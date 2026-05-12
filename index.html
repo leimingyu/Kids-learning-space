@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kids Learning Space</title>
+  <meta name="description" content="A friendly hub of four math learning games for kids — word problems, multiplication & division, fractions, and long division. No build, no signup, works in any modern browser.">
+  <meta name="theme-color" content="#FF6B6B">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="shared/styles/tokens.css" />
+  <link rel="stylesheet" href="shared/styles/components.css" />
+</head>
+<body>
+  <!-- Pip the Fox symbol library (inlined so <use href="#pip-..."> works on file://) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="pip-curious" viewBox="0 0 200 200">
+        <path d="M30,140 Q5,108 18,68 Q40,42 70,68 Q82,102 64,142 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M16,72 Q30,52 56,65 Q42,60 30,72 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <ellipse cx="110" cy="105" rx="58" ry="52" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M66,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M76,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M154,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M144,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M74,108 Q110,144 146,108 Q130,150 110,150 Q90,150 74,108 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <path d="M82,90 L96,87"   stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M124,87 L138,90" stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <circle cx="90"  cy="103" r="7"   fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="130" cy="103" r="7"   fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="92"  cy="100" r="2.4" fill="#fff"/>
+        <circle cx="132" cy="100" r="2.4" fill="#fff"/>
+        <ellipse cx="110" cy="124" rx="5" ry="3.6" fill="var(--pip-ink, #2D3436)"/>
+        <path d="M110,128 Q110,135 104,135 M110,128 Q110,135 116,135"
+              stroke="var(--pip-ink, #2D3436)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="78"  cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+        <circle cx="142" cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div id="chrome-root"></div>
+
+  <main id="hub-root" class="hub"></main>
+
+  <section id="stage-root" class="stage" hidden>
+    <iframe id="stage-frame"
+            class="stage__frame"
+            title="Game"
+            allow="autoplay; fullscreen"></iframe>
+  </section>
+
+  <script src="shared/scripts/util.js"></script>
+  <script src="shared/scripts/progress.js"></script>
+  <script src="shared/scripts/celebrate.js"></script>
+  <script src="shared/scripts/chrome.js"></script>
+  <script src="shared/scripts/hub.js"></script>
+</body>
+</html>

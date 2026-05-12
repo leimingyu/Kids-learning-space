@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Long Division Coach</title>
+    <link rel="stylesheet" href="../../shared/styles/tokens.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <header class="header">
+      <div class="header__brand">
+        <div class="logo" aria-hidden="true">÷</div>
+        <div>
+          <h1 class="title">Long Division Coach</h1>
+          <p class="subtitle">A friendly step-by-step mini-game: Divide → Multiply → Subtract → Bring down</p>
+        </div>
+      </div>
+
+      <div class="toolbar" role="group" aria-label="Settings">
+        <div class="toolbar__group">
+          <span class="toolbar__label">Difficulty</span>
+          <div class="segmented" role="group" aria-label="Difficulty">
+            <button class="segmented__btn" data-difficulty="easy" type="button">Easy</button>
+            <button class="segmented__btn" data-difficulty="medium" type="button">Medium</button>
+            <button class="segmented__btn" data-difficulty="hard" type="button">Hard</button>
+          </div>
+        </div>
+
+        <div class="toolbar__group">
+          <span class="toolbar__label">Mode</span>
+          <div class="segmented" role="group" aria-label="Mode">
+            <button class="segmented__btn" data-mode="demo" type="button">Watch</button>
+            <button class="segmented__btn" data-mode="guided" type="button">Practice</button>
+            <button class="segmented__btn" data-mode="independent" type="button">Challenge</button>
+          </div>
+        </div>
+
+        <div class="toolbar__group toolbar__group--actions">
+          <button id="newProblemBtn" class="btn btn--tertiary" type="button">New problem</button>
+          <button id="startOverBtn" class="btn btn--tertiary" type="button">Start over</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="main">
+      <section class="card card--lessonPanel" aria-labelledby="lessonHeadingText">
+        <button
+          type="button"
+          id="lessonToggle"
+          class="lessonPanel__toggle"
+          aria-expanded="false"
+          aria-controls="lessonBody"
+        >
+          <span id="lessonHeadingText" class="lessonPanel__toggleLabel">How long division works</span>
+          <span class="lessonPanel__chevron" aria-hidden="true">▼</span>
+        </button>
+        <div id="lessonBody" class="lessonPanel__body" hidden>
+          <p class="card__lead lessonPanel__lead">
+            Long division is a repeating cycle. Your job is to do <strong>one tiny step</strong> at a time.
+          </p>
+
+          <ol class="lesson-list">
+            <li><strong>Divide</strong>: How many of the divisor fit in the current number? (For example: “How many 5s are in 20?”)</li>
+            <li><strong>Multiply</strong>: Multiply the divisor by that number.</li>
+            <li><strong>Subtract</strong>: Subtract to see what’s left.</li>
+            <li><strong>Bring down</strong>: Bring down the next digit (if there is one).</li>
+          </ol>
+
+          <div class="tip">
+            <div class="tip__badge" aria-hidden="true">Tip</div>
+            <p class="tip__text">
+              If the first digit is too small, you can “grab one more digit” from the dividend.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="mainInteraction">
+        <section class="card card--step" aria-labelledby="stepTitle">
+          <div class="stepHeader">
+            <h2 id="stepTitle" class="card__title">Step</h2>
+            <div class="phaseBadge" id="phaseBadge" aria-label="Current phase">—</div>
+          </div>
+
+          <p id="stepPrompt" class="stepPrompt">Choose a mode and start a problem.</p>
+
+          <div class="inputRow">
+            <label class="inputLabel" for="answerInput">Your answer</label>
+            <input
+              id="answerInput"
+              class="input"
+              inputmode="numeric"
+              autocomplete="off"
+              pattern="[0-9]*"
+              placeholder="Type a number"
+              aria-describedby="inputHelp"
+            />
+            <div id="inputHelp" class="inputHelp">Use the keypad or your keyboard.</div>
+          </div>
+
+          <div class="controls">
+            <button id="checkBtn" class="btn btn--primary" type="button">Check</button>
+            <button id="nextBtn" class="btn btn--primary" type="button" hidden>Next</button>
+            <button id="hintBtn" class="btn btn--secondary" type="button">Hint</button>
+            <button id="explainBtn" class="btn btn--tertiary" type="button">Explain</button>
+            <button id="undoBtn" class="btn btn--tertiary" type="button">Undo</button>
+          </div>
+
+          <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+          <div class="keypad" aria-label="Number keypad">
+            <div class="keypad__grid">
+              <button class="keypad__btn" data-key="1" type="button">1</button>
+              <button class="keypad__btn" data-key="2" type="button">2</button>
+              <button class="keypad__btn" data-key="3" type="button">3</button>
+              <button class="keypad__btn" data-key="4" type="button">4</button>
+              <button class="keypad__btn" data-key="5" type="button">5</button>
+              <button class="keypad__btn" data-key="6" type="button">6</button>
+              <button class="keypad__btn" data-key="7" type="button">7</button>
+              <button class="keypad__btn" data-key="8" type="button">8</button>
+              <button class="keypad__btn" data-key="9" type="button">9</button>
+              <button class="keypad__btn keypad__btn--wide" data-key="clear" type="button" aria-label="Clear input">Clear</button>
+              <button class="keypad__btn" data-key="0" type="button">0</button>
+              <button class="keypad__btn keypad__btn--wide" data-key="back" type="button" aria-label="Backspace">⌫</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card--board" aria-label="Division workspace">
+          <div class="boardHeader">
+            <div class="boardHeader__problem" aria-label="Current problem">
+              <span class="pill">Divisor: <strong id="divisorText">—</strong></span>
+              <span class="pill">Dividend: <strong id="dividendText">—</strong></span>
+            </div>
+            <div class="boardHeader__stats" aria-label="Session stats">
+              <span class="pill">Streak: <strong id="streakText">0</strong></span>
+              <span class="pill">Stars: <strong id="starsText">0</strong></span>
+            </div>
+          </div>
+
+          <div class="board">
+            <div class="board__topRow">
+              <div class="board__blank" aria-hidden="true"></div>
+              <div class="quotient">
+                <div class="quotient__label">Quotient</div>
+                <div id="quotientSlots" class="quotient__slots digitGrid" aria-label="Quotient digits"></div>
+              </div>
+            </div>
+
+            <div class="board__midRow">
+              <div class="divisorBox">
+                <div class="divisorBox__label">Divisor</div>
+                <div id="divisorBoxValue" class="divisorBox__value">—</div>
+              </div>
+
+              <div class="bracket">
+                <div class="bracket__top"></div>
+                <div class="bracket__side"></div>
+
+                <div class="dividend">
+                  <div class="dividend__label">Dividend</div>
+                  <div id="dividendDigits" class="dividend__digits digitGrid" aria-label="Dividend digits"></div>
+                </div>
+
+                <div class="computation" aria-label="Computation area">
+                  <div class="computation__label">Work</div>
+                  <div id="workRows" class="computation__rows" aria-label="Work rows"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="doneSummary" class="doneSummary" hidden>
+            <h3 class="doneSummary__title">Nice work!</h3>
+            <p class="doneSummary__text" id="doneSummaryText">—</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p class="footer__text">
+        Made for learning. Be kind to your brain—mistakes are how we grow.
+      </p>
+    </footer>
+
+    <script src="./script.js"></script>
+    <script src="../../shared/scripts/game-bridge.js"></script>
+    <script>
+      // KLS hub wiring: post a "played" event when the Done Summary panel appears.
+      if (window.KLS && window.KLS.bridge) {
+        window.KLS.bridge.onVisible('#doneSummary', function () {
+          window.KLS.bridge.played();
+          window.KLS.bridge.celebrate();
+        });
+      }
+    </script>
+  </body>
+</html>
+

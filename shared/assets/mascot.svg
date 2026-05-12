@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pip the Fox — Kids Learning Space mascot.
+
+  Reference a pose from another document:
+    <svg viewBox="0 0 200 200">
+      <use href="shared/assets/mascot.svg#pip-curious"/>
+    </svg>
+
+  Available poses:  #pip-curious  #pip-cheering  #pip-thinking  #pip-sleeping
+
+  Colors honor parent-document CSS custom properties (--pip-fur, --pip-cream,
+  --pip-pink, --pip-ink, --pip-accent) and fall back to baked-in hex values
+  when this SVG is opened standalone.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Pip the fox">
+  <defs>
+    <!-- ====== CURIOUS (default / hub host) ====== -->
+    <symbol id="pip-curious" viewBox="0 0 200 200">
+      <!-- Tail -->
+      <path d="M30,140 Q5,108 18,68 Q40,42 70,68 Q82,102 64,142 Z"
+            fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M16,72 Q30,52 56,65 Q42,60 30,72 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Head -->
+      <ellipse cx="110" cy="105" rx="58" ry="52"
+               fill="var(--pip-fur, #FF8A65)"/>
+      <!-- Ears -->
+      <path d="M66,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M76,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+      <path d="M154,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M144,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+      <!-- Cream face -->
+      <path d="M74,108 Q110,144 146,108 Q130,150 110,150 Q90,150 74,108 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Eyebrows (curious tilt) -->
+      <path d="M82,90 L96,87" stroke="var(--pip-ink, #2D3436)"
+            stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M124,87 L138,90" stroke="var(--pip-ink, #2D3436)"
+            stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <!-- Eyes (open) -->
+      <circle cx="90"  cy="103" r="7" fill="var(--pip-ink, #2D3436)"/>
+      <circle cx="130" cy="103" r="7" fill="var(--pip-ink, #2D3436)"/>
+      <circle cx="92"  cy="100" r="2.4" fill="#fff"/>
+      <circle cx="132" cy="100" r="2.4" fill="#fff"/>
+      <!-- Nose -->
+      <ellipse cx="110" cy="124" rx="5" ry="3.6"
+               fill="var(--pip-ink, #2D3436)"/>
+      <!-- Mouth -->
+      <path d="M110,128 Q110,135 104,135 M110,128 Q110,135 116,135"
+            stroke="var(--pip-ink, #2D3436)" stroke-width="2"
+            fill="none" stroke-linecap="round"/>
+      <!-- Cheeks -->
+      <circle cx="78"  cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+      <circle cx="142" cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+    </symbol>
+
+    <!-- ====== CHEERING (celebrations) ====== -->
+    <symbol id="pip-cheering" viewBox="0 0 200 200">
+      <!-- Sparkles -->
+      <g fill="var(--pip-accent, #FFD93D)">
+        <path d="M38,38 l4,9 l9,4 l-9,4 l-4,9 l-4,-9 l-9,-4 l9,-4 z"/>
+        <path d="M172,52 l3,7 l7,3 l-7,3 l-3,7 l-3,-7 l-7,-3 l7,-3 z"/>
+        <path d="M168,140 l3,6 l6,3 l-6,3 l-3,6 l-3,-6 l-6,-3 l6,-3 z"/>
+      </g>
+      <!-- Tail (raised, swooshed) -->
+      <path d="M28,138 Q-2,96 12,55 Q35,28 70,55 Q82,98 66,144 Z"
+            fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M10,60 Q25,40 58,55 Q42,50 25,62 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Head -->
+      <ellipse cx="110" cy="105" rx="58" ry="52"
+               fill="var(--pip-fur, #FF8A65)"/>
+      <!-- Ears (tilted outward) -->
+      <path d="M62,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M74,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+      <path d="M158,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M146,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+      <!-- Cream face -->
+      <path d="M74,108 Q110,148 146,108 Q130,152 110,152 Q90,152 74,108 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Closed happy eyes ^ ^ -->
+      <path d="M80,104 Q90,93 100,104"
+            stroke="var(--pip-ink, #2D3436)" stroke-width="3"
+            fill="none" stroke-linecap="round"/>
+      <path d="M120,104 Q130,93 140,104"
+            stroke="var(--pip-ink, #2D3436)" stroke-width="3"
+            fill="none" stroke-linecap="round"/>
+      <!-- Nose -->
+      <ellipse cx="110" cy="124" rx="5" ry="3.6"
+               fill="var(--pip-ink, #2D3436)"/>
+      <!-- Open smile -->
+      <path d="M92,128 Q110,148 128,128 Q110,140 92,128 Z"
+            fill="var(--pip-ink, #2D3436)"/>
+      <ellipse cx="110" cy="138" rx="7" ry="3.2" fill="#F08080"/>
+      <!-- Strong cheek blush -->
+      <circle cx="76"  cy="120" r="6.5" fill="var(--pip-pink, #FFB39C)" opacity="0.75"/>
+      <circle cx="144" cy="120" r="6.5" fill="var(--pip-pink, #FFB39C)" opacity="0.75"/>
+    </symbol>
+
+    <!-- ====== THINKING (loading / hint) ====== -->
+    <symbol id="pip-thinking" viewBox="0 0 200 200">
+      <!-- Thought bubble -->
+      <g fill="var(--pip-cream, #FFF0E1)" stroke="var(--pip-ink, #2D3436)" stroke-width="2">
+        <circle cx="170" cy="40" r="20"/>
+        <circle cx="148" cy="62" r="7"/>
+        <circle cx="138" cy="74" r="4"/>
+      </g>
+      <text x="170" y="48" text-anchor="middle"
+            font-family="var(--kls-font-display, 'Fredoka', sans-serif)"
+            font-size="22" font-weight="700"
+            fill="var(--pip-ink, #2D3436)">?</text>
+
+      <!-- Tail -->
+      <path d="M30,140 Q5,108 18,68 Q40,42 70,68 Q82,102 64,142 Z"
+            fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M16,72 Q30,52 56,65 Q42,60 30,72 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Head tilted -->
+      <g transform="rotate(-7 110 105)">
+        <ellipse cx="110" cy="105" rx="58" ry="52"
+                 fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M66,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M76,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M154,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M144,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M74,108 Q110,144 146,108 Q130,150 110,150 Q90,150 74,108 Z"
+              fill="var(--pip-cream, #FFF0E1)"/>
+        <!-- Eyes looking up-right -->
+        <circle cx="94"  cy="100" r="7" fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="134" cy="100" r="7" fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="97"  cy="97" r="2.4" fill="#fff"/>
+        <circle cx="137" cy="97" r="2.4" fill="#fff"/>
+        <!-- Pursed mouth -->
+        <ellipse cx="110" cy="132" rx="3.2" ry="2.6"
+                 fill="var(--pip-ink, #2D3436)"/>
+        <!-- Nose -->
+        <ellipse cx="110" cy="124" rx="5" ry="3.6"
+                 fill="var(--pip-ink, #2D3436)"/>
+      </g>
+    </symbol>
+
+    <!-- ====== SLEEPING (empty states / end-of-day) ====== -->
+    <symbol id="pip-sleeping" viewBox="0 0 200 200">
+      <!-- Floating Zzz -->
+      <g fill="var(--kls-secondary, #4ECDC4)"
+         font-family="var(--kls-font-display, 'Fredoka', sans-serif)"
+         font-weight="700">
+        <text x="150" y="52" font-size="22">Z</text>
+        <text x="166" y="38" font-size="17">z</text>
+        <text x="178" y="26" font-size="13">z</text>
+      </g>
+      <!-- Curled tail -->
+      <path d="M40,154 Q14,142 22,108 Q42,90 64,108 Q74,130 66,150 Z"
+            fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M22,112 Q36,100 58,108 Q44,104 30,112 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Head (lower, slightly squished) -->
+      <ellipse cx="110" cy="120" rx="58" ry="48"
+               fill="var(--pip-fur, #FF8A65)"/>
+      <!-- Ears (folded down) -->
+      <path d="M66,82 Q72,100 92,93 Q76,84 66,82 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <path d="M154,82 Q148,100 128,93 Q144,84 154,82 Z" fill="var(--pip-fur, #FF8A65)"/>
+      <!-- Cream face -->
+      <path d="M74,122 Q110,154 146,122 Q130,158 110,158 Q90,158 74,122 Z"
+            fill="var(--pip-cream, #FFF0E1)"/>
+      <!-- Closed gentle eyes -->
+      <path d="M82,115 Q90,121 98,115"
+            stroke="var(--pip-ink, #2D3436)" stroke-width="2.5"
+            fill="none" stroke-linecap="round"/>
+      <path d="M122,115 Q130,121 138,115"
+            stroke="var(--pip-ink, #2D3436)" stroke-width="2.5"
+            fill="none" stroke-linecap="round"/>
+      <!-- Nose -->
+      <ellipse cx="110" cy="136" rx="5" ry="3.6"
+               fill="var(--pip-ink, #2D3436)"/>
+      <!-- Sleep mouth -->
+      <ellipse cx="110" cy="148" rx="3" ry="2.5"
+               fill="var(--pip-ink, #2D3436)" opacity="0.75"/>
+    </symbol>
+  </defs>
+
+  <!-- Default render when this file is opened standalone -->
+  <use href="#pip-curious"/>
+</svg>

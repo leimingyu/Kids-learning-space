@@ -1,0 +1,4414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Cosmic Math Quest — Multiply & Divide</title>
+  <style>
+    /* ========== Cosmic Math Quest — Space theme, kid-friendly ========== */
+    :root {
+      --bg-deep: #0c1224;
+      --bg-panel: #161d35;
+      --accent: #7cffb3;
+      --accent2: #6eb5ff;
+      --accent-warm: #ffd166;
+      --danger-soft: #ff8b94;
+      --text: #f4f7ff;
+      --text-muted: #9aa8c9;
+      --star-gold: #ffe066;
+      --radius: 20px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      --font: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      background: radial-gradient(ellipse 120% 80% at 50% 0%, #1a2750 0%, var(--bg-deep) 55%);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      padding: clamp(12px, 3vw, 24px);
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Screens */
+    .screen {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.85); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes sparkle {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.15) rotate(8deg); }
+    }
+
+    /* Header / branding */
+    .brand {
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .brand h1 {
+      font-size: clamp(1.65rem, 5vw, 2.25rem);
+      margin: 0 0 0.35rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 20px rgba(110, 181, 255, 0.4);
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: clamp(1rem, 3vw, 1.15rem);
+      color: var(--text-muted);
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(22, 29, 53, 0.95), rgba(12, 18, 36, 0.98));
+      border: 2px solid rgba(110, 181, 255, 0.25);
+      border-radius: var(--radius);
+      padding: clamp(1rem, 4vw, 1.75rem);
+      box-shadow: var(--shadow);
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      font-weight: 700;
+      padding: 0.95rem 1.5rem;
+      min-height: 52px;
+      min-width: 140px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--accent-warm);
+      outline-offset: 3px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent) 0%, #4ed693 100%);
+      color: #062818;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(180deg, var(--accent2) 0%, #3d8ae0 100%);
+      color: #051a30;
+    }
+
+    .btn-ghost {
+      background: rgba(110, 181, 255, 0.15);
+      color: var(--text);
+      border: 2px solid rgba(110, 181, 255, 0.4);
+    }
+
+    /* Segmented level / mode */
+    .segment-label {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin: 1.25rem 0 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .segment-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .segment-btn {
+      flex: 1 1 auto;
+      min-height: 52px;
+      min-width: 100px;
+      padding: 0.75rem 1rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 12px;
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .segment-btn.selected {
+      background: rgba(126, 255, 179, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Game status bar */
+    .status-bar {
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 1rem;
+      font-size: clamp(0.9rem, 2.6vw, 1.05rem);
+      line-height: 1.5;
+    }
+
+    .status-bar strong {
+      color: var(--accent-warm);
+      font-weight: 800;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 16px;
+      align-items: center;
+    }
+
+    .status-row + .status-row {
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(110, 181, 255, 0.15);
+    }
+
+    .mode-indicators {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(110, 181, 255, 0.2);
+    }
+
+    .mode-badge {
+      display: inline-block;
+      font-weight: 800;
+      font-size: clamp(0.82rem, 2.2vw, 0.95rem);
+      letter-spacing: 0.02em;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(126, 255, 179, 0.18);
+      border: 1px solid rgba(126, 255, 179, 0.45);
+      color: var(--accent);
+    }
+
+    .mode-current-op {
+      font-size: clamp(0.78rem, 2vw, 0.88rem);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .mode-current-op strong {
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .review-banner {
+      display: none;
+      text-align: center;
+      font-size: clamp(0.95rem, 2.8vw, 1.1rem);
+      font-weight: 800;
+      color: #ffd166;
+      background: rgba(255, 209, 102, 0.12);
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      border-radius: 12px;
+      padding: 0.6rem 0.85rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .review-banner.visible {
+      display: block;
+    }
+
+    .review-banner .sub {
+      display: block;
+      font-size: 0.88em;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .hearts {
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+    }
+
+    .lives-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .lives-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .lives-label {
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .lives-note {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .lives-wrap.review-safe .lives-display,
+    .lives-wrap.review-safe .lives-note {
+      opacity: 0.72;
+    }
+
+    .hearts.life-lost {
+      animation: lifeLostPulse 0.45s ease;
+    }
+
+    .hearts .lost {
+      opacity: 0.35;
+      filter: grayscale(0.8);
+    }
+
+    @keyframes lifeLostPulse {
+      0% { transform: scale(1); }
+      35% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+
+    .game-tools-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-small {
+      min-height: 44px;
+      min-width: auto;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.95rem;
+      border-radius: 10px;
+    }
+
+    .btn-small.muted {
+      opacity: 0.7;
+    }
+
+    /* Question area */
+    .question-card {
+      text-align: center;
+      padding: clamp(1rem, 3vw, 1.5rem) 0;
+      min-height: 120px;
+    }
+
+    /* Large equation-first prompt; × and ÷ stay Unicode, sized for clarity */
+    .question-text {
+      font-size: clamp(1.85rem, 7.5vw, 2.85rem);
+      font-weight: 800;
+      line-height: 1.35;
+      margin: 0 0 0.5rem;
+      letter-spacing: 0.03em;
+    }
+
+    /* Visual models */
+    .visual-model {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin: 0.5rem 0 1rem;
+      padding: 12px;
+      background: rgba(110, 181, 255, 0.08);
+      border-radius: 12px;
+      border: 1px dashed rgba(110, 181, 255, 0.35);
+    }
+
+    .array-grid {
+      display: grid;
+      gap: 4px;
+      margin: 0 auto;
+    }
+
+    .array-cell {
+      width: clamp(22px, 5vw, 28px);
+      height: clamp(22px, 5vw, 28px);
+      background: linear-gradient(145deg, var(--accent-warm), #e8a317);
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .groups-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .group-pile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .group-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      max-width: 100px;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent2);
+    }
+
+    .group-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Typed answer */
+    .answer-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin: 1.25rem 0;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .answer-stack input {
+      font-size: clamp(1.55rem, 6vw, 2.1rem);
+      font-weight: 800;
+      width: 100%;
+      max-width: 280px;
+      text-align: center;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      border: 3px solid rgba(126, 255, 179, 0.55);
+      background: var(--bg-panel);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .answer-stack input:disabled {
+      opacity: 0.65;
+    }
+
+    .answer-stack input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(126, 255, 179, 0.25);
+    }
+
+    .btn-check {
+      min-width: 200px;
+      min-height: 56px;
+      font-size: 1.2rem;
+    }
+
+    /* Gameplay: keep mission UI in one viewport (no page scroll / zoom) */
+    html:has(#screen-game.active) {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    body:has(#screen-game.active) {
+      min-height: 100vh;
+      min-height: 100dvh;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      padding: 6px 10px max(6px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+    }
+
+    body:has(#screen-game.active) .app {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #screen-game.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    body:has(#screen-game.active) #screen-game .brand {
+      margin-bottom: 0.2rem;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .brand h1 {
+      font-size: clamp(1rem, 3.2vw, 1.45rem);
+      margin: 0;
+    }
+
+    body:has(#screen-game.active) #screen-game .panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem 0.65rem;
+      gap: 0.3rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: contain;
+    }
+
+    body:has(#screen-game.active) #screen-game .review-banner {
+      margin-bottom: 0;
+      padding: 0.45rem 0.6rem;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .game-tools-top {
+      margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .status-bar {
+      margin-bottom: 0;
+      padding: 6px 8px;
+      font-size: clamp(0.72rem, 2vw, 0.92rem);
+      line-height: 1.35;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .mode-indicators {
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      gap: 4px 8px;
+    }
+
+    body:has(#screen-game.active) #screen-game .status-row + .status-row {
+      margin-top: 2px;
+      padding-top: 4px;
+    }
+
+    body:has(#screen-game.active) #screen-game .hearts {
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+
+    body:has(#screen-game.active) #screen-game .lives-note {
+      font-size: 0.68rem;
+      line-height: 1.2;
+    }
+
+    body:has(#screen-game.active) #screen-game .question-card {
+      padding: 0.25rem 0;
+      min-height: 0;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .question-text {
+      font-size: clamp(1.2rem, 5.2vw, 2rem);
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    body:has(#screen-game.active) #screen-game .answer-stack {
+      margin-block: 0.2rem;
+      margin-inline: auto;
+      gap: 8px;
+      flex: 0 0 auto;
+      align-self: center;
+      width: 100%;
+    }
+
+    body:has(#screen-game.active) #screen-game .answer-stack input {
+      font-size: clamp(1.1rem, 4.5vw, 1.65rem);
+      padding: 0.5rem 0.65rem;
+    }
+
+    body:has(#screen-game.active) #screen-game .btn-check {
+      min-height: 48px;
+      min-width: 160px;
+      font-size: 1.05rem;
+    }
+
+    body:has(#screen-game.active) #screen-game .feedback {
+      min-height: 0;
+      margin: 0;
+      padding: 0.35rem 0.45rem;
+      font-size: clamp(0.88rem, 2.8vw, 1.05rem);
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game #feedback-extra {
+      flex: 0 1 auto;
+      min-height: 0;
+      max-height: min(22vh, 180px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    body:has(#screen-game.active) #screen-game .panel > .btn-row {
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+
+    body:has(#screen-game.active) #screen-game .panel > .btn-row .btn-small {
+      min-height: 40px;
+    }
+
+    @media (max-height: 700px) {
+      body:has(#screen-game.active) #hud-lives-note {
+        display: none;
+      }
+    }
+
+    @media (max-height: 620px) {
+      body:has(#screen-game.active) #hud-current-op {
+        display: none;
+      }
+
+      body:has(#screen-game.active) #screen-game .status-bar {
+        padding: 4px 6px;
+        font-size: 0.72rem;
+      }
+
+      body:has(#screen-game.active) #screen-game .question-text {
+        font-size: clamp(1.05rem, 4.5vw, 1.55rem);
+      }
+    }
+
+    /* Feedback */
+    .feedback {
+      min-height: 3.5rem;
+      text-align: center;
+      font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+      font-weight: 700;
+      margin: 0.5rem 0 1rem;
+      padding: 0.75rem;
+      border-radius: 12px;
+      transition: background 0.3s;
+    }
+
+    .feedback.success {
+      background: rgba(124, 255, 179, 0.15);
+      color: var(--accent);
+      animation: sparkle 0.5s ease;
+    }
+
+    .feedback.gentle {
+      background: rgba(255, 139, 148, 0.12);
+      color: #ffb4ba;
+    }
+
+    .feedback.neutral {
+      color: var(--text-muted);
+    }
+
+    .feedback-explain {
+      margin-top: 8px;
+      font-size: clamp(0.95rem, 3vw, 1.05rem);
+      font-weight: 600;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .feedback-visual-wrap {
+      margin-top: 12px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .points-tag {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--accent-warm);
+    }
+
+    /* Confetti layer */
+    .confetti-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      top: -12px;
+      animation: confetti-fall linear forwards;
+      border-radius: 2px;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0.6;
+      }
+    }
+
+    .answer-stack input:focus,
+    .answer-stack input.focus-ready {
+      border-color: var(--accent-warm);
+      box-shadow: 0 0 0 5px rgba(255, 209, 102, 0.18);
+      outline: none;
+    }
+
+    .answer-stack input.focus-ready {
+      animation: input-ready-glow 0.7s ease;
+    }
+
+    @keyframes input-ready-glow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(255, 209, 102, 0);
+      }
+      35% {
+        box-shadow: 0 0 0 7px rgba(255, 209, 102, 0.26);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(255, 209, 102, 0);
+      }
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 8, 18, 0.82);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-panel);
+      border: 2px solid rgba(110, 181, 255, 0.4);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 520px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .modal h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.35rem;
+    }
+
+    .modal ul {
+      margin: 0;
+      padding-left: 1.25rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .modal li { margin-bottom: 0.5rem; }
+
+    .hint-modal {
+      width: min(100%, 520px);
+      background: linear-gradient(145deg, rgba(28, 36, 68, 0.98), rgba(12, 18, 36, 0.99));
+      border-color: rgba(255, 209, 102, 0.4);
+    }
+
+    .game-over-modal {
+      width: min(100%, 560px);
+      text-align: center;
+      background: linear-gradient(145deg, rgba(36, 27, 63, 0.98), rgba(12, 18, 36, 0.99));
+      border-color: rgba(255, 139, 148, 0.45);
+      animation: pop 0.28s ease;
+    }
+
+    .game-over-modal h2 {
+      color: var(--accent-warm);
+      font-size: clamp(1.45rem, 4.2vw, 1.8rem);
+    }
+
+    .game-over-lead {
+      margin: 0 0 0.6rem;
+      font-size: 1.08rem;
+      line-height: 1.5;
+    }
+
+    .game-over-sub {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .hint-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+      text-align: center;
+    }
+
+    .hint-modal h2 {
+      margin: 0;
+      color: var(--accent-warm);
+      font-size: clamp(1.35rem, 4vw, 1.6rem);
+    }
+
+    .hint-modal-text {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .hint-visual-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .hint-visual-wrap .visual-model {
+      margin: 0;
+    }
+
+    /* Results */
+    .results-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin: 1rem 0;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-box .num {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent-warm);
+    }
+
+    .stat-box .lbl {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .stars-row {
+      text-align: center;
+      font-size: 2.5rem;
+      letter-spacing: 8px;
+      margin: 0.5rem 0 1rem;
+    }
+
+    .badge-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .badge-pill {
+      background: rgba(110, 181, 255, 0.2);
+      border: 1px solid rgba(110, 181, 255, 0.45);
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+    }
+
+    .mistake-actions {
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 10px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+      background: rgba(110, 181, 255, 0.08);
+      border: 1px solid rgba(110, 181, 255, 0.28);
+      border-radius: 14px;
+    }
+
+    .mistake-actions .btn {
+      min-height: 48px;
+    }
+
+    .save-status-msg {
+      display: block;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0.35rem 0 0.5rem;
+      min-height: 1.35em;
+    }
+
+    .save-status-msg[hidden] {
+      display: none !important;
+    }
+
+    /* Progress screen */
+    .progress-summary {
+      text-align: center;
+      font-size: 1.15rem;
+      margin: 1rem 0;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    .feedback-visual-wrap .visual-model {
+      margin: 0;
+    }
+
+    .adaptive-encouragement {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: rgba(255, 224, 130, 0.95);
+      opacity: 0.95;
+    }
+
+    @media (min-width: 600px) {
+      .status-bar { font-size: 1.05rem; }
+    }
+  </style>
+  <link rel="stylesheet" href="../../shared/styles/tokens.css">
+</head>
+<body>
+  <div class="confetti-container" id="confetti" aria-hidden="true"></div>
+
+  <div class="app">
+    <!-- ========== MAIN MENU ========== -->
+    <section id="screen-menu" class="screen active" aria-labelledby="menu-title">
+      <div class="brand">
+        <h1>🚀 Cosmic Math Quest</h1>
+        <p>A multiplication &amp; division adventure</p>
+      </div>
+      <div class="panel">
+        <div class="segment-label" id="menu-title">Choose level</div>
+        <div class="segment-group" role="group" aria-label="Difficulty level">
+          <button type="button" class="segment-btn selected" data-level="easy" aria-pressed="true">Easy</button>
+          <button type="button" class="segment-btn" data-level="medium" aria-pressed="false">Medium</button>
+          <button type="button" class="segment-btn" data-level="hard" aria-pressed="false">Hard</button>
+        </div>
+        <div class="segment-label">Choose mode</div>
+        <div class="segment-group" role="group" aria-label="Game mode">
+          <button type="button" class="segment-btn selected" data-mode="multiply" aria-pressed="true">Multiplication</button>
+          <button type="button" class="segment-btn" data-mode="divide" aria-pressed="false">Division</button>
+          <button type="button" class="segment-btn" data-mode="mixed" aria-pressed="false">Mixed</button>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-play">▶ Play Mission</button>
+        </div>
+        <div class="segment-label">Things to Improve</div>
+        <div class="btn-row mistake-actions">
+          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-quickfix" hidden>Quick Fix</button>
+          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-mostmissed" hidden>Most Missed</button>
+          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-duetoday" hidden>Due Today</button>
+        </div>
+        <div class="btn-row mistake-actions">
+          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-save-saved-wrongs" hidden>
+            Save list to disk
+          </button>
+        </div>
+        <p class="save-status-msg" id="menu-mistakes-empty" hidden>Nice work! Nothing to improve right now — fly a mission first.</p>
+        <p class="save-status-msg" id="menu-save-status" hidden role="status" aria-live="polite"></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost btn-small" id="btn-progress">⭐ Stars &amp; Badges</button>
+          <button type="button" class="btn btn-ghost btn-small" id="btn-how">❓ How to play</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== GAMEPLAY ========== -->
+    <section id="screen-game" class="screen" aria-label="Game">
+      <div class="brand">
+        <h1 id="game-brand-title">🛸 Mission in progress</h1>
+      </div>
+      <div class="panel">
+        <div class="review-banner" id="review-banner" role="status">
+          Fix tricky questions
+          <span class="sub">Extra practice — learn at your own pace.</span>
+        </div>
+        <div class="game-tools-top">
+          <button type="button" class="btn btn-ghost btn-small" id="btn-menu-game">Exit game</button>
+          <button type="button" class="btn btn-ghost btn-small" id="btn-sound" aria-pressed="true">🔊 Sound on</button>
+        </div>
+
+        <div class="status-bar" id="status-bar" aria-live="polite">
+          <div class="mode-indicators">
+            <span class="mode-badge" id="hud-mode-badge">Mode: Multiplication</span>
+            <span class="mode-current-op" id="hud-current-op">Current question: <strong>—</strong></span>
+          </div>
+          <div class="status-row">
+            <span>Score: <strong id="hud-score">0</strong></span>
+            <span id="hud-q-num">Question 1 of 10</span>
+            <span>🔥 Streak: <strong id="hud-streak">0</strong></span>
+          </div>
+          <div class="status-row">
+            <span>Correct: <strong id="hud-correct">0</strong> / <strong id="hud-total">0</strong></span>
+            <span>Accuracy: <strong id="hud-accuracy">0%</strong></span>
+            <span class="lives-wrap" id="hud-lives-wrap">
+              <span class="lives-display">
+                <span class="lives-label" id="hud-lives-label">Lives:</span>
+                <span class="hearts" id="hud-hearts" aria-label="Lives left"></span>
+              </span>
+              <span class="lives-note" id="hud-lives-note">Hearts = lives. If they are all gone, the mission pauses.</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="question-card">
+          <p class="question-text" id="q-text">Loading…</p>
+        </div>
+
+        <div class="answer-stack" id="answer-area">
+          <label class="sr-only" for="answer-input">Your answer</label>
+          <input type="text" inputmode="numeric" pattern="[0-9-]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
+          <button type="button" class="btn btn-secondary btn-check" id="btn-submit-answer">Check</button>
+        </div>
+
+        <div class="feedback neutral" id="feedback" aria-live="polite"></div>
+        <div id="feedback-extra"></div>
+
+        <div class="btn-row" style="margin-top:1rem;">
+          <button type="button" class="btn btn-ghost btn-small" id="btn-hint">Show hint</button>
+          <button type="button" class="btn btn-primary btn-small" id="btn-next" hidden>Next question</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== RESULTS ========== -->
+    <section id="screen-results" class="screen" aria-labelledby="results-title">
+      <div class="brand">
+        <h1 id="results-title">🌟 Mission Complete!</h1>
+      </div>
+      <div class="panel">
+        <div class="stars-row" id="results-stars">⭐⭐⭐</div>
+        <p id="results-rating" style="text-align:center;font-size:1.15rem;margin:0 0 1rem;"></p>
+        <div class="results-stats">
+          <div class="stat-box"><div class="num" id="res-score">0</div><div class="lbl">Score</div></div>
+          <div class="stat-box"><div class="num" id="res-correct">0</div><div class="lbl">Correct / 10</div></div>
+          <div class="stat-box"><div class="num" id="res-accuracy">0%</div><div class="lbl">Accuracy</div></div>
+          <div class="stat-box"><div class="num" id="res-streak">0</div><div class="lbl">Longest streak</div></div>
+          <div class="stat-box"><div class="num" id="res-stars">0</div><div class="lbl">Stars</div></div>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-again">Play again</button>
+          <button type="button" class="btn btn-secondary" id="btn-change-level">Change level</button>
+          <button type="button" class="btn btn-ghost" id="btn-change-mode">Change mode</button>
+          <button type="button" class="btn btn-ghost" id="btn-results-menu">Back to menu</button>
+        </div>
+        <div class="segment-label">Things to improve &amp; practice</div>
+        <div class="btn-row mistake-actions" id="results-review-actions">
+          <button type="button" class="btn btn-primary" id="btn-practice-wrongs" hidden>Fix Tricky Questions</button>
+        </div>
+        <div class="btn-row mistake-actions">
+          <button type="button" class="btn btn-secondary btn-small" id="btn-results-quickfix" hidden>Quick Fix</button>
+          <button type="button" class="btn btn-secondary btn-small" id="btn-results-mostmissed" hidden>Most Missed</button>
+          <button type="button" class="btn btn-secondary btn-small" id="btn-results-duetoday" hidden>Due Today</button>
+        </div>
+        <div class="btn-row mistake-actions">
+          <button type="button" class="btn btn-secondary" id="btn-save-wrongs-recent" hidden>
+            Save list to file (.txt)
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-save-wrongs-all" hidden>
+            Save all to file (.txt)
+          </button>
+        </div>
+        <p class="save-status-msg" id="results-mistakes-empty" hidden>Nothing to improve right now. Great job!</p>
+        <p class="save-status-msg" id="results-save-status" hidden role="status" aria-live="polite"></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost btn-small" id="btn-clear-wrong-history">Clear saved list</button>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost btn-small" id="btn-results-progress">Stars &amp; badges</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PROGRESS / BADGES ========== -->
+    <section id="screen-progress" class="screen" aria-labelledby="prog-title">
+      <div class="brand">
+        <h1 id="prog-title">⭐ Your cosmic collection</h1>
+      </div>
+      <div class="panel">
+        <div class="progress-summary">
+          Total stars: <strong id="prog-total-stars">0</strong><br />
+          Missions flown: <strong id="prog-rounds">0</strong><br />
+          All-time best streak: <strong id="prog-best-streak">0</strong>
+        </div>
+        <div class="segment-label">Badges</div>
+        <div class="badge-list" id="badge-list"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="btn-prog-back">Back to menu</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- How to play modal -->
+  <div class="modal-overlay" id="modal-how" role="dialog" aria-modal="true" aria-labelledby="how-heading">
+    <div class="modal">
+      <h2 id="how-heading">How to play</h2>
+      <ul>
+        <li>Pick <strong>Easy</strong>, <strong>Medium</strong>, or <strong>Hard</strong>. Tap <strong>Show hint</strong> for help (pictures on Easy).</li>
+        <li>Choose <strong>Multiplication</strong>, <strong>Division</strong>, or <strong>Mix</strong>.</li>
+        <li>Type your answer and press <strong>Check</strong> or Enter. Then press <strong>Next question</strong> when you’re ready.</li>
+        <li>Each correct answer is <strong>+10</strong> points. Every <strong>3 in a row</strong> adds <strong>+5</strong> bonus!</li>
+        <li>No timer — finish all 10 questions. Hearts are lives, and if they run out the mission pauses so you can try again or fix tricky questions.</li>
+      </ul>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button type="button" class="btn btn-primary" id="btn-how-close">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-hint" role="dialog" aria-modal="true" aria-labelledby="hint-heading" aria-hidden="true">
+    <div class="modal hint-modal" role="document">
+      <div class="hint-modal-header">
+        <h2 id="hint-heading">Hint</h2>
+      </div>
+      <p class="hint-modal-text" id="hint-text"></p>
+      <div class="hint-visual-wrap" id="hint-visual" hidden></div>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button type="button" class="btn btn-primary" id="btn-hint-close">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-game-over" role="dialog" aria-modal="true" aria-labelledby="game-over-heading" aria-hidden="true">
+    <div class="modal game-over-modal" role="document">
+      <h2 id="game-over-heading">Mission paused!</h2>
+      <p class="game-over-lead" id="game-over-text">Oops! You used all your lives. Let's try again!</p>
+      <p class="game-over-sub">You can jump back in or fix tricky questions.</p>
+      <p class="save-status-msg" id="game-over-mistakes-empty" hidden>Nothing to improve right now. Great job!</p>
+      <div class="btn-row" style="margin-top:1rem;">
+        <button type="button" class="btn btn-primary" id="btn-game-over-try-again">Try Again</button>
+        <button type="button" class="btn btn-secondary" id="btn-game-over-practice" hidden>Fix Tricky Questions</button>
+        <button type="button" class="btn btn-ghost" id="btn-game-over-menu">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="learningIntelligence.js"></script>
+  <script>
+(function () {
+  'use strict';
+
+  // ========== CONFIG ==========
+  const ROUND_SIZE = 10;
+  const POOL_SIZE = 100;
+  const INITIAL_HEARTS = 5;
+  const POINTS_CORRECT = 10;
+  const STREAK_BONUS_EVERY = 3;
+  const STREAK_BONUS_POINTS = 5;
+  const STORAGE_KEY = 'cosmicMathQuest_v1';
+  const WRONG_ANSWERS_STORAGE_KEY = 'cosmicMathQuest_wrongs_v1';
+  /** Smart practice sessions: target length (cap only; no padding). */
+  const PRACTICE_ROUND_MIN = 5;
+  const PRACTICE_ROUND_MAX = 10;
+
+  const CORRECT_PHRASES = ['Nice work!', "You're getting stronger!"];
+  const GENTLE_PHRASES = ["Good try! Let's fix this."];
+  const ADAPTIVE_ENCOURAGEMENT_PHRASES = [
+    'Nice streak — the next fact is a little tougher!',
+    'You are on fire! Next question nudges the challenge up a bit.',
+    'Great work — ready for a slightly stronger fact?',
+  ];
+
+  // Keys used this browser session (avoid repeating the exact same item across rounds)
+  var sessionAskedKeys = new Set();
+  var browserSessionId =
+    'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+
+  // ========== STATE ==========
+  const GameState = {
+    level: 'easy',
+    mode: 'multiply',
+    questionIndex: 0,
+    roundQuestions: [],
+    roundMixOps: null,
+    roundSize: ROUND_SIZE,
+    score: 0,
+    streak: 0,
+    bestStreakThisRound: 0,
+    hearts: INITIAL_HEARTS,
+    correctCount: 0,
+    totalAnswered: 0,
+    soundOn: true,
+    answered: false,
+    currentQuestion: null,
+    isReviewMode: false,
+    pendingReviewAdvance: false,
+    currentRoundId: '',
+    /** Wrong attempts in the active normal round (spec: currentRoundWrongAnswers). */
+    currentRoundWrongAnswers: [],
+    lastRoundWrongBuffer: [],
+    /** Active review session: remaining question keys (shuffled order). */
+    reviewQueue: [],
+    lastRoundMode: 'multiply',
+    lastRoundLevel: 'easy',
+    reviewJustCompleted: false,
+    reviewCompletedAllCorrect: false,
+    isGameOver: false,
+    /** Reward tracking (normal rounds). */
+    mistakeSeenThisRound: false,
+    correctAfterFirstMistake: 0,
+    hintsUsedThisRound: 0,
+    /** Micro-difficulty within the selected level (-1, 0, +1). Resets each normal round. */
+    adaptiveTier: 0,
+    recentAnswerHistory: [],
+    lastAdaptiveChangeAtQuestionIndex: -99,
+    adaptiveStats: { correctThisRound: 0, wrongThisRound: 0 },
+    /** Hard-mode subtype queues + metadata for lazy round generation. */
+    roundAdaptivePlan: null,
+  };
+
+  var focusAnswerTimer = null;
+  var focusAnswerFlashTimer = null;
+
+  // ========== PERSISTENCE (stars, badges, family mastery — agents 05 + 07) ==========
+  function defaultStats() {
+    return {
+      mistakesFixed: 0,
+      totalPractices: 0,
+      masteredFacts: 0,
+      streakRecoveryCount: 0,
+    };
+  }
+
+  function defaultProgress() {
+    return {
+      totalStars: 0,
+      roundsPlayed: 0,
+      bestStreakEver: 0,
+      badges: [],
+      lastRoundAccuracy: null,
+      stats: defaultStats(),
+      playDates: [],
+      masteredDivisionKeys: [],
+      masteredKeysByFamily: {},
+      allMasteredKeys: [],
+      /** Per fact-family attempts (LearningIntel); feeds getWeakFamilies mastery gap. */
+      familyStats:
+        typeof LearningIntel !== 'undefined' ? LearningIntel.createEmptyFamilyStats() : { version: 1, updatedAt: null, families: {} },
+    };
+  }
+
+  function ensureFamilyStatsShape(fs) {
+    if (fs && fs.families && typeof fs.families === 'object') return fs;
+    return typeof LearningIntel !== 'undefined'
+      ? LearningIntel.createEmptyFamilyStats()
+      : { version: 1, updatedAt: null, families: {} };
+  }
+
+  function ensureProgressShape(p) {
+    if (!p || typeof p !== 'object') return defaultProgress();
+    var stats = p.stats && typeof p.stats === 'object' ? p.stats : defaultStats();
+    if (typeof stats.mistakesFixed !== 'number') stats.mistakesFixed = 0;
+    if (typeof stats.totalPractices !== 'number') stats.totalPractices = 0;
+    if (typeof stats.masteredFacts !== 'number') stats.masteredFacts = 0;
+    if (typeof stats.streakRecoveryCount !== 'number') stats.streakRecoveryCount = 0;
+    var lr = p.lastRoundAccuracy;
+    if (lr != null && typeof lr !== 'number') lr = null;
+    return {
+      totalStars: Number(p.totalStars) || 0,
+      roundsPlayed: Number(p.roundsPlayed) || 0,
+      bestStreakEver: Number(p.bestStreakEver) || 0,
+      badges: Array.isArray(p.badges) ? p.badges : [],
+      lastRoundAccuracy: lr == null ? null : lr,
+      stats: stats,
+      playDates: Array.isArray(p.playDates) ? p.playDates : [],
+      masteredDivisionKeys: Array.isArray(p.masteredDivisionKeys) ? p.masteredDivisionKeys : [],
+      masteredKeysByFamily: p.masteredKeysByFamily && typeof p.masteredKeysByFamily === 'object' ? p.masteredKeysByFamily : {},
+      allMasteredKeys: Array.isArray(p.allMasteredKeys) ? p.allMasteredKeys : [],
+      familyStats: ensureFamilyStatsShape(p.familyStats),
+    };
+  }
+
+  function loadProgress() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultProgress();
+      const d = JSON.parse(raw);
+      return ensureProgressShape(d);
+    } catch {
+      return defaultProgress();
+    }
+  }
+
+  function saveProgress(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { /* ignore */ }
+  }
+
+  let progress = loadProgress();
+
+  function isoDateLocal(d) {
+    d = d || new Date();
+    var y = d.getFullYear();
+    var m = d.getMonth() + 1;
+    var day = d.getDate();
+    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+  }
+
+  function applyProgressOnMistakeFixed(h) {
+    if (!h || !h.questionSnapshot) return;
+    progress = ensureProgressShape(progress);
+    var q = questionFromSnapshot(h.questionSnapshot);
+    if (!q) return;
+    progress.stats.mistakesFixed += 1;
+    if (progress.allMasteredKeys.indexOf(q.key) === -1) {
+      progress.allMasteredKeys.push(q.key);
+    }
+    progress.stats.masteredFacts = progress.allMasteredKeys.length;
+    if (q.operation === 'divide') {
+      if (progress.masteredDivisionKeys.indexOf(q.key) === -1) {
+        progress.masteredDivisionKeys.push(q.key);
+      }
+    }
+    if (typeof LearningIntel !== 'undefined') {
+      var ff = LearningIntel.getFactFamily(q);
+      var fi;
+      for (fi = 0; fi < ff.familyIds.length; fi++) {
+        var fid = ff.familyIds[fi];
+        if (fid.indexOf('mul:') !== 0) continue;
+        if (!progress.masteredKeysByFamily[fid]) progress.masteredKeysByFamily[fid] = [];
+        var arr = progress.masteredKeysByFamily[fid];
+        if (arr.indexOf(q.key) === -1) arr.push(q.key);
+      }
+    }
+    tryAwardPracticeProgressBadges();
+    saveProgress(progress);
+  }
+
+  function hasMulFamilyMasteredEnough(n) {
+    var o = progress.masteredKeysByFamily || {};
+    for (var k in o) {
+      if (Object.prototype.hasOwnProperty.call(o, k) && k.indexOf('mul:') === 0) {
+        if (o[k].length >= n) return true;
+      }
+    }
+    return false;
+  }
+
+  function tryAwardPracticeProgressBadges() {
+    if (progress.stats.mistakesFixed >= 10 && progress.badges.indexOf('mistake_fixer') === -1) {
+      progress.badges.push('mistake_fixer');
+    }
+    if (hasMulFamilyMasteredEnough(5) && progress.badges.indexOf('fact_master') === -1) {
+      progress.badges.push('fact_master');
+    }
+    if ((progress.masteredDivisionKeys || []).length >= 10 && progress.badges.indexOf('division_master') === -1) {
+      progress.badges.push('division_master');
+    }
+  }
+
+  function recordPracticeSessionStarted() {
+    progress = ensureProgressShape(progress);
+    progress.stats.totalPractices += 1;
+    if (progress.stats.totalPractices >= 5 && progress.badges.indexOf('practice_star') === -1) {
+      progress.badges.push('practice_star');
+    }
+    saveProgress(progress);
+  }
+
+  function recordPlayDateForMission() {
+    progress = ensureProgressShape(progress);
+    var day = isoDateLocal();
+    if (progress.playDates.indexOf(day) === -1) progress.playDates.push(day);
+    saveProgress(progress);
+  }
+
+  /**
+   * Updates LearningIntel familyStats for every graded question (mission + practice).
+   * Keeps mastery gap in sync for getWeakFamilies(wrongAnswerStore, progress.familyStats).
+   */
+  function recordFamilyAttemptsForQuestion(q, correct) {
+    if (typeof LearningIntel === 'undefined' || !q) return;
+    progress = ensureProgressShape(progress);
+    progress.familyStats = ensureFamilyStatsShape(progress.familyStats);
+    var ff = LearningIntel.getFactFamily(q);
+    var i;
+    for (i = 0; i < ff.familyIds.length; i++) {
+      LearningIntel.recordFamilyAttempt(progress.familyStats, ff.familyIds[i], correct);
+    }
+    saveProgress(progress);
+  }
+
+  // ========== WRONG ANSWERS (persisted) — mistake records + mastery fields (agent 03) ==========
+  var wrongAnswerStore = {
+    schemaVersion: 1,
+    sessionId: browserSessionId,
+    wrongAnswersHistory: [],
+    recentWrongAnswers: [],
+    /** Last-started practice session question keys (optional persistence). */
+    reviewQueue: [],
+  };
+
+  function defaultWrongAnswerStore() {
+    return {
+      schemaVersion: 1,
+      sessionId: browserSessionId,
+      wrongAnswersHistory: [],
+      recentWrongAnswers: [],
+      reviewQueue: [],
+    };
+  }
+
+  function loadWrongAnswerHistory() {
+    try {
+      var raw = localStorage.getItem(WRONG_ANSWERS_STORAGE_KEY);
+      if (!raw) return defaultWrongAnswerStore();
+      var d = JSON.parse(raw);
+      return {
+        schemaVersion: typeof d.schemaVersion === 'number' ? d.schemaVersion : 1,
+        sessionId: typeof d.sessionId === 'string' ? d.sessionId : browserSessionId,
+        wrongAnswersHistory: Array.isArray(d.wrongAnswersHistory) ? d.wrongAnswersHistory.map(normalizeWrongAnswerRecord) : [],
+        recentWrongAnswers: Array.isArray(d.recentWrongAnswers) ? d.recentWrongAnswers.map(normalizeWrongAnswerRecord) : [],
+        reviewQueue: Array.isArray(d.reviewQueue) ? d.reviewQueue : [],
+      };
+    } catch (e) {
+      return defaultWrongAnswerStore();
+    }
+  }
+
+  function saveWrongAnswerHistory() {
+    try {
+      localStorage.setItem(WRONG_ANSWERS_STORAGE_KEY, JSON.stringify(wrongAnswerStore));
+    } catch (e) { /* ignore */ }
+  }
+
+  wrongAnswerStore = loadWrongAnswerHistory();
+
+  function resetLatestPracticeStateOnLaunch() {
+    GameState.lastRoundWrongBuffer = [];
+    GameState.reviewQueue = [];
+    wrongAnswerStore.recentWrongAnswers = [];
+    wrongAnswerStore.reviewQueue = [];
+    saveWrongAnswerHistory();
+  }
+
+  function cloneQuestionForStorage(q) {
+    try {
+      return JSON.parse(
+        JSON.stringify({
+          key: q.key,
+          prompt: q.prompt,
+          subtitle: q.subtitle || '',
+          answer: q.answer,
+          result: q.result,
+          operation: q.operation,
+          type: q.type,
+          level: q.level,
+          mode: q.mode,
+          operands: q.operands || {},
+          meta: q.meta || {},
+          visualSpec: q.visualSpec || null,
+          hintEasy: q.hintEasy,
+          hintMed: q.hintMed,
+          hintHard: q.hintHard,
+        })
+      );
+    } catch (e) {
+      return {
+        key: q.key,
+        prompt: q.prompt,
+        subtitle: q.subtitle || '',
+        answer: q.answer,
+        result: q.result,
+        operation: q.operation,
+        type: q.type,
+        level: q.level,
+        mode: q.mode,
+        operands: {},
+        meta: {},
+        visualSpec: null,
+      };
+    }
+  }
+
+  function questionFromSnapshot(snap) {
+    if (!snap) return null;
+    return {
+      key: snap.key,
+      prompt: snap.prompt,
+      subtitle: snap.subtitle || '',
+      answer: snap.answer,
+      result: snap.result != null ? snap.result : snap.answer,
+      operation: snap.operation,
+      type: snap.type,
+      level: snap.level,
+      mode: snap.mode,
+      operands: snap.operands || {},
+      meta: snap.meta || {},
+      visualSpec: snap.visualSpec || null,
+      hintEasy: snap.hintEasy,
+      hintMed: snap.hintMed,
+      hintHard: snap.hintHard,
+    };
+  }
+
+  /** @type {ReadonlyArray<string>} */
+  var MASTERY_STAGES = ['new', 'practicing', 'stable', 'mastered'];
+
+  function familyStringFromQuestion(q) {
+    if (!q || typeof LearningIntel === 'undefined') return '';
+    var ff = LearningIntel.getFactFamily(q);
+    return ff.familyIds && ff.familyIds.length ? ff.familyIds.join(',') : '';
+  }
+
+  function isValidMasteryStage(s) {
+    return typeof s === 'string' && MASTERY_STAGES.indexOf(s) !== -1;
+  }
+
+  function inferMasteryStageFromLegacy(record) {
+    if (record.resolved) return 'mastered';
+    var mc = record.missCount || 1;
+    if (mc > 1) return 'practicing';
+    return 'new';
+  }
+
+  function downgradeMasteryStageOnWrong(prev) {
+    if (prev === 'mastered' || prev === 'stable') return 'practicing';
+    return 'practicing';
+  }
+
+  function buildWrongAnswerRecord(q, childAnswer) {
+    var ts = new Date().toISOString();
+    var snap = cloneQuestionForStorage(q);
+    var fam = familyStringFromQuestion(q);
+    return {
+      id: 'wa_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+      timestamp: ts,
+      level: q.level,
+      mode: GameState.mode,
+      prompt: q.prompt,
+      correctAnswer: q.answer,
+      childAnswer: childAnswer,
+      type: q.type,
+      key: q.key,
+      operands: snap.operands,
+      meta: snap.meta,
+      roundId: GameState.currentRoundId,
+      sessionId: wrongAnswerStore.sessionId || browserSessionId,
+      missCount: 1,
+      questionSnapshot: snap,
+      resolved: false,
+      resolvedAt: null,
+      masteryStage: 'new',
+      successCountInPractice: 0,
+      consecutiveCorrect: 0,
+      nextReviewAt: new Date().toISOString(),
+      family: fam,
+    };
+  }
+
+  function normalizeWrongAnswerRecord(record) {
+    if (!record || typeof record !== 'object') return record;
+    var snapQ = record.questionSnapshot ? questionFromSnapshot(record.questionSnapshot) : null;
+    var fam =
+      typeof record.family === 'string' && record.family.length
+        ? record.family
+        : snapQ
+          ? familyStringFromQuestion(snapQ)
+          : '';
+    var stage = record.masteryStage;
+    if (!isValidMasteryStage(stage)) {
+      stage = inferMasteryStageFromLegacy(record);
+    }
+    var sc = record.successCountInPractice;
+    var cc = record.consecutiveCorrect;
+    return Object.assign({}, record, {
+      resolved: !!record.resolved,
+      resolvedAt: record.resolvedAt || null,
+      masteryStage: stage,
+      successCountInPractice: typeof sc === 'number' && sc >= 0 ? sc : 0,
+      consecutiveCorrect: typeof cc === 'number' && cc >= 0 ? cc : 0,
+      nextReviewAt: record.nextReviewAt != null ? record.nextReviewAt : null,
+      family: fam,
+    });
+  }
+
+  function mergeWrongIntoHistory(historyArr, record) {
+    var i;
+    var key = record.key;
+    for (i = 0; i < historyArr.length; i++) {
+      if (historyArr[i].key === key) {
+        var h = historyArr[i];
+        h.missCount = (h.missCount || 1) + 1;
+        h.lastTimestamp = record.timestamp;
+        h.lastChildAnswer = record.childAnswer;
+        h.questionSnapshot = record.questionSnapshot;
+        h.prompt = record.prompt;
+        h.correctAnswer = record.correctAnswer;
+        h.type = record.type;
+        h.level = record.level;
+        h.mode = record.mode;
+        h.operands = record.operands;
+        h.meta = record.meta;
+        h.resolved = false;
+        h.resolvedAt = null;
+        h.masteryStage = downgradeMasteryStageOnWrong(h.masteryStage || 'new');
+        h.consecutiveCorrect = 0;
+        h.nextReviewAt = new Date().toISOString();
+        h.family =
+          (record.family && String(record.family)) ||
+          familyStringFromQuestion(questionFromSnapshot(record.questionSnapshot)) ||
+          h.family ||
+          '';
+        return;
+      }
+    }
+    historyArr.push({
+      id: record.id,
+      timestamp: record.timestamp,
+      lastTimestamp: record.timestamp,
+      level: record.level,
+      mode: record.mode,
+      prompt: record.prompt,
+      correctAnswer: record.correctAnswer,
+      lastChildAnswer: record.childAnswer,
+      childAnswer: record.childAnswer,
+      type: record.type,
+      key: record.key,
+      operands: record.operands,
+      meta: record.meta,
+      roundId: record.roundId,
+      sessionId: record.sessionId,
+      missCount: 1,
+      questionSnapshot: record.questionSnapshot,
+      resolved: false,
+      resolvedAt: null,
+      masteryStage: record.masteryStage || 'new',
+      successCountInPractice: typeof record.successCountInPractice === 'number' ? record.successCountInPractice : 0,
+      consecutiveCorrect: typeof record.consecutiveCorrect === 'number' ? record.consecutiveCorrect : 0,
+      nextReviewAt: record.nextReviewAt != null ? record.nextReviewAt : null,
+      family: record.family || familyStringFromQuestion(questionFromSnapshot(record.questionSnapshot)) || '',
+    });
+  }
+
+  function recordWrongAnswer(q, childAnswer) {
+    var rec = buildWrongAnswerRecord(q, childAnswer);
+    GameState.currentRoundWrongAnswers.push(rec);
+    mergeWrongIntoHistory(wrongAnswerStore.wrongAnswersHistory, rec);
+    wrongAnswerStore.recentWrongAnswers = GameState.currentRoundWrongAnswers.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+  }
+
+  function getActiveMistakes() {
+    return wrongAnswerStore.wrongAnswersHistory.filter(function (r) {
+      return !r.resolved;
+    });
+  }
+
+  function resolveMistake(questionKey) {
+    var hist = wrongAnswerStore.wrongAnswersHistory;
+    var i;
+    var firstFixed = null;
+    for (i = 0; i < hist.length; i++) {
+      if (hist[i].key === questionKey) {
+        var h = hist[i];
+        h.masteredInReviewAt = new Date().toISOString();
+        h.resolved = true;
+        h.resolvedAt = h.masteredInReviewAt;
+        h.masteryStage = 'mastered';
+        h.successCountInPractice = (typeof h.successCountInPractice === 'number' ? h.successCountInPractice : 0) + 1;
+        h.consecutiveCorrect = (typeof h.consecutiveCorrect === 'number' ? h.consecutiveCorrect : 0) + 1;
+        h.nextReviewAt = null;
+        if (!h.family && h.questionSnapshot) {
+          h.family = familyStringFromQuestion(questionFromSnapshot(h.questionSnapshot));
+        }
+        if (!firstFixed) firstFixed = h;
+      }
+    }
+    if (firstFixed) applyProgressOnMistakeFixed(firstFixed);
+    clearResolvedMistakes();
+  }
+
+  function clearResolvedMistakes() {
+    var resolvedKeys = {};
+    var i;
+    for (i = 0; i < wrongAnswerStore.wrongAnswersHistory.length; i++) {
+      if (wrongAnswerStore.wrongAnswersHistory[i].resolved) {
+        resolvedKeys[wrongAnswerStore.wrongAnswersHistory[i].key] = true;
+      }
+    }
+    wrongAnswerStore.recentWrongAnswers = wrongAnswerStore.recentWrongAnswers.filter(function (r) {
+      return !resolvedKeys[r.key];
+    });
+    GameState.lastRoundWrongBuffer = GameState.lastRoundWrongBuffer.filter(function (r) {
+      return !resolvedKeys[r.key];
+    });
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+  }
+
+  function syncReviewQueueKeys() {
+    GameState.reviewQueue = GameState.roundQuestions.map(function (qq) {
+      return qq.key;
+    });
+    wrongAnswerStore.reviewQueue = GameState.reviewQueue.slice();
+    saveWrongAnswerHistory();
+  }
+
+  function clearPersistedReviewQueue() {
+    GameState.reviewQueue = [];
+    wrongAnswerStore.reviewQueue = [];
+    saveWrongAnswerHistory();
+  }
+
+  function uniquePracticeRecordsFromBuffer(buffer) {
+    var map = {};
+    var i, r;
+    for (i = 0; i < buffer.length; i++) {
+      r = buffer[i];
+      map[r.key] = r;
+    }
+    return Object.keys(map).map(function (k) {
+      return map[k];
+    });
+  }
+
+  function getLatestMistakesBuffer() {
+    if (GameState.lastRoundWrongBuffer && GameState.lastRoundWrongBuffer.length) {
+      return GameState.lastRoundWrongBuffer.slice();
+    }
+    if (wrongAnswerStore.recentWrongAnswers && wrongAnswerStore.recentWrongAnswers.length) {
+      return wrongAnswerStore.recentWrongAnswers.slice();
+    }
+    return [];
+  }
+
+  function getLatestMistakesForPractice() {
+    return uniquePracticeRecordsFromBuffer(getLatestMistakesBuffer()).filter(function (r) {
+      return !r.resolved;
+    });
+  }
+
+  function hasPracticeMistakes(buffer) {
+    if (Array.isArray(buffer)) {
+      return uniquePracticeRecordsFromBuffer(buffer).filter(function (r) {
+        return !r.resolved;
+      }).length > 0;
+    }
+    return getLatestMistakesForPractice().length > 0;
+  }
+
+  function getNoMistakesMessage(location) {
+    if (location === 'menu') return 'Nice work! Nothing to improve right now — fly a mission first.';
+    if (location === 'results') return 'Nothing to improve right now. Great job!';
+    if (location === 'gameover') return 'Nothing to improve right now. Great job!';
+    return 'Nothing to improve right now. Great job!';
+  }
+
+  function showNoMistakesMessage(location) {
+    var idMap = {
+      menu: 'menu-mistakes-empty',
+      results: 'results-mistakes-empty',
+      gameover: 'game-over-mistakes-empty'
+    };
+    var el = document.getElementById(idMap[location]);
+    if (!el) return;
+    el.textContent = getNoMistakesMessage(location);
+    el.hidden = false;
+  }
+
+  function exportWrongAnswersToText(records, titleExtra) {
+    var lines = [];
+    var now = new Date();
+    var r0 = records && records[0];
+    lines.push('Cosmic Math Quest - Wrong Answer Report');
+    if (titleExtra) lines.push(titleExtra);
+    lines.push('Date: ' + now.toISOString());
+    lines.push('');
+    lines.push('Round Mode: ' + (r0 && r0.mode ? r0.mode : GameState.lastRoundMode || GameState.mode));
+    lines.push('Level: ' + (r0 && r0.level ? r0.level : GameState.lastRoundLevel || GameState.level));
+    lines.push('');
+    var i, r, t;
+    for (i = 0; i < records.length; i++) {
+      r = records[i];
+      t = r.lastTimestamp || r.timestamp;
+      lines.push(i + 1 + ')');
+      lines.push('Question: ' + (r.prompt || ''));
+      lines.push('Child Answer: ' + String(r.lastChildAnswer != null ? r.lastChildAnswer : r.childAnswer));
+      lines.push('Correct Answer: ' + String(r.correctAnswer));
+      lines.push('Type: ' + String(r.type));
+      lines.push('Time: ' + String(t));
+      lines.push('Miss Count: ' + String(r.missCount != null ? r.missCount : 1));
+      lines.push('Question key: ' + String(r.key));
+      if (r.roundId) lines.push('Round id: ' + String(r.roundId));
+      if (r.masteredInReviewAt) lines.push('Mastered in review at: ' + String(r.masteredInReviewAt));
+      lines.push('');
+    }
+    return lines.join('\n');
+  }
+
+  function downloadTextFile(filename, content) {
+    var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 4000);
+  }
+
+  function exportFilenameStamp() {
+    var d = new Date();
+    var p = function (n) {
+      return (n < 10 ? '0' : '') + n;
+    };
+    return (
+      d.getFullYear() +
+      '-' +
+      p(d.getMonth() + 1) +
+      '-' +
+      p(d.getDate()) +
+      '-' +
+      p(d.getHours()) +
+      p(d.getMinutes())
+    );
+  }
+
+  async function exportWrongAnswersWithFilePicker(content, defaultName) {
+    if (window.showSaveFilePicker) {
+      try {
+        var h = await window.showSaveFilePicker({
+          suggestedName: defaultName,
+          types: [{ description: 'Text', accept: { 'text/plain': ['.txt'] } }],
+        });
+        var w = await h.createWritable();
+        await w.write(content);
+        await w.close();
+        return true;
+      } catch (e) {
+        if (e && e.name === 'AbortError') return 'aborted';
+      }
+    }
+    return false;
+  }
+
+  function clearWrongAnswerHistory() {
+    wrongAnswerStore.wrongAnswersHistory = [];
+    wrongAnswerStore.recentWrongAnswers = [];
+    wrongAnswerStore.reviewQueue = [];
+    GameState.reviewQueue = [];
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+  }
+
+  function newRoundId() {
+    return 'round_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  function getRoundSize() {
+    return GameState.roundSize > 0 ? GameState.roundSize : ROUND_SIZE;
+  }
+
+  function setReviewBannerVisible(on) {
+    var el = document.getElementById('review-banner');
+    if (el) el.classList.toggle('visible', !!on);
+  }
+
+  function setGameTitle(text) {
+    var el = document.getElementById('game-brand-title');
+    if (el) el.textContent = text;
+  }
+
+  var saveStatusTimers = {};
+
+  function showSaveStatus(message, elementId) {
+    var id = elementId || 'results-save-status';
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message;
+    el.hidden = false;
+    if (saveStatusTimers[id]) clearTimeout(saveStatusTimers[id]);
+    saveStatusTimers[id] = setTimeout(function () {
+      el.textContent = '';
+      el.hidden = true;
+      saveStatusTimers[id] = null;
+    }, 5000);
+  }
+
+  function clearSaveStatus(elementId) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    if (saveStatusTimers[elementId]) clearTimeout(saveStatusTimers[elementId]);
+    el.textContent = '';
+    el.hidden = true;
+  }
+
+  function runSaveMistakesFile(text, filename, statusElementId) {
+    var sid = statusElementId || 'results-save-status';
+    return exportWrongAnswersWithFilePicker(text, filename).then(function (r) {
+      if (r === 'aborted') return;
+      if (r === true) {
+        showSaveStatus('File saved.', sid);
+        return;
+      }
+      downloadTextFile(filename, text);
+      showSaveStatus('Saved to your downloads folder.', sid);
+    });
+  }
+
+  function updateExitButtonLabel() {
+    var exitBtn = document.getElementById('btn-menu-game');
+    if (!exitBtn) return;
+    exitBtn.textContent = GameState.isReviewMode ? 'Exit Practice' : 'Exit game';
+  }
+
+  function updateResultsExportButtons() {
+    var pr = document.getElementById('btn-practice-wrongs');
+    var rq = document.getElementById('btn-results-quickfix');
+    var rm = document.getElementById('btn-results-mostmissed');
+    var rd = document.getElementById('btn-results-duetoday');
+    var sr = document.getElementById('btn-save-wrongs-recent');
+    var sa = document.getElementById('btn-save-wrongs-all');
+    var emptyMsg = document.getElementById('results-mistakes-empty');
+    if (!pr || !sr || !sa) return;
+    var hasLast = hasPracticeMistakes(GameState.lastRoundWrongBuffer);
+    var hasHist = wrongAnswerStore.wrongAnswersHistory.length > 0;
+    var hasImprove = getActiveMistakes().length > 0;
+    var showSmart = hasImprove && !GameState.reviewJustCompleted;
+    pr.hidden = !hasLast || GameState.reviewJustCompleted;
+    if (rq) rq.hidden = !showSmart;
+    if (rm) rm.hidden = !showSmart;
+    if (rd) rd.hidden = !showSmart;
+    sr.hidden = !hasLast;
+    sa.hidden = !hasHist;
+    if (emptyMsg) {
+      emptyMsg.textContent = getNoMistakesMessage('results');
+      emptyMsg.hidden = !!(hasLast || hasImprove || GameState.reviewJustCompleted);
+    }
+  }
+
+  function updateMenuMistakeButtons() {
+    var qf = document.getElementById('btn-menu-quickfix');
+    var mm = document.getElementById('btn-menu-mostmissed');
+    var dt = document.getElementById('btn-menu-duetoday');
+    var ms = document.getElementById('btn-menu-save-saved-wrongs');
+    var emptyMsg = document.getElementById('menu-mistakes-empty');
+    var hasLatest = hasPracticeMistakes() || getActiveMistakes().length > 0;
+    if (qf) qf.hidden = !hasLatest;
+    if (mm) mm.hidden = !hasLatest;
+    if (dt) dt.hidden = !hasLatest;
+    if (ms) ms.hidden = !hasLatest;
+    if (emptyMsg) {
+      emptyMsg.textContent = getNoMistakesMessage('menu');
+      emptyMsg.hidden = hasLatest;
+    }
+  }
+
+  function updateGameOverPracticeUi() {
+    var practiceBtn = document.getElementById('btn-game-over-practice');
+    var emptyMsg = document.getElementById('game-over-mistakes-empty');
+    var hasLatest = hasPracticeMistakes(GameState.lastRoundWrongBuffer);
+    if (practiceBtn) practiceBtn.hidden = !hasLatest;
+    if (emptyMsg) {
+      emptyMsg.textContent = getNoMistakesMessage('gameover');
+      emptyMsg.hidden = hasLatest;
+    }
+  }
+
+  function updatePracticeButtons() {
+    updateMenuMistakeButtons();
+    updateResultsExportButtons();
+    updateGameOverPracticeUi();
+  }
+
+  function safeStartWrongAnswerPractice(buffer, opts) {
+    opts = opts || {};
+    if (!hasPracticeMistakes(buffer)) {
+      showNoMistakesMessage(opts.emptyStateLocation || 'results');
+      updatePracticeButtons();
+      return false;
+    }
+    startWrongAnswerPractice(buffer, opts);
+    return true;
+  }
+
+  function showReviewCompleteMessage() {
+    return 'Great job! You fixed everything we saved!';
+  }
+
+  function wrapUpReviewSessionSuccess() {
+    GameState.answered = false;
+    GameState.isReviewMode = false;
+    GameState.pendingReviewAdvance = false;
+    GameState.reviewCompletedAllCorrect = false;
+    GameState.reviewJustCompleted = true;
+    GameState.roundSize = ROUND_SIZE;
+    clearPersistedReviewQueue();
+    setReviewBannerVisible(false);
+    setGameTitle('🛸 Mission in progress');
+    updateExitButtonLabel();
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent = 'Practice complete!';
+    document.getElementById('results-stars').textContent = '⭐';
+    document.getElementById('results-rating').textContent = showReviewCompleteMessage();
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent = String(GameState.correctCount) + ' correct';
+    document.getElementById('res-accuracy').textContent =
+      accuracyPercent(GameState.correctCount, GameState.totalAnswered) + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = '—';
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
+  function showNormalResultsStats() {
+    var rs = document.querySelector('.results-stats');
+    if (rs) rs.style.display = '';
+  }
+
+  /**
+   * @param {Array} buffer - wrong records with questionSnapshot (e.g. lastRoundWrongBuffer or history)
+   * @param {{ preserveRoundContext?: boolean }} opts - if true, keep last mission mode/level (results "Practice" button)
+   */
+  function startWrongAnswerPractice(buffer, opts) {
+    opts = opts || {};
+    var buf = buffer || getLatestMistakesForPractice();
+    var uniq = uniquePracticeRecordsFromBuffer(buf).filter(function (r) {
+      return !r.resolved;
+    });
+    if (!uniq.length) return;
+    recordPracticeSessionStarted();
+    var snaps = shuffle(uniq.map(function (r) {
+      return questionFromSnapshot(r.questionSnapshot);
+    }));
+    if (opts.preserveRoundContext) {
+      GameState.mode = GameState.lastRoundMode;
+      GameState.level = GameState.lastRoundLevel;
+    } else {
+      var hasM = false;
+      var hasD = false;
+      var si;
+      for (si = 0; si < snaps.length; si++) {
+        if (snaps[si].operation === 'multiply') hasM = true;
+        if (snaps[si].operation === 'divide') hasD = true;
+      }
+      if (hasM && hasD) GameState.mode = 'mixed';
+      else if (hasD) GameState.mode = 'divide';
+      else GameState.mode = 'multiply';
+    }
+
+    GameState.isReviewMode = true;
+    GameState.pendingReviewAdvance = false;
+    GameState.reviewCompletedAllCorrect = false;
+    GameState.reviewJustCompleted = false;
+    GameState.isGameOver = false;
+    GameState.questionIndex = 0;
+    GameState.score = 0;
+    GameState.streak = 0;
+    GameState.bestStreakThisRound = 0;
+    GameState.hearts = INITIAL_HEARTS;
+    GameState.correctCount = 0;
+    GameState.totalAnswered = 0;
+    GameState.roundSize = snaps.length;
+    GameState.roundQuestions = snaps;
+    GameState.currentRoundId = newRoundId();
+    GameState.currentRoundWrongAnswers = [];
+    if (GameState.mode === 'mixed') {
+      GameState.roundMixOps = snaps.map(function (q) {
+        return q.operation;
+      });
+    } else {
+      GameState.roundMixOps = null;
+    }
+    GameState.currentQuestion = snaps[0];
+    syncReviewQueueKeys();
+    setGameOverModalOpen(false);
+    showNormalResultsStats();
+    showScreen('game');
+    setReviewBannerVisible(true);
+    setGameTitle('Fix tricky questions');
+    updateExitButtonLabel();
+    renderQuestion();
+  }
+
+  function parseWrongTimestampMs(record) {
+    if (!record) return 0;
+    var s = record.lastTimestamp || record.timestamp;
+    if (!s) return 0;
+    var t = Date.parse(s);
+    return isNaN(t) ? 0 : t;
+  }
+
+  function parseNextReviewMs(record) {
+    if (!record || record.nextReviewAt == null) return NaN;
+    var t = Date.parse(record.nextReviewAt);
+    return isNaN(t) ? NaN : t;
+  }
+
+  /**
+   * Mix stored levels (easy / medium / hard) so one difficulty does not dominate.
+   */
+  function interleavePracticeRecordsByLevel(records) {
+    var easy = [];
+    var medium = [];
+    var hard = [];
+    var i;
+    for (i = 0; i < records.length; i++) {
+      var lv = (records[i].questionSnapshot && records[i].questionSnapshot.level) || 'medium';
+      if (lv === 'easy') easy.push(records[i]);
+      else if (lv === 'hard') hard.push(records[i]);
+      else medium.push(records[i]);
+    }
+    var out = [];
+    while (easy.length || medium.length || hard.length) {
+      if (easy.length) out.push(easy.shift());
+      if (medium.length) out.push(medium.shift());
+      if (hard.length) out.push(hard.shift());
+    }
+    return out;
+  }
+
+  /**
+   * Dedupe by key, interleave difficulty, cap length (5–10 when enough items exist).
+   */
+  function finalizeSmartPracticeSet(records) {
+    var u = uniquePracticeRecordsFromBuffer(records).filter(function (r) {
+      return !r.resolved;
+    });
+    u = interleavePracticeRecordsByLevel(u);
+    var n = u.length;
+    if (!n) return [];
+    var cap = n >= PRACTICE_ROUND_MIN ? Math.min(PRACTICE_ROUND_MAX, n) : n;
+    return u.slice(0, cap);
+  }
+
+  /**
+   * Recent / last-session mistakes (prefers current round buffer persisted in recentWrongAnswers).
+   */
+  function getQuickFixSet() {
+    var pool = [];
+    var recent = wrongAnswerStore.recentWrongAnswers || [];
+    var ri;
+    for (ri = 0; ri < recent.length; ri++) {
+      if (!recent[ri].resolved) pool.push(recent[ri]);
+    }
+    if (!pool.length) {
+      var hist = getActiveMistakes().slice();
+      hist.sort(function (a, b) {
+        return parseWrongTimestampMs(b) - parseWrongTimestampMs(a);
+      });
+      pool = hist;
+    }
+    return finalizeSmartPracticeSet(pool);
+  }
+
+  /**
+   * Highest missCount first; ties use LearningIntel.getWeakFamilies (+ familyStats mastery gap).
+   */
+  function getMostMissedSet() {
+    var hist = getActiveMistakes().slice();
+    var weakRank = {};
+    if (typeof LearningIntel !== 'undefined') {
+      progress = ensureProgressShape(progress);
+      var weak = LearningIntel.getWeakFamilies(wrongAnswerStore, progress.familyStats);
+      var wj;
+      for (wj = 0; wj < weak.length; wj++) {
+        weakRank[weak[wj].familyId] = weak[wj].weaknessScore;
+      }
+    }
+    function familyWeaknessSum(rec) {
+      var s = 0;
+      if (typeof LearningIntel === 'undefined' || !rec.questionSnapshot) return 0;
+      var qq = questionFromSnapshot(rec.questionSnapshot);
+      var ff = LearningIntel.getFactFamily(qq);
+      var k;
+      for (k = 0; k < ff.familyIds.length; k++) {
+        s += weakRank[ff.familyIds[k]] || 0;
+      }
+      return s;
+    }
+    hist.sort(function (a, b) {
+      var mc = (b.missCount || 0) - (a.missCount || 0);
+      if (mc !== 0) return mc;
+      return familyWeaknessSum(b) - familyWeaknessSum(a);
+    });
+    return finalizeSmartPracticeSet(hist);
+  }
+
+  /**
+   * Spaced repetition: items scheduled with nextReviewAt at or before now.
+   */
+  function getDueTodaySet() {
+    var now = Date.now();
+    var hist = getActiveMistakes().filter(function (r) {
+      var ms = parseNextReviewMs(r);
+      if (isNaN(ms)) return false;
+      return ms <= now;
+    });
+    hist.sort(function (a, b) {
+      return parseNextReviewMs(a) - parseNextReviewMs(b);
+    });
+    return finalizeSmartPracticeSet(hist);
+  }
+
+  /**
+   * Starts the existing review session using a smart-practice buffer (no UI).
+   * @param {'quickfix'|'mostmissed'|'duetoday'} mode
+   */
+  function startSmartPractice(mode, opts) {
+    var buf;
+    if (mode === 'quickfix') buf = getQuickFixSet();
+    else if (mode === 'mostmissed') buf = getMostMissedSet();
+    else if (mode === 'duetoday') buf = getDueTodaySet();
+    else buf = getLatestMistakesForPractice();
+    return safeStartWrongAnswerPractice(buf, opts || {});
+  }
+
+  // Smart practice: Quick Fix / Most Missed / Due Today → existing review session (agent 04 + 06 UI).
+  window.SmartPractice = {
+    getQuickFixSet: getQuickFixSet,
+    getMostMissedSet: getMostMissedSet,
+    getDueTodaySet: getDueTodaySet,
+    start: startSmartPractice,
+    getWeakFamilies: function () {
+      if (typeof LearningIntel === 'undefined') return [];
+      progress = ensureProgressShape(progress);
+      return LearningIntel.getWeakFamilies(wrongAnswerStore, progress.familyStats);
+    },
+  };
+
+  // ========== UTILITIES ==========
+  function randInt(min, max) {
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function pick(arr) {
+    return arr[randInt(0, arr.length - 1)];
+  }
+
+  function uniqueKey(q) {
+    return q.key;
+  }
+
+  function accuracyPercent(correct, total) {
+    if (!total) return 0;
+    return Math.round((correct / total) * 100);
+  }
+
+  // ========== DIFFICULTY RULES ==========
+  /** Fluency band for easy & medium (no 0 or 1). */
+  var FACTOR_FLUENCY_MIN = 2;
+  var FACTOR_FLUENCY_MAX = 9;
+  var FACTOR_HARD_MAX = 12;
+  var EASY_FACTOR_MIN = 3;
+  var EASY_FACTOR_MAX = 9;
+  var EASY_MIN_PRODUCT = 18;
+
+  var ADAPTIVE_TIER_MIN = -1;
+  var ADAPTIVE_TIER_MAX = 1;
+  var ADAPTIVE_HISTORY_MAX = 5;
+
+  function clampAdaptiveTier(t) {
+    if (t < ADAPTIVE_TIER_MIN) return ADAPTIVE_TIER_MIN;
+    if (t > ADAPTIVE_TIER_MAX) return ADAPTIVE_TIER_MAX;
+    return t;
+  }
+
+  /** Tier used while generating the upcoming question (normal rounds only). */
+  function getAdaptiveTier() {
+    return clampAdaptiveTier(GameState.adaptiveTier || 0);
+  }
+
+  function resetAdaptiveDifficultyState() {
+    GameState.adaptiveTier = 0;
+    GameState.recentAnswerHistory = [];
+    GameState.lastAdaptiveChangeAtQuestionIndex = -99;
+    GameState.adaptiveStats = { correctThisRound: 0, wrongThisRound: 0 };
+  }
+
+  function countWrongInRecentLast(n) {
+    var h = GameState.recentAnswerHistory;
+    if (!h.length || n <= 0) return 0;
+    var c = 0;
+    var start = Math.max(0, h.length - n);
+    for (var i = start; i < h.length; i++) {
+      if (!h[i]) c++;
+    }
+    return c;
+  }
+
+  /**
+   * Updates micro-difficulty from recent answers. At most one step every 2 questions.
+   * @returns {boolean} true if tier increased (for subtle UX)
+   */
+  function updateAdaptiveDifficulty(isCorrect) {
+    GameState.recentAnswerHistory.push(!!isCorrect);
+    if (GameState.recentAnswerHistory.length > ADAPTIVE_HISTORY_MAX) {
+      GameState.recentAnswerHistory.shift();
+    }
+    var wrongLast3 = countWrongInRecentLast(3);
+    if (wrongLast3 >= 2) return false;
+
+    var qIdx = GameState.questionIndex;
+    var since =
+      GameState.lastAdaptiveChangeAtQuestionIndex < 0
+        ? ADAPTIVE_HISTORY_MAX
+        : qIdx - GameState.lastAdaptiveChangeAtQuestionIndex;
+    if (since < 2) return false;
+
+    var tier = GameState.adaptiveTier;
+    var next = tier;
+    if (isCorrect && GameState.streak >= 3) {
+      next = tier + 1;
+    } else if (!isCorrect && countWrongInRecentLast(4) >= 2) {
+      next = tier - 1;
+    } else {
+      return false;
+    }
+    next = clampAdaptiveTier(next);
+    if (next === tier) return false;
+    GameState.adaptiveTier = next;
+    GameState.lastAdaptiveChangeAtQuestionIndex = qIdx;
+    return isCorrect && next > tier;
+  }
+
+  function pickFluencyPair() {
+    var tier = getAdaptiveTier();
+    var a;
+    var b;
+    var t;
+    for (t = 0; t < 160; t++) {
+      if (tier <= -1) {
+        if (Math.random() < 0.72) {
+          a = randInt(FACTOR_FLUENCY_MIN, 6);
+          b = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        } else {
+          a = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+          b = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        }
+      } else if (tier >= 1) {
+        if (Math.random() < 0.55) {
+          a = randInt(5, FACTOR_FLUENCY_MAX);
+          b = randInt(5, FACTOR_FLUENCY_MAX);
+        } else {
+          a = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+          b = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        }
+      } else {
+        a = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        b = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+      }
+      return { a: a, b: b, prod: 0 };
+    }
+    return { a: 4, b: 7, prod: 0 };
+  }
+
+  function pairWithProd(p) {
+    p.prod = p.a * p.b;
+    return p;
+  }
+
+  function chooseAllowedQuestionTypes(level, op) {
+    if (level === 'easy') return ['basic'];
+    if (level === 'medium') return ['missing'];
+    if (op === 'multiply') return ['basic', 'word', 'inverse', 'reasoning_compare', 'reasoning_tf'];
+    return ['basic', 'word', 'inverse', 'reasoning_compare', 'reasoning_tf'];
+  }
+
+  function pickEasyPair() {
+    var tier = getAdaptiveTier();
+    var a, b, prod, tries;
+    for (tries = 0; tries < 200; tries++) {
+      a = randInt(EASY_FACTOR_MIN, EASY_FACTOR_MAX);
+      b = randInt(EASY_FACTOR_MIN, EASY_FACTOR_MAX);
+      prod = a * b;
+      if (prod < EASY_MIN_PRODUCT) continue;
+      if (a <= 4 && b <= 4) continue;
+      if (tier >= 1) {
+        if (prod < 30) continue;
+        if ((a <= 4 && b <= 5) || (a <= 5 && b <= 4)) continue;
+      }
+      if (tier <= -1) {
+        if (prod > 45 && Math.random() < 0.62) continue;
+      }
+      return { a: a, b: b, prod: prod };
+    }
+    return { a: 3, b: 7, prod: 21 };
+  }
+
+  function pickEasyDivisionTriple() {
+    var p = pickEasyPair();
+    return { dividend: p.prod, divisor: p.a, quotient: p.b };
+  }
+
+  /** Minimum dividend for Hard division (non-trivial facts). */
+  var HARD_DIV_MIN_DIVIDEND = 28;
+
+  /**
+   * Hard division triple: exact whole-number fact, no 1/10, no tiny dividends, no symmetric square facts.
+   */
+  function isValidHardDivisionTriple(m) {
+    var d = m.dividend;
+    var div = m.divisor;
+    var q = m.quotient;
+    if (typeof d !== 'number' || typeof div !== 'number' || typeof q !== 'number') return false;
+    if (!Number.isFinite(d) || !Number.isFinite(div) || !Number.isFinite(q)) return false;
+    if (d !== div * q) return false;
+    if (div < 3 || q < 3) return false;
+    if (div > FACTOR_HARD_MAX || q > FACTOR_HARD_MAX) return false;
+    if (div === 10 || q === 10) return false;
+    if (d < HARD_DIV_MIN_DIVIDEND) return false;
+    if (div === q) return false;
+    return true;
+  }
+
+  function pickStrictHardDivisionTriple() {
+    var tier = getAdaptiveTier();
+    var divisor, quotient, dividend, g;
+    for (g = 0; g < 200; g++) {
+      divisor = randInt(3, FACTOR_HARD_MAX);
+      quotient = randInt(3, FACTOR_HARD_MAX);
+      if (divisor === 10 || quotient === 10 || divisor === quotient) continue;
+      dividend = divisor * quotient;
+      if (!isValidHardDivisionTriple({ dividend: dividend, divisor: divisor, quotient: quotient })) continue;
+      if (tier >= 1) {
+        if (dividend < 45 && Math.random() < 0.42) continue;
+      }
+      if (tier <= -1) {
+        if (dividend > 96 && Math.random() < 0.48) continue;
+      }
+      return { dividend: dividend, divisor: divisor, quotient: quotient };
+    }
+    return { dividend: 56, divisor: 7, quotient: 8 };
+  }
+
+  /** True if Hard division fails strict non-trivial rules. */
+  function isTrivialHardDivision(q) {
+    return q.level === 'hard' && q.operation === 'divide' && !isValidHardDivisionTriple(q.meta || {});
+  }
+
+  /** Anti-trivial filter (Hard multiplication gate). */
+  function isTooEasy(a, b) {
+    return (a === 1 || b === 1 || a === 10 || b === 10 || a * b < 20);
+  }
+
+  /**
+   * Hard multiplication validity (Types A–D).
+   * @param {string} type - 'fact' | 'missing' | 'word' | 'reasoning'
+   */
+  function isValidHardQuestion(a, b, type) {
+    if (a < 3 || b < 3) return false;
+    if (a * b < 24) return false;
+    if (a === 10 || b === 10) return false;
+    if (isTooEasy(a, b)) return false;
+    return true;
+  }
+
+  function pickHardMultiplyPair() {
+    var tier = getAdaptiveTier();
+    var a = 6;
+    var b = 7;
+    var p = 42;
+    var g = 0;
+    for (g = 0; g < 150; g++) {
+      a = randInt(3, FACTOR_HARD_MAX);
+      b = randInt(3, FACTOR_HARD_MAX);
+      p = a * b;
+      if (!isValidHardQuestion(a, b, 'fact')) continue;
+      if (tier >= 1) {
+        if (p < 40 && Math.random() < 0.52) continue;
+      }
+      if (tier <= -1) {
+        if (p > 72 && Math.random() < 0.45) continue;
+      }
+      return { a: a, b: b, prod: p };
+    }
+    return { a: a, b: b, prod: p };
+  }
+
+  function pickFluencyDivisionTriple(level) {
+    if (level === 'easy') return pickEasyDivisionTriple();
+    var tier = getAdaptiveTier();
+    var divisor;
+    var quotient;
+    if (tier <= -1) {
+      if (Math.random() < 0.7) {
+        divisor = randInt(FACTOR_FLUENCY_MIN, 6);
+        quotient = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+      } else {
+        divisor = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        quotient = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+      }
+    } else if (tier >= 1) {
+      if (Math.random() < 0.55) {
+        divisor = randInt(5, FACTOR_FLUENCY_MAX);
+        quotient = randInt(5, FACTOR_FLUENCY_MAX);
+      } else {
+        divisor = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+        quotient = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+      }
+    } else {
+      divisor = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+      quotient = randInt(FACTOR_FLUENCY_MIN, FACTOR_FLUENCY_MAX);
+    }
+    return { dividend: divisor * quotient, divisor: divisor, quotient: quotient };
+  }
+
+  function pickDivisionTripleForLevel(level) {
+    if (level === 'hard') return pickStrictHardDivisionTriple();
+    return pickFluencyDivisionTriple(level);
+  }
+
+  /** @returns {{ kind:'array', a:number, b:number } | { kind:'groups', groups:number, per:number } | null}} */
+  function visualSpecForMult(a, b) {
+    return { kind: 'array', a, b };
+  }
+
+  function visualSpecForDiv(groups, per) {
+    return { kind: 'groups', groups, per };
+  }
+
+  // ========== DOM VISUAL HELPERS ==========
+  function renderArray(a, b) {
+    const wrap = document.createElement('div');
+    wrap.className = 'visual-model';
+    wrap.innerHTML = '<div style="font-size:0.95rem;color:var(--text-muted);margin-bottom:6px;">Array: ' + a + ' rows × ' + b + ' columns</div>';
+    const grid = document.createElement('div');
+    grid.className = 'array-grid';
+    grid.style.gridTemplateColumns = 'repeat(' + b + ', 1fr)';
+    const cap = Math.min(a * b, 144);
+    for (let i = 0; i < cap; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'array-cell';
+      cell.textContent = '✦';
+      cell.setAttribute('aria-hidden', 'true');
+      grid.appendChild(cell);
+    }
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
+  function renderGroups(numGroups, perGroup) {
+    const wrap = document.createElement('div');
+    wrap.className = 'visual-model';
+    wrap.innerHTML = '<div style="font-size:0.95rem;color:var(--text-muted);">' + numGroups + ' equal groups</div>';
+    const row = document.createElement('div');
+    row.className = 'groups-row';
+    const maxGroups = Math.min(numGroups, 12);
+    for (let g = 0; g < maxGroups; g++) {
+      const pile = document.createElement('div');
+      pile.className = 'group-pile';
+      const dots = document.createElement('div');
+      dots.className = 'group-dots';
+      const maxDots = Math.min(perGroup, 12);
+      for (let i = 0; i < maxDots; i++) {
+        const d = document.createElement('span');
+        d.className = 'dot';
+        dots.appendChild(d);
+      }
+      const lbl = document.createElement('span');
+      lbl.className = 'group-label';
+      lbl.textContent = perGroup + ' in each';
+      pile.appendChild(dots);
+      pile.appendChild(lbl);
+      row.appendChild(pile);
+    }
+    wrap.appendChild(row);
+    return wrap;
+  }
+
+  function renderVisualFromSpec(spec) {
+    if (!spec) return null;
+    if (spec.kind === 'array') return renderArray(spec.a, spec.b);
+    if (spec.kind === 'groups') return renderGroups(spec.groups, spec.per);
+    return null;
+  }
+
+  // ========== QUESTION GENERATION (rule-based) ==========
+  function equationSubtitle(operation, level) {
+    if (level === 'easy') return '';
+    return operation === 'multiply' ? 'Multiplication' : 'Division';
+  }
+
+  /**
+   * Division & generic slot pick. Hard multiply / hard divide use per-round queues in generateRoundQuestionAtIndex.
+   * Medium multiplication & medium division: caller forces 'missing' only (reverse thinking).
+   */
+  function pickTypeForSlot(level, op) {
+    var allowed = chooseAllowedQuestionTypes(level, op);
+    return allowed.length ? pick(allowed) : 'basic';
+  }
+
+  /** Hard multiply: 35% fact / 25% word / 20% inverse / 20% reasoning for n slots. */
+  function buildHardMultiplySubtypeOrder(n) {
+    if (n <= 0) return [];
+    var fact = Math.floor(0.35 * n);
+    var word = Math.floor(0.25 * n);
+    var inverse = Math.floor(0.2 * n);
+    var reason = Math.floor(0.2 * n);
+    var rem = n - fact - word - inverse - reason;
+    var bump = 0;
+    for (bump = 0; bump < rem; bump++) {
+      if (bump % 4 === 0) fact++;
+      else if (bump % 4 === 1) word++;
+      else if (bump % 4 === 2) inverse++;
+      else reason++;
+    }
+    return shuffle([].concat(
+      Array(fact).fill('hm_fact'),
+      Array(word).fill('hm_word'),
+      Array(inverse).fill('hm_inverse'),
+      Array(reason).fill('hm_reason')
+    ));
+  }
+
+  function pickHardMultiplyQtypeRandom() {
+    var r = Math.random();
+    if (r < 0.35) return 'basic';
+    if (r < 0.6) return 'word';
+    if (r < 0.8) return 'inverse';
+    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
+  }
+
+  function hardMultTagToQtype(tag) {
+    if (tag === 'hm_fact') return 'basic';
+    if (tag === 'hm_word') return 'word';
+    if (tag === 'hm_inverse') return 'inverse';
+    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
+  }
+
+  /** Hard divide: 35% direct / 25% word / 20% inverse / 20% reasoning for n slots. */
+  function buildHardDivideSubtypeOrder(n) {
+    if (n <= 0) return [];
+    var direct = Math.floor(0.35 * n);
+    var word = Math.floor(0.25 * n);
+    var inv = Math.floor(0.2 * n);
+    var reason = Math.floor(0.2 * n);
+    var rem = n - direct - word - inv - reason;
+    var bump = 0;
+    for (bump = 0; bump < rem; bump++) {
+      if (bump % 4 === 0) direct++;
+      else if (bump % 4 === 1) word++;
+      else if (bump % 4 === 2) inv++;
+      else reason++;
+    }
+    return shuffle([].concat(
+      Array(direct).fill('hd_direct'),
+      Array(word).fill('hd_word'),
+      Array(inv).fill('hd_inv'),
+      Array(reason).fill('hd_reason')
+    ));
+  }
+
+  function pickHardDivideQtypeRandom() {
+    var r = Math.random();
+    if (r < 0.35) return 'basic';
+    if (r < 0.6) return 'word';
+    if (r < 0.8) return 'inverse';
+    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
+  }
+
+  function hardDivTagToQtype(tag) {
+    if (tag === 'hd_direct') return 'basic';
+    if (tag === 'hd_word') return 'word';
+    if (tag === 'hd_inv') return 'inverse';
+    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
+  }
+
+  function buildMultBasic(level) {
+    var ph =
+      level === 'hard'
+        ? pickHardMultiplyPair()
+        : level === 'easy'
+          ? pickEasyPair()
+          : pairWithProd(pickFluencyPair());
+    var a = ph.a;
+    var b = ph.b;
+    var prod = ph.prod;
+    return {
+      key: 'bm|' + a + 'x' + b,
+      type: 'basic',
+      operation: 'multiply',
+      prompt: a + ' × ' + b + ' = ?',
+      answer: prod,
+      meta: { a: a, b: b, prod: prod, anchor: b },
+      visualSpec: visualSpecForMult(a, b),
+      hintEasy: 'Picture ' + a + ' groups with ' + b + ' in each. Skip-count by ' + b + '.',
+      hintMed: a + ' × ' + b + ' — which fact is it?',
+      hintHard: 'Recall ' + a + ' × ' + b + '.',
+    };
+  }
+
+  function buildMultMissing(level) {
+    var a, b, prod;
+    if (level === 'hard') {
+      var h = pickHardMultiplyPair();
+      a = h.a;
+      b = h.b;
+      prod = h.prod;
+    } else {
+      var f = pairWithProd(pickFluencyPair());
+      a = f.a;
+      b = f.b;
+      prod = f.prod;
+    }
+    var hideA = Math.random() < 0.5;
+    var answer = hideA ? a : b;
+    var prompt = hideA ? '? × ' + b + ' = ' + prod : a + ' × ? = ' + prod;
+    var anchor = hideA ? b : a;
+    return {
+      key: 'mm|' + (hideA ? 'a' : 'b') + '|' + a + '|' + b,
+      type: 'missing',
+      operation: 'multiply',
+      prompt: prompt,
+      answer: answer,
+      meta: { a: a, b: b, prod: prod, hideA: hideA, anchor: anchor },
+      visualSpec: visualSpecForMult(a, b),
+      hintEasy: hideA ? 'How many ' + b + 's make ' + prod + '?' : 'What times ' + a + ' makes ' + prod + '?',
+      hintMed: 'Which factor is missing?',
+      hintHard: 'Try ' + prod + ' ÷ ' + (hideA ? b : a) + '.',
+    };
+  }
+
+  function buildMultWord(level) {
+    var a, b, prod;
+    if (level === 'hard') {
+      var h = pickHardMultiplyPair();
+      a = h.a;
+      b = h.b;
+      prod = h.prod;
+    } else {
+      var f = pairWithProd(pickFluencyPair());
+      a = f.a;
+      b = f.b;
+      prod = f.prod;
+    }
+    var prompt = 'There are ' + a + ' boxes with ' + b + ' pencils in each box. How many pencils are there?';
+    return {
+      key: 'wpM|' + a + '|' + b + '|' + prod,
+      type: 'word',
+      operation: 'multiply',
+      prompt: prompt,
+      answer: prod,
+      meta: { a: a, b: b, prod: prod, useMult: true, anchor: b },
+      visualSpec: visualSpecForMult(a, b),
+      hintEasy: 'Same as ' + a + ' × ' + b + '.',
+      hintMed: 'Each box is a group.',
+      hintHard: 'Multiply groups × pencils per box.',
+    };
+  }
+
+  function buildInverseMultiply(level) {
+    var h;
+    if (level === 'hard') {
+      var st = pickStrictHardDivisionTriple();
+      h = { a: st.divisor, b: st.quotient, prod: st.dividend };
+    } else {
+      h = pairWithProd(pickFluencyPair());
+    }
+    var a = h.a;
+    var b = h.b;
+    var prod = h.prod;
+    return {
+      key: 'im|' + a + '|' + b + '|' + prod,
+      type: 'inverse',
+      operation: 'multiply',
+      prompt: 'If ' + prod + ' ÷ ' + a + ' = ' + b + ', what is ' + a + ' × ' + b + '?',
+      subtitle: 'Inverse fact',
+      answer: prod,
+      meta: { a: a, b: b, prod: prod, dividend: prod, divisor: a, quotient: b, anchor: b },
+      visualSpec: null,
+      hintEasy: 'Think about the matching multiply fact.',
+      hintMed: a + ' × ' + b + ' = ?',
+      hintHard: 'Inverse facts match: divide and multiply.',
+    };
+  }
+
+  /** Type C: which product is larger (typed answer = larger value). */
+  function buildReasoningCompare() {
+    var p1, p2, g = 0;
+    do {
+      p1 = pickHardMultiplyPair();
+      p2 = pickHardMultiplyPair();
+      g++;
+    } while (
+      g < 100 &&
+      (p1.prod === p2.prod ||
+        !isValidHardQuestion(p1.a, p1.b, 'reasoning') ||
+        !isValidHardQuestion(p2.a, p2.b, 'reasoning') ||
+        (getAdaptiveTier() >= 1 && Math.abs(p1.prod - p2.prod) > 16) ||
+        (getAdaptiveTier() <= -1 && Math.abs(p1.prod - p2.prod) < 12))
+    );
+    if (p1.prod === p2.prod) {
+      p1 = { a: 6, b: 7, prod: 42 };
+      p2 = { a: 5, b: 8, prod: 40 };
+    }
+    var larger = Math.max(p1.prod, p2.prod);
+    var prompt = 'Which is larger: ' + p1.a + ' × ' + p1.b + ' or ' + p2.a + ' × ' + p2.b + '? Type the larger value only.';
+    return {
+      key: 'rc|' + p1.prod + '|' + p2.prod + '|' + p1.a + '|' + p2.a,
+      type: 'reasoning',
+      operation: 'multiply',
+      prompt: prompt,
+      answer: larger,
+      subtitle: 'Reasoning',
+      meta: {
+        a: p1.a,
+        b: p1.b,
+        prod: p1.prod,
+        c: p2.a,
+        d: p2.b,
+        prod2: p2.prod,
+        reasoning: 'compare',
+        anchor: Math.max(p1.b, p2.b),
+      },
+      visualSpec: null,
+      hintEasy: 'Figure each side, then pick the bigger total.',
+      hintMed: p1.a + ' × ' + p1.b + ' = ' + p1.prod + '. ' + p2.a + ' × ' + p2.b + ' = ' + p2.prod + '.',
+      hintHard: 'Compare ' + p1.prod + ' and ' + p2.prod + '.',
+    };
+  }
+
+  /** Type C: true/false about a false equation (answer 1 = yes, 0 = no). */
+  function buildReasoningTrueFalse() {
+    var h = pickHardMultiplyPair();
+    var wrong = h.prod + pick([-5, -4, -3, -2, 2, 3, 4, 5, 6]);
+    if (wrong === h.prod) wrong = h.prod + 2;
+    if (wrong < 0) wrong = h.prod + 3;
+    var prompt = 'Is ' + h.a + ' × ' + h.b + ' = ' + wrong + '? Type 1 for yes, 0 for no.';
+    return {
+      key: 'rtf|' + h.a + '|' + h.b + '|' + wrong,
+      type: 'reasoning',
+      operation: 'multiply',
+      prompt: prompt,
+      answer: 0,
+      subtitle: 'Reasoning',
+      meta: { a: h.a, b: h.b, prod: h.prod, shown: wrong, reasoning: 'tf', anchor: h.b },
+      visualSpec: null,
+      hintEasy: 'What is ' + h.a + ' × ' + h.b + ' really?',
+      hintMed: h.a + ' × ' + h.b + ' = ' + h.prod + ', not ' + wrong + '.',
+      hintHard: 'Check the product.',
+    };
+  }
+
+  function buildDivReasoningCompare() {
+    var p1, p2, g = 0;
+    do {
+      p1 = pickStrictHardDivisionTriple();
+      p2 = pickStrictHardDivisionTriple();
+      g++;
+    } while (
+      g < 100 &&
+      (p1.quotient === p2.quotient ||
+        p1.dividend === p2.dividend ||
+        (getAdaptiveTier() >= 1 && Math.abs(p1.quotient - p2.quotient) > 4) ||
+        (getAdaptiveTier() <= -1 && Math.abs(p1.quotient - p2.quotient) < 2))
+    );
+    var larger = Math.max(p1.quotient, p2.quotient);
+    return {
+      key: 'rdc|' + p1.dividend + '|' + p1.divisor + '|' + p2.dividend + '|' + p2.divisor,
+      type: 'reasoning',
+      operation: 'divide',
+      prompt: 'Which is larger: ' + p1.dividend + ' ÷ ' + p1.divisor + ' or ' + p2.dividend + ' ÷ ' + p2.divisor + '? Type the larger value only.',
+      answer: larger,
+      subtitle: 'Reasoning',
+      meta: {
+        dividend: p1.dividend,
+        divisor: p1.divisor,
+        quotient: p1.quotient,
+        dividend2: p2.dividend,
+        divisor2: p2.divisor,
+        quotient2: p2.quotient,
+        reasoning: 'compare_div',
+        anchor: Math.max(p1.divisor, p2.divisor),
+      },
+      visualSpec: null,
+      hintEasy: 'Solve both division facts and compare the answers.',
+      hintMed: p1.dividend + ' ÷ ' + p1.divisor + ' = ' + p1.quotient + '. ' + p2.dividend + ' ÷ ' + p2.divisor + ' = ' + p2.quotient + '.',
+      hintHard: 'Compare ' + p1.quotient + ' and ' + p2.quotient + '.',
+    };
+  }
+
+  function buildDivReasoningTrueFalse() {
+    var h = pickStrictHardDivisionTriple();
+    var wrong = h.quotient + pick([-3, -2, -1, 1, 2, 3]);
+    if (wrong === h.quotient || wrong < 2) wrong = h.quotient + 1;
+    return {
+      key: 'rdt|' + h.dividend + '|' + h.divisor + '|' + wrong,
+      type: 'reasoning',
+      operation: 'divide',
+      prompt: 'Is ' + h.dividend + ' ÷ ' + h.divisor + ' = ' + wrong + '? Type 1 for yes, 0 for no.',
+      answer: 0,
+      subtitle: 'Reasoning',
+      meta: { dividend: h.dividend, divisor: h.divisor, quotient: h.quotient, shown: wrong, reasoning: 'tf_div', anchor: h.divisor },
+      visualSpec: null,
+      hintEasy: 'Work out the division fact first.',
+      hintMed: h.dividend + ' ÷ ' + h.divisor + ' = ' + h.quotient + ', not ' + wrong + '.',
+      hintHard: 'Check the quotient.',
+    };
+  }
+
+  function buildDivBasic(level) {
+    var t = pickDivisionTripleForLevel(level);
+    return {
+      key: 'bd|' + t.dividend + '/' + t.divisor,
+      type: 'basic',
+      operation: 'divide',
+      prompt: t.dividend + ' ÷ ' + t.divisor + ' = ?',
+      answer: t.quotient,
+      meta: { dividend: t.dividend, divisor: t.divisor, quotient: t.quotient, anchor: t.divisor },
+      visualSpec: visualSpecForDiv(t.divisor, t.quotient),
+      hintEasy: 'Split ' + t.dividend + ' into ' + t.divisor + ' equal shares.',
+      hintMed: 'What times ' + t.divisor + ' equals ' + t.dividend + '?',
+      hintHard: '? × ' + t.divisor + ' = ' + t.dividend + '.',
+    };
+  }
+
+  function buildDivMissing(level) {
+    var t = pickDivisionTripleForLevel(level);
+    var dividend = t.dividend;
+    var divisor = t.divisor;
+    var quotient = t.quotient;
+    if (Math.random() < 0.5) {
+      return {
+        key: 'md1|' + dividend + '|' + quotient,
+        type: 'missing',
+        operation: 'divide',
+        prompt: dividend + ' ÷ ? = ' + quotient,
+        answer: divisor,
+        meta: { dividend: dividend, divisor: divisor, quotient: quotient, missing: 'divisor', anchor: divisor },
+        visualSpec: visualSpecForDiv(divisor, quotient),
+        hintEasy: '? × ' + quotient + ' = ' + dividend + '.',
+        hintMed: 'What times ' + quotient + ' gives ' + dividend + '?',
+        hintHard: 'Multiply back.',
+      };
+    }
+    return {
+      key: 'md2|' + divisor + '|' + quotient,
+      type: 'missing',
+      operation: 'divide',
+      prompt: '? ÷ ' + divisor + ' = ' + quotient,
+      answer: dividend,
+      meta: { dividend: dividend, divisor: divisor, quotient: quotient, missing: 'dividend', anchor: divisor },
+      visualSpec: visualSpecForDiv(divisor, quotient),
+      hintEasy: 'Total = ' + divisor + ' × ' + quotient + '.',
+      hintMed: divisor + ' × ' + quotient + ' = ?',
+      hintHard: 'Divisor × answer = total.',
+    };
+  }
+
+  function buildDivWord(level) {
+    var t = pickDivisionTripleForLevel(level);
+    var total = t.dividend;
+    var divisor = t.divisor;
+    var quotient = t.quotient;
+    var nouns = pick(['stickers', 'pencils', 'tiles', 'stars']);
+    var prompt =
+      level === 'hard'
+        ? total + ' ' + nouns + ' shared equally among ' + divisor + ' groups. How many per group?'
+        : total + ' ' + nouns + ' are shared equally among ' + divisor + ' kids. How many does each kid get?';
+    return {
+      key: 'wpD|' + total + '|' + divisor + '|' + quotient,
+      type: 'word',
+      operation: 'divide',
+      prompt: prompt,
+      answer: quotient,
+      meta: { dividend: total, divisor: divisor, quotient: quotient, useMult: false, anchor: divisor },
+      visualSpec: visualSpecForDiv(divisor, quotient),
+      hintEasy: 'Divide the total by ' + divisor + '.',
+      hintMed: total + ' ÷ ' + divisor + '.',
+      hintHard: 'Equal shares: total ÷ groups.',
+    };
+  }
+
+  function buildInverseDivide(level) {
+    var h;
+    if (level === 'hard') {
+      var st = pickStrictHardDivisionTriple();
+      h = { a: st.divisor, b: st.quotient, prod: st.dividend };
+    } else {
+      h = pairWithProd(pickFluencyPair());
+    }
+    var a = h.a;
+    var b = h.b;
+    var prod = h.prod;
+    return {
+      key: 'inv|' + prod + '|' + a + '|' + b,
+      type: 'inverse',
+      operation: 'divide',
+      prompt: prod + ' ÷ ' + a + ' = ?',
+      subtitle: 'If ' + a + ' × ' + b + ' = ' + prod,
+      answer: b,
+      meta: { a: a, b: b, prod: prod, dividend: prod, divisor: a, quotient: b, anchor: a },
+      visualSpec: visualSpecForDiv(a, b),
+      hintEasy: 'Think: ' + a + ' × ? = ' + prod + '.',
+      hintMed: 'Undo the multiply.',
+      hintHard: prod + ' ÷ ' + a + '.',
+    };
+  }
+
+  function generateRawQuestion(level, op, qtype) {
+    if (op === 'multiply') {
+      if (qtype === 'basic') return buildMultBasic(level);
+      if (qtype === 'missing') return buildMultMissing(level);
+      if (qtype === 'word') return buildMultWord(level);
+      if (qtype === 'inverse') return buildInverseMultiply(level);
+      if (qtype === 'reasoning_compare') return buildReasoningCompare();
+      if (qtype === 'reasoning_tf') return buildReasoningTrueFalse();
+      if (qtype === 'reasoning') {
+        return Math.random() < 0.5 ? buildReasoningCompare() : buildReasoningTrueFalse();
+      }
+      return buildMultBasic(level);
+    }
+    if (qtype === 'basic') return buildDivBasic(level);
+    if (qtype === 'missing') return buildDivMissing(level);
+    if (qtype === 'word') return buildDivWord(level);
+    if (qtype === 'reasoning_compare') return buildDivReasoningCompare();
+    if (qtype === 'reasoning_tf') return buildDivReasoningTrueFalse();
+    return buildInverseDivide(level);
+  }
+
+  function finalizeQuestion(raw, level, mode) {
+    var subtitle = raw.subtitle || '';
+    if (raw.type === 'inverse') {
+      subtitle = raw.subtitle || '';
+    } else if (raw.type === 'reasoning') {
+      subtitle = raw.subtitle || (level === 'hard' ? 'Reasoning' : '');
+    } else if (raw.type === 'word') {
+      subtitle = level === 'hard' ? 'Story' : '';
+    } else {
+      subtitle = equationSubtitle(raw.operation, level);
+    }
+    var m = raw.meta || {};
+    var operands;
+    if (raw.operation === 'multiply') {
+      if (m.reasoning === 'compare') {
+        operands = { a: m.a, b: m.b, c: m.c, d: m.d, product: m.prod, product2: m.prod2 };
+      } else {
+        operands = { a: m.a, b: m.b, product: m.prod };
+      }
+    } else {
+      operands = { dividend: m.dividend, divisor: m.divisor, quotient: m.quotient };
+    }
+    return {
+      key: raw.key,
+      prompt: raw.prompt,
+      subtitle: subtitle,
+      answer: raw.answer,
+      result: raw.answer,
+      operation: raw.operation,
+      type: raw.type,
+      level: level,
+      mode: mode,
+      operands: operands,
+      meta: m,
+      visualSpec: raw.visualSpec,
+      hintEasy: raw.hintEasy,
+      hintMed: raw.hintMed,
+      hintHard: raw.hintHard,
+    };
+  }
+
+  /** Fluency: every factor used in the fact must lie in [2, 9]. */
+  function operandsInFluencyRange(q) {
+    var m = q.meta || {};
+    if (q.operation === 'multiply') {
+      if (m.a < FACTOR_FLUENCY_MIN || m.b < FACTOR_FLUENCY_MIN) return false;
+      if (m.a > FACTOR_FLUENCY_MAX || m.b > FACTOR_FLUENCY_MAX) return false;
+      if (q.type === 'missing' && (q.answer < FACTOR_FLUENCY_MIN || q.answer > FACTOR_FLUENCY_MAX)) return false;
+      return true;
+    }
+    if (m.divisor < FACTOR_FLUENCY_MIN || m.quotient < FACTOR_FLUENCY_MIN) return false;
+    if (m.divisor > FACTOR_FLUENCY_MAX || m.quotient > FACTOR_FLUENCY_MAX) return false;
+    if (m.dividend !== m.divisor * m.quotient) return false;
+    if (q.type === 'missing') {
+      if (q.answer < FACTOR_FLUENCY_MIN) return false;
+      if (m.missing === 'divisor' && q.answer > FACTOR_FLUENCY_MAX) return false;
+      if (m.missing === 'dividend' && q.answer > FACTOR_FLUENCY_MAX * FACTOR_FLUENCY_MAX) return false;
+    }
+    return true;
+  }
+
+  function operandsHardRange(q) {
+    var m = q.meta || {};
+    if (q.operation === 'multiply') {
+      if (q.type === 'reasoning') {
+        if (m.reasoning === 'compare') {
+          return (
+            isValidHardQuestion(m.a, m.b, 'reasoning') &&
+            isValidHardQuestion(m.c, m.d, 'reasoning')
+          );
+        }
+        if (m.reasoning === 'tf') {
+          return isValidHardQuestion(m.a, m.b, 'reasoning');
+        }
+        return false;
+      }
+      if (!isValidHardQuestion(m.a, m.b, 'fact')) return false;
+      if (m.a > FACTOR_HARD_MAX || m.b > FACTOR_HARD_MAX) return false;
+      return true;
+    }
+    if (q.type === 'reasoning') {
+      if (m.reasoning === 'compare_div') {
+        return (
+          isValidHardDivisionTriple({ dividend: m.dividend, divisor: m.divisor, quotient: m.quotient }) &&
+          isValidHardDivisionTriple({ dividend: m.dividend2, divisor: m.divisor2, quotient: m.quotient2 })
+        );
+      }
+      if (m.reasoning === 'tf_div') {
+        return isValidHardDivisionTriple({ dividend: m.dividend, divisor: m.divisor, quotient: m.quotient });
+      }
+      return false;
+    }
+    return isValidHardDivisionTriple(m);
+  }
+
+  function isTrivialHardQuestion(q) {
+    if (q.level !== 'hard') return false;
+    var m = q.meta || {};
+    if (q.operation === 'multiply') {
+      if (q.type === 'reasoning') {
+        if (m.reasoning === 'compare') {
+          return (
+            !isValidHardQuestion(m.a, m.b, 'reasoning') ||
+            !isValidHardQuestion(m.c, m.d, 'reasoning') ||
+            m.prod === m.prod2
+          );
+        }
+        if (m.reasoning === 'tf') {
+          return !isValidHardQuestion(m.a, m.b, 'reasoning') || m.shown === m.prod;
+        }
+        return true;
+      }
+      if (!isValidHardQuestion(m.a, m.b, 'fact')) return true;
+      if (q.type === 'word' && !isValidHardQuestion(m.a, m.b, 'word')) return true;
+      return false;
+    }
+    if (q.type === 'reasoning') {
+      if (m.reasoning === 'compare_div') {
+        return (
+          !isValidHardDivisionTriple({ dividend: m.dividend, divisor: m.divisor, quotient: m.quotient }) ||
+          !isValidHardDivisionTriple({ dividend: m.dividend2, divisor: m.divisor2, quotient: m.quotient2 }) ||
+          m.quotient === m.quotient2
+        );
+      }
+      if (m.reasoning === 'tf_div') {
+        return !isValidHardDivisionTriple({ dividend: m.dividend, divisor: m.divisor, quotient: m.quotient }) || m.shown === m.quotient;
+      }
+    }
+    if (isTrivialHardDivision(q)) return true;
+    return false;
+  }
+
+  function isTooEasyForEightYearOld(q) {
+    var m = q.meta || {};
+    if (q.level !== 'easy') return false;
+    if (q.type !== 'basic') return true;
+    if (q.operation === 'multiply') {
+      return (
+        m.a < EASY_FACTOR_MIN ||
+        m.b < EASY_FACTOR_MIN ||
+        m.a > EASY_FACTOR_MAX ||
+        m.b > EASY_FACTOR_MAX ||
+        m.prod < EASY_MIN_PRODUCT ||
+        (m.a <= 4 && m.b <= 4)
+      );
+    }
+    return (
+      m.divisor < EASY_FACTOR_MIN ||
+      m.quotient < EASY_FACTOR_MIN ||
+      m.divisor > EASY_FACTOR_MAX ||
+      m.quotient > EASY_FACTOR_MAX ||
+      m.dividend < EASY_MIN_PRODUCT
+    );
+  }
+
+  function isTooSimilarToMedium(q) {
+    if (q.level !== 'hard') return false;
+    return q.type === 'missing';
+  }
+
+  function validateQuestionForLevel(q, level, mode) {
+    var prompt = String(q.prompt || '');
+    var isWord = q.type === 'word';
+    var isReasoning = q.type === 'reasoning';
+    var isInverse = q.type === 'inverse';
+    var hasMissingBlank = prompt.indexOf('?') !== -1;
+    var allowed = chooseAllowedQuestionTypes(level, q.operation);
+    if (allowed.indexOf(q.type) === -1) return false;
+
+    if (level === 'easy') {
+      if (isWord || isReasoning || isInverse || hasMissingBlank) return false;
+      if (isTooEasyForEightYearOld(q)) return false;
+    }
+
+    if (level === 'medium') {
+      if (q.type !== 'missing') return false;
+      if (isWord || isReasoning || isInverse) return false;
+      if (!hasMissingBlank) return false;
+    }
+
+    if (level === 'hard') {
+      if (isTooSimilarToMedium(q)) return false;
+      if (q.operation === 'multiply' && q.type === 'basic' && prompt.indexOf('×') === -1) return false;
+      if (q.operation === 'divide' && q.type === 'basic' && prompt.indexOf('÷') === -1) return false;
+    }
+
+    if (mode === 'multiply' && q.operation !== 'multiply') return false;
+    if (mode === 'divide' && q.operation !== 'divide') return false;
+    return true;
+  }
+
+  /**
+   * Full validation: mode, symbols, level rules, duplication, trivial hard.
+   * @param {{ roundKeys?: Set, skipSession?: boolean }} opts
+   */
+  function validateQuestion(q, mode, opts) {
+    opts = opts || {};
+    if (!q || typeof q.answer !== 'number' || !Number.isFinite(q.answer)) return false;
+    var tfReason =
+      q.type === 'reasoning' &&
+      q.meta &&
+      (q.meta.reasoning === 'tf' || q.meta.reasoning === 'tf_div');
+    if (tfReason) {
+      if (q.answer !== 0 && q.answer !== 1) return false;
+    } else {
+      if (q.answer !== Math.floor(q.answer) || q.answer < 2) return false;
+    }
+    if (q.operation !== 'multiply' && q.operation !== 'divide') return false;
+    if (mode === 'multiply' && q.operation !== 'multiply') return false;
+    if (mode === 'divide' && q.operation !== 'divide') return false;
+    if (mode === 'mixed' && q.operation !== 'multiply' && q.operation !== 'divide') return false;
+
+    if (opts.roundKeys && opts.roundKeys.size && opts.roundKeys.has(q.key)) return false;
+    if (!opts.skipSession && sessionAskedKeys.has(q.key)) return false;
+
+    var main = String(q.prompt || '');
+    if (/\+/.test(main)) return false;
+    if (/\d\s*[-−]\s*\d/.test(main)) return false;
+
+    if (!validateQuestionForLevel(q, q.level, mode)) return false;
+
+    if (q.type === 'word') {
+      if (q.operation === 'multiply') {
+        if (main.indexOf('÷') !== -1) return false;
+        if (mode === 'divide') return false;
+      } else {
+        if (main.indexOf('×') !== -1) return false;
+        if (mode === 'multiply') return false;
+      }
+    } else if (q.type === 'reasoning') {
+      if (q.operation === 'multiply') {
+        if (main.indexOf('×') === -1) return false;
+        if (main.indexOf('÷') !== -1) return false;
+      } else {
+        if (main.indexOf('÷') === -1) return false;
+        if (main.indexOf('×') !== -1) return false;
+      }
+    } else if (q.type === 'inverse') {
+      if (q.operation === 'multiply') {
+        if (main.indexOf('×') === -1 || main.indexOf('÷') === -1) return false;
+      } else {
+        if (main.indexOf('÷') === -1) return false;
+        if (main.indexOf('×') === -1 && String(q.subtitle || '').indexOf('×') === -1) return false;
+      }
+    } else {
+      if (q.operation === 'multiply') {
+        if (main.indexOf('×') === -1) return false;
+        if (main.indexOf('÷') !== -1) return false;
+      } else {
+        if (main.indexOf('÷') === -1) return false;
+        if (main.indexOf('×') !== -1) return false;
+      }
+    }
+
+    if (mode === 'multiply' && String(q.subtitle || '').indexOf('÷') !== -1) return false;
+
+    if (q.level === 'easy' || q.level === 'medium') {
+      if (!operandsInFluencyRange(q)) return false;
+    } else {
+      if (!operandsHardRange(q)) return false;
+      if (isTrivialHardQuestion(q)) return false;
+    }
+
+    return true;
+  }
+
+  /** Division-only validation wrapper (same rules as validateQuestion). */
+  function validateDivisionQuestion(q, level, mode, opts) {
+    if (!q || q.operation !== 'divide' || q.level !== level) return false;
+    return validateQuestion(q, mode, opts || {});
+  }
+
+  function generateDivisionQuestion(level, qtype) {
+    return generateRawQuestion(level, 'divide', qtype);
+  }
+
+  function varietyClash(anchors, anchor) {
+    if (anchor < FACTOR_FLUENCY_MIN) return false;
+    return anchors.length >= 2 && anchors[0] === anchors[1] && anchors[1] === anchor;
+  }
+
+  function multiplySlotsInMode(mode) {
+    if (mode === 'multiply') return ROUND_SIZE;
+    if (mode === 'mixed') return 5;
+    return 0;
+  }
+
+  function divideSlotsInMode(mode) {
+    if (mode === 'divide') return ROUND_SIZE;
+    if (mode === 'mixed') return 5;
+    return 0;
+  }
+
+  function fallbackQtypeForSlot(level, op) {
+    if (level === 'medium' && (op === 'multiply' || op === 'divide')) return 'missing';
+    return 'basic';
+  }
+
+  function attachAdaptiveRoundPlan(level, mode) {
+    var multSlots = multiplySlotsInMode(mode);
+    var divSlots = divideSlotsInMode(mode);
+    GameState.roundAdaptivePlan = {
+      hardMultQueue: level === 'hard' && multSlots > 0 ? buildHardMultiplySubtypeOrder(multSlots) : null,
+      hardDivQueue: level === 'hard' && divSlots > 0 ? buildHardDivideSubtypeOrder(divSlots) : null,
+    };
+  }
+
+  function countOpSlotsBefore(mode, opWant, slotIndex) {
+    var c = 0;
+    var j;
+    for (j = 0; j < slotIndex; j++) {
+      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[j];
+      if (op === opWant) c++;
+    }
+    return c;
+  }
+
+  function getHardMultTagForSlot(slotIndex) {
+    if (GameState.level !== 'hard') return null;
+    var mode = GameState.mode;
+    if (multiplySlotsInMode(mode) <= 0) return null;
+    var idx = countOpSlotsBefore(mode, 'multiply', slotIndex);
+    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardMultQueue;
+    if (!q || idx < 0 || idx >= q.length) return null;
+    return q[idx];
+  }
+
+  function getHardDivTagForSlot(slotIndex) {
+    if (GameState.level !== 'hard') return null;
+    var mode = GameState.mode;
+    if (divideSlotsInMode(mode) <= 0) return null;
+    var idx = countOpSlotsBefore(mode, 'divide', slotIndex);
+    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardDivQueue;
+    if (!q || idx < 0 || idx >= q.length) return null;
+    return q[idx];
+  }
+
+  function recentAnchorsForSlot(slotIndex) {
+    var r = [];
+    if (slotIndex >= 2) {
+      var q0 = GameState.roundQuestions[slotIndex - 2];
+      if (q0 && q0.meta && q0.meta.anchor != null) r.push(q0.meta.anchor);
+    }
+    if (slotIndex >= 1) {
+      var q1 = GameState.roundQuestions[slotIndex - 1];
+      if (q1 && q1.meta && q1.meta.anchor != null) r.push(q1.meta.anchor);
+    }
+    return r;
+  }
+
+  function collectRoundKeysExcludingIndex(excludeIndex) {
+    var rk = new Set();
+    var i;
+    for (i = 0; i < GameState.roundQuestions.length; i++) {
+      var qq = GameState.roundQuestions[i];
+      if (qq && i !== excludeIndex) rk.add(qq.key);
+    }
+    return rk;
+  }
+
+  /** One slot of the current normal round, using current GameState.adaptiveTier. */
+  function generateRoundQuestionAtIndex(slotIndex) {
+    var level = GameState.level;
+    var mode = GameState.mode;
+    var roundKeys = collectRoundKeysExcludingIndex(slotIndex);
+    var recentAnchors = recentAnchorsForSlot(slotIndex);
+    var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[slotIndex];
+    var multTag = op === 'multiply' ? getHardMultTagForSlot(slotIndex) : null;
+    var divTag = op === 'divide' ? getHardDivTagForSlot(slotIndex) : null;
+    var q = null;
+    var attempt;
+    var qtype;
+    var raw;
+    var anchor;
+    for (attempt = 0; attempt < 140; attempt++) {
+      if (multTag != null) qtype = hardMultTagToQtype(multTag);
+      else if (divTag != null) qtype = hardDivTagToQtype(divTag);
+      else qtype = pickTypeForSlot(level, op);
+      if (level === 'easy') qtype = 'basic';
+      if (level === 'medium' && op === 'multiply') qtype = 'missing';
+      if (level === 'medium' && op === 'divide') qtype = 'missing';
+      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) continue;
+      raw = generateRawQuestion(level, op, qtype);
+      q = finalizeQuestion(raw, level, mode);
+      anchor = q.meta && q.meta.anchor != null ? q.meta.anchor : -1;
+      if (varietyClash(recentAnchors, anchor) && attempt < 120) continue;
+      if (!validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: false })) continue;
+      break;
+    }
+    if (!q) {
+      for (attempt = 0; attempt < 80; attempt++) {
+        raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
+        q = finalizeQuestion(raw, level, mode);
+        if (validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: true })) break;
+        q = null;
+      }
+    }
+    if (!q) {
+      raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
+      q = finalizeQuestion(raw, level, mode);
+    }
+    roundKeys.add(q.key);
+    sessionAskedKeys.add(q.key);
+    if (sessionAskedKeys.size > 4000) {
+      sessionAskedKeys = new Set(Array.from(sessionAskedKeys).slice(-2000));
+    }
+    GameState.roundQuestions[slotIndex] = q;
+  }
+
+  /** Pool builder — valid, deduped questions (does not rely on session keys). */
+  function generateQuestions(level, mode) {
+    var prevTier = GameState.adaptiveTier;
+    GameState.adaptiveTier = 0;
+    var pool = [];
+    var seen = new Set();
+    var n = 0;
+    while (pool.length < POOL_SIZE && n < 25000) {
+      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : (Math.random() < 0.5 ? 'multiply' : 'divide');
+      var qtype = pickTypeForSlot(level, op);
+      if (level === 'easy') qtype = 'basic';
+      if (level === 'medium' && op === 'multiply') qtype = 'missing';
+      if (level === 'medium' && op === 'divide') qtype = 'missing';
+      if (level === 'hard' && op === 'multiply') qtype = pickHardMultiplyQtypeRandom();
+      if (level === 'hard' && op === 'divide') qtype = pickHardDivideQtypeRandom();
+      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) qtype = fallbackQtypeForSlot(level, op);
+      var raw = generateRawQuestion(level, op, qtype);
+      var q = finalizeQuestion(raw, level, mode);
+      if (validateQuestion(q, mode, { roundKeys: seen, skipSession: true }) && !seen.has(q.key)) {
+        seen.add(q.key);
+        pool.push(q);
+      }
+      n++;
+    }
+    GameState.adaptiveTier = prevTier;
+    return pool;
+  }
+
+  // ========== WRONG-ANSWER HELP ==========
+  function wrongExplainParagraph(q) {
+    var m = q.meta || {};
+    switch (q.type) {
+      case 'basic':
+        if (q.operation === 'multiply') {
+          return 'Think: ' + m.a + ' × ' + m.b + ' = ' + q.answer + '. You can skip-count by ' + m.b + '.';
+        }
+        return 'Split ' + m.dividend + ' into ' + m.divisor + ' equal parts: ' + m.dividend + ' ÷ ' + m.divisor + ' = ' + q.answer + '.';
+      case 'missing':
+        if (q.operation === 'multiply') {
+          return m.hideA
+            ? 'We need how many groups of ' + m.b + ' make ' + m.prod + '. That is ' + q.answer + '.'
+            : 'We need what times ' + m.a + ' makes ' + m.prod + '. That is ' + q.answer + '.';
+        }
+        if (m.missing === 'dividend') {
+          return 'The total is ' + m.divisor + ' × ' + m.quotient + ' = ' + q.answer + '.';
+        }
+        return 'The missing divider is ' + q.answer + ' because ' + q.answer + ' × ' + m.quotient + ' = ' + m.dividend + '.';
+      case 'word':
+        return m.useMult
+          ? 'Multiply: ' + m.a + ' × ' + m.b + ' = ' + q.answer + '.'
+          : 'Divide: ' + m.dividend + ' ÷ ' + m.divisor + ' = ' + q.answer + '.';
+      case 'inverse':
+        if (q.operation === 'multiply') {
+          return 'Since ' + m.prod + ' ÷ ' + m.divisor + ' = ' + m.quotient + ', the matching multiply fact is ' + m.a + ' × ' + m.b + ' = ' + q.answer + '.';
+        }
+        return 'Since ' + m.a + ' × ' + m.b + ' = ' + m.prod + ', we know ' + m.prod + ' ÷ ' + m.a + ' = ' + q.answer + '.';
+      case 'reasoning':
+        if (m.reasoning === 'compare') {
+          return m.a + ' × ' + m.b + ' = ' + m.prod + ' and ' + m.c + ' × ' + m.d + ' = ' + m.prod2 + '. The larger total is ' + q.answer + '.';
+        }
+        if (m.reasoning === 'tf') {
+          return m.a + ' × ' + m.b + ' is ' + m.prod + ', not ' + m.shown + ', so the correct choice is ' + q.answer + ' (0 = no, 1 = yes).';
+        }
+        if (m.reasoning === 'compare_div') {
+          return m.dividend + ' ÷ ' + m.divisor + ' = ' + m.quotient + ' and ' + m.dividend2 + ' ÷ ' + m.divisor2 + ' = ' + m.quotient2 + '. The larger value is ' + q.answer + '.';
+        }
+        if (m.reasoning === 'tf_div') {
+          return m.dividend + ' ÷ ' + m.divisor + ' is ' + m.quotient + ', not ' + m.shown + ', so the correct choice is ' + q.answer + ' (0 = no, 1 = yes).';
+        }
+        return 'The answer is ' + q.answer + '.';
+      default:
+        return 'The answer is ' + q.answer + '.';
+    }
+  }
+
+  function currentQuestionLevel() {
+    var q = GameState.currentQuestion;
+    return q && q.level != null ? q.level : GameState.level;
+  }
+
+  function shouldAttachWrongVisual() {
+    var lvl = currentQuestionLevel();
+    if (lvl === 'easy') return true;
+    if (lvl === 'medium') return GameState.questionIndex % 2 === 0;
+    return false;
+  }
+
+  // ========== SOUND ==========
+  let audioCtx = null;
+  function playTone(freq, duration, type) {
+    if (!GameState.soundOn) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      o.start(audioCtx.currentTime);
+      o.stop(audioCtx.currentTime + duration);
+    } catch (e) { /* ignore */ }
+  }
+
+  function soundCorrect() {
+    playTone(523, 0.12, 'sine');
+    setTimeout(function () { playTone(659, 0.15, 'sine'); }, 90);
+  }
+
+  function soundGentle() {
+    playTone(300, 0.18, 'triangle');
+  }
+
+  function soundGameOver() {
+    playTone(220, 0.14, 'triangle');
+    setTimeout(function () { playTone(185, 0.2, 'triangle'); }, 110);
+  }
+
+  function confettiBurst() {
+    const box = document.getElementById('confetti');
+    const colors = ['#7cffb3', '#6eb5ff', '#ffd166', '#ff8b94', '#c77dff'];
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = randInt(5, 95) + '%';
+      p.style.background = pick(colors);
+      p.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
+      p.style.animationDelay = (Math.random() * 0.15) + 's';
+      box.appendChild(p);
+      setTimeout(function () { p.remove(); }, 2200);
+    }
+  }
+
+  // ========== SCREENS ==========
+  const screens = {
+    menu: document.getElementById('screen-menu'),
+    game: document.getElementById('screen-game'),
+    results: document.getElementById('screen-results'),
+    progress: document.getElementById('screen-progress'),
+  };
+
+  function showScreen(name) {
+    Object.values(screens).forEach(function (el) { el.classList.remove('active'); });
+    screens[name].classList.add('active');
+    if (name === 'menu') updateMenuMistakeButtons();
+    if (name === 'game') updateExitButtonLabel();
+  }
+
+  function hintTextForQuestion(q) {
+    var lvl = q && q.level != null ? q.level : GameState.level;
+    if (lvl === 'easy') return q.hintEasy;
+    if (lvl === 'medium') return q.hintMed;
+    return q.hintHard;
+  }
+
+  function attachHintVisual(panel, q) {
+    const spec = q.visualSpec;
+    if (!spec) return;
+    var lvl = q && q.level != null ? q.level : GameState.level;
+    if (lvl === 'easy') {
+      const el = renderVisualFromSpec(spec);
+      if (el) panel.appendChild(el);
+    } else if (lvl === 'medium') {
+      const el = renderVisualFromSpec(spec);
+      if (el) {
+        el.style.opacity = '0.92';
+        panel.appendChild(el);
+      }
+    }
+  }
+
+  function focusAnswerInput(options) {
+    var opts = options || {};
+    var input = document.getElementById('answer-input');
+    if (!input) return;
+    if (focusAnswerTimer) clearTimeout(focusAnswerTimer);
+    focusAnswerTimer = setTimeout(function () {
+      if (input.disabled || !screens.game.classList.contains('active')) return;
+      input.focus();
+      if (opts.selectText && input.value) input.select();
+      input.classList.remove('focus-ready');
+      void input.offsetWidth;
+      input.classList.add('focus-ready');
+      if (focusAnswerFlashTimer) clearTimeout(focusAnswerFlashTimer);
+      focusAnswerFlashTimer = setTimeout(function () {
+        input.classList.remove('focus-ready');
+      }, 750);
+    }, opts.delay == null ? 60 : opts.delay);
+  }
+
+  function restoreFocusAfterHint() {
+    focusAnswerInput({ delay: 40 });
+  }
+
+  function renderHintModalContent(q) {
+    var hintText = document.getElementById('hint-text');
+    var visualWrap = document.getElementById('hint-visual');
+    hintText.textContent = hintTextForQuestion(q);
+    visualWrap.innerHTML = '';
+    attachHintVisual(visualWrap, q);
+    visualWrap.hidden = !visualWrap.childNodes.length;
+  }
+
+  function openHintModal(q) {
+    var modal = document.getElementById('modal-hint');
+    if (!q || GameState.answered) return;
+    GameState.hintsUsedThisRound = (GameState.hintsUsedThisRound || 0) + 1;
+    renderHintModalContent(q);
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(function () {
+      var closeBtn = document.getElementById('btn-hint-close');
+      if (closeBtn) closeBtn.focus();
+    }, 20);
+  }
+
+  function closeHintModal() {
+    var modal = document.getElementById('modal-hint');
+    if (!modal.classList.contains('open')) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    restoreFocusAfterHint();
+  }
+
+  function modeLabelForState(mode) {
+    if (mode === 'multiply') return 'Multiplication';
+    if (mode === 'divide') return 'Division';
+    return 'Mixed';
+  }
+
+  function updateModeIndicator() {
+    var badge = document.getElementById('hud-mode-badge');
+    var cur = document.getElementById('hud-current-op');
+    if (!badge || !cur) return;
+    if (GameState.isReviewMode) {
+      badge.textContent = 'Mode: Fix tricky questions';
+    } else {
+      badge.textContent = 'Mode: ' + modeLabelForState(GameState.mode);
+    }
+    var op = GameState.currentQuestion && GameState.currentQuestion.operation;
+    var opLabel = op === 'multiply' ? 'Multiplication' : op === 'divide' ? 'Division' : '—';
+    cur.innerHTML = 'Current question: <strong>' + opLabel + '</strong>';
+  }
+
+  // ========== STATS UI ==========
+  function updateLivesUI() {
+    var h = document.getElementById('hud-hearts');
+    var wrap = document.getElementById('hud-lives-wrap');
+    var note = document.getElementById('hud-lives-note');
+    if (!h || !wrap || !note) return;
+    var heartsHtml = '';
+    var livesValue = GameState.isReviewMode ? INITIAL_HEARTS : GameState.hearts;
+    for (var i = 0; i < INITIAL_HEARTS; i++) {
+      heartsHtml += i < livesValue ? '❤️' : '<span class="lost">🤍</span>';
+    }
+    h.innerHTML = heartsHtml;
+    h.setAttribute('aria-label', GameState.isReviewMode ? 'Practice mode hearts' : 'Lives left: ' + String(GameState.hearts));
+    wrap.classList.toggle('review-safe', GameState.isReviewMode);
+    note.textContent = GameState.isReviewMode
+      ? 'Practice mode is for learning. No lives are lost here.'
+      : 'Hearts = lives. If they are all gone, the mission pauses.';
+  }
+
+  function updateStatsUI() {
+    document.getElementById('hud-score').textContent = String(GameState.score);
+    const n = GameState.questionIndex + 1;
+    var rs = getRoundSize();
+    document.getElementById('hud-q-num').textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
+    document.getElementById('hud-streak').textContent = String(GameState.streak);
+    document.getElementById('hud-correct').textContent = String(GameState.correctCount);
+    document.getElementById('hud-total').textContent = String(GameState.totalAnswered);
+    document.getElementById('hud-accuracy').textContent = accuracyPercent(GameState.correctCount, GameState.totalAnswered) + '%';
+    updateLivesUI();
+  }
+
+  function animateLifeLost() {
+    var heartsEl = document.getElementById('hud-hearts');
+    if (!heartsEl) return;
+    heartsEl.classList.remove('life-lost');
+    void heartsEl.offsetWidth;
+    heartsEl.classList.add('life-lost');
+  }
+
+  function setGameOverModalOpen(on) {
+    var modal = document.getElementById('modal-game-over');
+    if (!modal) return;
+    modal.classList.toggle('open', !!on);
+    modal.setAttribute('aria-hidden', on ? 'false' : 'true');
+  }
+
+  function showGameOverModal() {
+    updateGameOverPracticeUi();
+    setGameOverModalOpen(true);
+    setTimeout(function () {
+      var btn = document.getElementById('btn-game-over-try-again');
+      if (btn) btn.focus();
+    }, 20);
+  }
+
+  function handleGameOver() {
+    if (GameState.isGameOver) return;
+    GameState.isGameOver = true;
+    GameState.answered = true;
+    setAnswerControlsEnabled(false);
+    document.getElementById('btn-hint').disabled = true;
+    document.getElementById('btn-next').hidden = true;
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    soundGameOver();
+    showGameOverModal();
+  }
+
+  function handleLifeLost() {
+    if (GameState.isReviewMode || GameState.hearts <= 0) return;
+    GameState.hearts--;
+    animateLifeLost();
+    updateLivesUI();
+    if (GameState.hearts <= 0) handleGameOver();
+  }
+
+  // ========== FEEDBACK ==========
+  function showFeedback(isCorrect, pointsLine, adaptiveEncouragement) {
+    const fb = document.getElementById('feedback');
+    const extra = document.getElementById('feedback-extra');
+    extra.innerHTML = '';
+    const q = GameState.currentQuestion;
+
+    if (isCorrect) {
+      fb.className = 'feedback success';
+      fb.innerHTML = pick(CORRECT_PHRASES);
+      if (pointsLine) {
+        const tag = document.createElement('div');
+        tag.className = 'points-tag';
+        tag.textContent = pointsLine;
+        fb.appendChild(tag);
+      }
+      if (adaptiveEncouragement) {
+        const enc = document.createElement('span');
+        enc.className = 'adaptive-encouragement';
+        enc.textContent = adaptiveEncouragement;
+        fb.appendChild(enc);
+      }
+      soundCorrect();
+      confettiBurst();
+    } else {
+      fb.className = 'feedback gentle';
+      fb.textContent = pick(GENTLE_PHRASES) + ' The answer is ' + q.answer + '.';
+      const explain = document.createElement('div');
+      explain.className = 'feedback-explain';
+      explain.textContent = wrongExplainParagraph(q);
+      extra.appendChild(explain);
+      if (q.visualSpec && shouldAttachWrongVisual()) {
+        const wrap = document.createElement('div');
+        wrap.className = 'feedback-visual-wrap';
+        const v = renderVisualFromSpec(q.visualSpec);
+        if (v) wrap.appendChild(v);
+        extra.appendChild(wrap);
+      }
+      soundGentle();
+    }
+  }
+
+  function setAnswerControlsEnabled(on) {
+    document.getElementById('answer-input').disabled = !on;
+    document.getElementById('btn-submit-answer').disabled = !on;
+  }
+
+  // ========== QUESTION RENDER ==========
+  function renderQuestion() {
+    var q = GameState.currentQuestion;
+    var guard = 0;
+    var rk = new Set();
+    var rqi, rkQ;
+    for (rqi = 0; rqi < GameState.roundQuestions.length; rqi++) {
+      rkQ = GameState.roundQuestions[rqi];
+      if (rkQ && rqi !== GameState.questionIndex) rk.add(rkQ.key);
+    }
+    while (guard < 24 && !validateQuestion(q, GameState.mode, { roundKeys: rk, skipSession: true })) {
+      var opFix = GameState.mode === 'multiply' ? 'multiply' : GameState.mode === 'divide' ? 'divide' : GameState.roundMixOps[GameState.questionIndex];
+      var rawFix = generateRawQuestion(GameState.level, opFix, fallbackQtypeForSlot(GameState.level, opFix));
+      q = finalizeQuestion(rawFix, GameState.level, GameState.mode);
+      GameState.roundQuestions[GameState.questionIndex] = q;
+      GameState.currentQuestion = q;
+      guard++;
+    }
+
+    GameState.answered = false;
+    closeHintModal();
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback neutral';
+    document.getElementById('feedback-extra').innerHTML = '';
+    document.getElementById('btn-next').hidden = true;
+
+    document.getElementById('q-text').textContent = q.prompt;
+
+    document.getElementById('answer-input').value = '';
+    setAnswerControlsEnabled(true);
+    document.getElementById('btn-hint').disabled = false;
+
+    updateModeIndicator();
+    updateStatsUI();
+    focusAnswerInput();
+  }
+
+  function handleSubmitAnswer() {
+    if (GameState.answered || GameState.isGameOver) return;
+    const q = GameState.currentQuestion;
+    const raw = document.getElementById('answer-input').value.trim();
+    // parseInt stops at the first non-digit ("5u" → 5); require the whole box to be a plain integer.
+    if (!/^-?\d+$/.test(raw)) {
+      document.getElementById('feedback').textContent =
+        raw === '' ? 'Type a number, then tap Check.' : 'Use digits only (no letters or extra symbols), then tap Check.';
+      document.getElementById('feedback').className = 'feedback neutral';
+      return;
+    }
+    const num = parseInt(raw, 10);
+    if (Number.isNaN(num)) {
+      document.getElementById('feedback').textContent = 'Type a number, then tap Check.';
+      document.getElementById('feedback').className = 'feedback neutral';
+      return;
+    }
+
+    GameState.answered = true;
+    GameState.totalAnswered++;
+    const ok = num === q.answer;
+
+    let pointsLine = '';
+    if (ok) {
+      GameState.correctCount++;
+      GameState.streak++;
+      if (GameState.streak > GameState.bestStreakThisRound) {
+        GameState.bestStreakThisRound = GameState.streak;
+      }
+      if (!GameState.isReviewMode && GameState.mistakeSeenThisRound) {
+        GameState.correctAfterFirstMistake++;
+      }
+      GameState.score += POINTS_CORRECT;
+      if (GameState.isReviewMode) {
+        pointsLine = '+10';
+      } else {
+        pointsLine = '+' + POINTS_CORRECT;
+        if (GameState.streak > 0 && GameState.streak % STREAK_BONUS_EVERY === 0) {
+          GameState.score += STREAK_BONUS_POINTS;
+          pointsLine += '  ·  +' + STREAK_BONUS_POINTS + ' streak bonus';
+        }
+      }
+    } else {
+      GameState.streak = 0;
+      if (!GameState.isReviewMode) {
+        GameState.mistakeSeenThisRound = true;
+      }
+      recordWrongAnswer(q, num);
+      if (!GameState.isReviewMode) handleLifeLost();
+    }
+
+    GameState.adaptiveStats.correctThisRound = GameState.correctCount;
+    GameState.adaptiveStats.wrongThisRound = GameState.totalAnswered - GameState.correctCount;
+
+    recordFamilyAttemptsForQuestion(q, ok);
+
+    var adaptiveEncouragement = '';
+    if (!GameState.isReviewMode && updateAdaptiveDifficulty(ok)) {
+      adaptiveEncouragement = pick(ADAPTIVE_ENCOURAGEMENT_PHRASES);
+    }
+
+    if (ok && GameState.isReviewMode) {
+      resolveMistake(q.key);
+      GameState.roundQuestions.splice(GameState.questionIndex, 1);
+      GameState.roundSize = GameState.roundQuestions.length;
+      if (GameState.roundSize === 0) {
+        GameState.reviewCompletedAllCorrect = true;
+        GameState.pendingReviewAdvance = false;
+      } else {
+        if (GameState.questionIndex >= GameState.roundSize) {
+          GameState.questionIndex = GameState.roundSize - 1;
+        }
+        GameState.currentQuestion = GameState.roundQuestions[GameState.questionIndex];
+        GameState.pendingReviewAdvance = true;
+      }
+    }
+    if (ok && GameState.isReviewMode) syncReviewQueueKeys();
+
+    setAnswerControlsEnabled(false);
+    document.getElementById('btn-hint').disabled = true;
+    showFeedback(ok, pointsLine, adaptiveEncouragement);
+    document.getElementById('btn-next').hidden = GameState.isGameOver;
+    updateStatsUI();
+  }
+
+  function goToNextQuestion() {
+    if (!GameState.answered || GameState.isGameOver) return;
+    if (GameState.reviewCompletedAllCorrect) {
+      GameState.reviewCompletedAllCorrect = false;
+      wrapUpReviewSessionSuccess();
+      return;
+    }
+    if (GameState.pendingReviewAdvance) {
+      GameState.pendingReviewAdvance = false;
+      GameState.answered = false;
+      renderQuestion();
+      return;
+    }
+    GameState.questionIndex++;
+    var rs = getRoundSize();
+    if (GameState.questionIndex >= rs) {
+      endRound();
+      return;
+    }
+    if (!GameState.isReviewMode && GameState.questionIndex < ROUND_SIZE) {
+      if (!GameState.roundQuestions[GameState.questionIndex]) {
+        generateRoundQuestionAtIndex(GameState.questionIndex);
+      }
+    }
+    GameState.currentQuestion = GameState.roundQuestions[GameState.questionIndex];
+    renderQuestion();
+  }
+
+  function computeStarsForNormalRound() {
+    var acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    var s = 1;
+    if (acc >= 70) s++;
+    if (acc >= 90) s++;
+    var prev = progress.lastRoundAccuracy;
+    if (prev != null && acc > prev) s++;
+    if (GameState.mistakeSeenThisRound && GameState.correctAfterFirstMistake >= 2) s++;
+    if (s > 5) s = 5;
+    return s;
+  }
+
+  function evaluateMissionBadges(stars) {
+    progress = ensureProgressShape(progress);
+    var defs = [
+      { id: 'first', test: function () { return progress.roundsPlayed >= 1; } },
+      { id: 'star10', test: function () { return progress.totalStars >= 10; } },
+      { id: 'star50', test: function () { return progress.totalStars >= 50; } },
+      { id: 'streak5', test: function () { return progress.bestStreakEver >= 5; } },
+      {
+        id: 'perfect',
+        test: function () {
+          return GameState.correctCount === ROUND_SIZE;
+        },
+      },
+      { id: 'hard', test: function () { return GameState.level === 'hard' && stars >= 4; } },
+      { id: 'mistake_fixer', test: function () { return progress.stats.mistakesFixed >= 10; } },
+      { id: 'comeback_kid', test: function () { return progress.stats.streakRecoveryCount >= 3; } },
+      { id: 'fact_master', test: function () { return hasMulFamilyMasteredEnough(5); } },
+      {
+        id: 'division_master',
+        test: function () {
+          return (progress.masteredDivisionKeys || []).length >= 10;
+        },
+      },
+      {
+        id: 'never_give_up',
+        test: function () {
+          return GameState.hearts === 1;
+        },
+      },
+      { id: 'practice_star', test: function () { return progress.stats.totalPractices >= 5; } },
+      { id: 'daily_learner', test: function () { return (progress.playDates || []).length >= 3; } },
+      {
+        id: 'focus_mode',
+        test: function () {
+          return GameState.hintsUsedThisRound === 0 && GameState.totalAnswered === ROUND_SIZE;
+        },
+      },
+    ];
+    defs.forEach(function (b) {
+      if (b.test() && progress.badges.indexOf(b.id) === -1) progress.badges.push(b.id);
+    });
+  }
+
+  function endRound() {
+    if (GameState.isReviewMode) {
+      GameState.isReviewMode = false;
+      GameState.pendingReviewAdvance = false;
+      GameState.reviewCompletedAllCorrect = false;
+      GameState.roundSize = ROUND_SIZE;
+      clearPersistedReviewQueue();
+      setReviewBannerVisible(false);
+      setGameTitle('🛸 Mission in progress');
+      updateExitButtonLabel();
+      showNormalResultsStats();
+      document.getElementById('results-title').textContent = 'Practice finished!';
+      document.getElementById('results-stars').textContent = '⭐';
+      document.getElementById('results-rating').textContent =
+        'Nice work reviewing — keep practicing anytime you like.';
+      document.getElementById('res-score').textContent = String(GameState.score);
+      document.getElementById('res-correct').textContent =
+        GameState.correctCount + ' / ' + String(GameState.totalAnswered);
+      document.getElementById('res-accuracy').textContent =
+        accuracyPercent(GameState.correctCount, GameState.totalAnswered) + '%';
+      document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+      document.getElementById('res-stars').textContent = '—';
+      clearSaveStatus('results-save-status');
+      showScreen('results');
+      updateResultsExportButtons();
+      return;
+    }
+
+    progress = ensureProgressShape(progress);
+    if (GameState.mistakeSeenThisRound) {
+      progress.stats.streakRecoveryCount = Math.max(
+        progress.stats.streakRecoveryCount,
+        GameState.correctAfterFirstMistake
+      );
+    }
+    const stars = computeStarsForNormalRound();
+    progress.totalStars += stars;
+    progress.roundsPlayed += 1;
+    if (GameState.bestStreakThisRound > progress.bestStreakEver) {
+      progress.bestStreakEver = GameState.bestStreakThisRound;
+    }
+
+    const acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    progress.lastRoundAccuracy = acc;
+    recordPlayDateForMission();
+
+    GameState.lastRoundMode = GameState.mode;
+    GameState.lastRoundLevel = GameState.level;
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    GameState.reviewJustCompleted = false;
+
+    evaluateMissionBadges(stars);
+
+    saveProgress(progress);
+
+    var ratingLine = '';
+    if (stars >= 5) ratingLine = 'Cosmic legend — you used every star!';
+    else if (stars >= 4) ratingLine = 'Outstanding pilot — improvement and focus!';
+    else if (stars >= 3) ratingLine = 'Great work — keep flying!';
+    else if (stars >= 2) ratingLine = 'Nice mission — room to climb higher!';
+    else ratingLine = 'Every mission makes you stronger!';
+
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent = '🌟 Mission Complete!';
+    document.getElementById('results-stars').textContent = new Array(stars + 1).join('⭐');
+    document.getElementById('results-rating').textContent = ratingLine;
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent = GameState.correctCount + ' / ' + ROUND_SIZE;
+    document.getElementById('res-accuracy').textContent = acc + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = String(stars);
+
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
+  function startRound() {
+    GameState.questionIndex = 0;
+    GameState.score = 0;
+    GameState.streak = 0;
+    GameState.bestStreakThisRound = 0;
+    GameState.hearts = INITIAL_HEARTS;
+    GameState.correctCount = 0;
+    GameState.totalAnswered = 0;
+    GameState.isReviewMode = false;
+    GameState.pendingReviewAdvance = false;
+    GameState.reviewCompletedAllCorrect = false;
+    GameState.reviewJustCompleted = false;
+    GameState.isGameOver = false;
+    GameState.mistakeSeenThisRound = false;
+    GameState.correctAfterFirstMistake = 0;
+    GameState.hintsUsedThisRound = 0;
+    GameState.roundSize = ROUND_SIZE;
+    GameState.currentRoundId = newRoundId();
+    GameState.currentRoundWrongAnswers = [];
+    resetAdaptiveDifficultyState();
+    if (GameState.mode === 'mixed') {
+      GameState.roundMixOps = shuffle([].concat(Array(5).fill('multiply'), Array(5).fill('divide')));
+    } else {
+      GameState.roundMixOps = null;
+    }
+    attachAdaptiveRoundPlan(GameState.level, GameState.mode);
+    GameState.roundQuestions = new Array(ROUND_SIZE);
+    generateRoundQuestionAtIndex(0);
+    GameState.currentQuestion = GameState.roundQuestions[0];
+    setReviewBannerVisible(false);
+    setGameTitle('🛸 Mission in progress');
+    setGameOverModalOpen(false);
+    showNormalResultsStats();
+    showScreen('game');
+    updateExitButtonLabel();
+    renderQuestion();
+  }
+
+  // ========== MENU / EVENTS ==========
+  document.querySelectorAll('[data-level]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-level]').forEach(function (b) {
+        b.classList.remove('selected');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('selected');
+      btn.setAttribute('aria-pressed', 'true');
+      GameState.level = btn.getAttribute('data-level');
+    });
+  });
+
+  document.querySelectorAll('[data-mode]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-mode]').forEach(function (b) {
+        b.classList.remove('selected');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('selected');
+      btn.setAttribute('aria-pressed', 'true');
+      GameState.mode = btn.getAttribute('data-mode');
+    });
+  });
+
+  document.getElementById('btn-play').addEventListener('click', startRound);
+
+  document.getElementById('btn-menu-quickfix').addEventListener('click', function () {
+    window.SmartPractice.start('quickfix', { emptyStateLocation: 'menu' });
+  });
+  document.getElementById('btn-menu-mostmissed').addEventListener('click', function () {
+    window.SmartPractice.start('mostmissed', { emptyStateLocation: 'menu' });
+  });
+  document.getElementById('btn-menu-duetoday').addEventListener('click', function () {
+    window.SmartPractice.start('duetoday', { emptyStateLocation: 'menu' });
+  });
+
+  document.getElementById('btn-how').addEventListener('click', function () {
+    document.getElementById('modal-how').classList.add('open');
+  });
+  document.getElementById('btn-how-close').addEventListener('click', function () {
+    document.getElementById('modal-how').classList.remove('open');
+  });
+  document.getElementById('modal-how').addEventListener('click', function (e) {
+    if (e.target.id === 'modal-how') document.getElementById('modal-how').classList.remove('open');
+  });
+
+  document.getElementById('btn-progress').addEventListener('click', function () {
+    renderProgressScreen();
+    showScreen('progress');
+  });
+
+  function renderProgressScreen() {
+    document.getElementById('prog-total-stars').textContent = String(progress.totalStars);
+    document.getElementById('prog-rounds').textContent = String(progress.roundsPlayed);
+    document.getElementById('prog-best-streak').textContent = String(progress.bestStreakEver);
+    const list = document.getElementById('badge-list');
+    list.innerHTML = '';
+    const labels = {
+      first: '🛰️ First launch',
+      star10: '⭐ 10 stars',
+      star50: '🌟 50 stars',
+      streak5: '🔥 Streak 5+',
+      perfect: '💯 Perfect round',
+      hard: '🚀 Hard hero',
+      mistake_fixer: '🔧 Mistake Fixer',
+      comeback_kid: '↩️ Comeback Kid',
+      fact_master: '🔢 Fact Master',
+      division_master: '➗ Division Master',
+      never_give_up: '❤️ Never Give Up',
+      practice_star: '🎯 Practice Star',
+      daily_learner: '📅 Daily Learner',
+      focus_mode: '🧭 Focus Mode',
+    };
+    if (!progress.badges.length) {
+      list.innerHTML = '<span class="badge-pill">Fly a mission to earn your first badge!</span>';
+    } else {
+      progress.badges.forEach(function (id) {
+        const pill = document.createElement('span');
+        pill.className = 'badge-pill';
+        pill.textContent = labels[id] || id;
+        list.appendChild(pill);
+      });
+    }
+  }
+
+  document.getElementById('btn-prog-back').addEventListener('click', function () { showScreen('menu'); });
+
+  document.getElementById('btn-menu-game').addEventListener('click', function () {
+    var confirmText = GameState.isReviewMode
+      ? 'Exit practice and return to the main menu?'
+      : 'Exit this mission? Your progress on this round will not be saved.';
+    if (window.confirm(confirmText)) {
+      if (GameState.isReviewMode) {
+        GameState.isReviewMode = false;
+        GameState.pendingReviewAdvance = false;
+        GameState.reviewCompletedAllCorrect = false;
+        clearPersistedReviewQueue();
+        setReviewBannerVisible(false);
+        setGameTitle('🛸 Mission in progress');
+        updateExitButtonLabel();
+      }
+      showScreen('menu');
+    }
+  });
+
+  document.getElementById('btn-sound').addEventListener('click', function () {
+    GameState.soundOn = !GameState.soundOn;
+    this.setAttribute('aria-pressed', String(GameState.soundOn));
+    this.textContent = GameState.soundOn ? '🔊 Sound on' : '🔇 Sound off';
+    this.classList.toggle('muted', !GameState.soundOn);
+  });
+
+  document.getElementById('btn-hint').addEventListener('click', function () {
+    const q = GameState.currentQuestion;
+    openHintModal(q);
+  });
+
+  document.getElementById('btn-hint-close').addEventListener('click', closeHintModal);
+
+  document.getElementById('modal-hint').addEventListener('click', function (e) {
+    if (e.target.id === 'modal-hint') closeHintModal();
+  });
+
+  document.getElementById('btn-submit-answer').addEventListener('click', handleSubmitAnswer);
+
+  document.getElementById('btn-next').addEventListener('click', goToNextQuestion);
+
+  document.getElementById('btn-again').addEventListener('click', startRound);
+
+  document.getElementById('btn-game-over-try-again').addEventListener('click', function () {
+    setGameOverModalOpen(false);
+    startRound();
+  });
+
+  document.getElementById('btn-game-over-practice').addEventListener('click', function () {
+    if (safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
+      preserveRoundContext: true,
+      emptyStateLocation: 'gameover'
+    })) {
+      setGameOverModalOpen(false);
+    }
+  });
+
+  document.getElementById('btn-game-over-menu').addEventListener('click', function () {
+    setGameOverModalOpen(false);
+    showScreen('menu');
+  });
+
+  document.getElementById('btn-practice-wrongs').addEventListener('click', function () {
+    safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
+      preserveRoundContext: true,
+      emptyStateLocation: 'results'
+    });
+  });
+
+  document.getElementById('btn-results-quickfix').addEventListener('click', function () {
+    window.SmartPractice.start('quickfix', {
+      emptyStateLocation: 'results',
+      preserveRoundContext: true,
+    });
+  });
+  document.getElementById('btn-results-mostmissed').addEventListener('click', function () {
+    window.SmartPractice.start('mostmissed', {
+      emptyStateLocation: 'results',
+      preserveRoundContext: true,
+    });
+  });
+  document.getElementById('btn-results-duetoday').addEventListener('click', function () {
+    window.SmartPractice.start('duetoday', {
+      emptyStateLocation: 'results',
+      preserveRoundContext: true,
+    });
+  });
+
+  document.getElementById('btn-save-wrongs-recent').addEventListener('click', function () {
+    var rec =
+      GameState.lastRoundWrongBuffer && GameState.lastRoundWrongBuffer.length
+        ? GameState.lastRoundWrongBuffer
+        : wrongAnswerStore.recentWrongAnswers;
+    if (!rec || !rec.length) return;
+    var text = exportWrongAnswersToText(rec, '(Last mission)');
+    var name = 'wrong-answers-' + exportFilenameStamp() + '.txt';
+    runSaveMistakesFile(text, name, 'results-save-status');
+  });
+
+  document.getElementById('btn-save-wrongs-all').addEventListener('click', function () {
+    if (!wrongAnswerStore.wrongAnswersHistory.length) return;
+    var text = exportWrongAnswersToText(wrongAnswerStore.wrongAnswersHistory, '(All saved history)');
+    var name = 'wrong-answers-all-' + exportFilenameStamp() + '.txt';
+    runSaveMistakesFile(text, name, 'results-save-status');
+  });
+
+  document.getElementById('btn-menu-save-saved-wrongs').addEventListener('click', function () {
+    var latestMistakes = getLatestMistakesForPractice();
+    if (!latestMistakes.length) return;
+    var text = exportWrongAnswersToText(latestMistakes, '(Latest mistakes)');
+    var name = 'mistakes-' + exportFilenameStamp() + '.txt';
+    runSaveMistakesFile(text, name, 'menu-save-status');
+  });
+
+  document.getElementById('btn-clear-wrong-history').addEventListener('click', function () {
+    if (!window.confirm('Clear everything in your saved list on this device? This cannot be undone.')) return;
+    clearWrongAnswerHistory();
+    GameState.lastRoundWrongBuffer = [];
+    updateResultsExportButtons();
+    updateMenuMistakeButtons();
+    clearSaveStatus('menu-save-status');
+  });
+  document.getElementById('btn-change-level').addEventListener('click', function () { showScreen('menu'); });
+  document.getElementById('btn-change-mode').addEventListener('click', function () { showScreen('menu'); });
+  document.getElementById('btn-results-menu').addEventListener('click', function () { showScreen('menu'); });
+  document.getElementById('btn-results-progress').addEventListener('click', function () {
+    renderProgressScreen();
+    showScreen('progress');
+  });
+
+  document.getElementById('answer-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') handleSubmitAnswer();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeHintModal();
+  });
+
+  (function initWrongAnswersUi() {
+    resetLatestPracticeStateOnLaunch();
+    updatePracticeButtons();
+  })();
+})();
+
+</script>
+
+
+  <script src="../../shared/scripts/game-bridge.js"></script>
+  <script>
+    // KLS hub wiring: post a "played" event when the Results screen appears.
+    if (window.KLS && window.KLS.bridge) {
+      window.KLS.bridge.onVisible('#screen-results.active', function () {
+        window.KLS.bridge.played();
+        window.KLS.bridge.celebrate();
+      });
+    }
+  </script>
+</body>
+</html>

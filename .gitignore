@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Python (used by games/word-problem-adventure/tools/)
+__pycache__/
+*.pyc
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# OS / scratch
+Thumbs.db
+*.swp

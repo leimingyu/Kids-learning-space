@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design System — Kids Learning Space</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="shared/styles/tokens.css">
+  <link rel="stylesheet" href="shared/styles/components.css">
+  <style>
+    /* Preview-page layout (not part of the design system) */
+    .ds-header {
+      text-align: center;
+      padding: var(--kls-space-8) var(--kls-space-5) var(--kls-space-4);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .ds-header__title {
+      font-family: var(--kls-font-display);
+      font-size: clamp(var(--kls-fs-2xl), 6vw, var(--kls-fs-4xl));
+      color: var(--kls-primary);
+      text-shadow: 3px 3px 0 var(--kls-accent);
+      margin: 0 0 var(--kls-space-2);
+    }
+    .ds-header__lead {
+      font-size: var(--kls-fs-lg);
+      color: var(--kls-muted);
+      margin: 0;
+    }
+    .ds-hero-mascot {
+      width: 200px; height: 200px;
+      margin: var(--kls-space-4) auto var(--kls-space-2);
+      display: block;
+    }
+
+    .ds-page {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: var(--kls-space-7);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--kls-space-5) var(--kls-space-5) var(--kls-space-11);
+    }
+    .ds-nav {
+      position: sticky;
+      top: var(--kls-space-5);
+      align-self: start;
+      background: var(--kls-surface-elev);
+      border-radius: var(--kls-radius-xl);
+      padding: var(--kls-space-5);
+      box-shadow: var(--kls-shadow-2);
+    }
+    .ds-nav h2 {
+      font-family: var(--kls-font-display);
+      font-size: var(--kls-fs-base);
+      margin: 0 0 var(--kls-space-3);
+      color: var(--kls-primary);
+    }
+    .ds-nav ol { list-style: none; padding: 0; margin: 0; }
+    .ds-nav li + li { margin-top: 2px; }
+    .ds-nav a {
+      display: block;
+      padding: var(--kls-space-1) var(--kls-space-3);
+      color: var(--kls-ink);
+      text-decoration: none;
+      border-radius: var(--kls-radius-sm);
+      font-size: var(--kls-fs-sm);
+    }
+    .ds-nav a:hover { background: var(--kls-surface-2); }
+
+    section.ds-section {
+      background: var(--kls-surface-elev);
+      border-radius: var(--kls-radius-xl);
+      padding: var(--kls-space-7);
+      box-shadow: var(--kls-shadow-2);
+      margin-bottom: var(--kls-space-7);
+      scroll-margin-top: var(--kls-space-5);
+    }
+    section.ds-section > h2 {
+      font-family: var(--kls-font-display);
+      font-size: var(--kls-fs-2xl);
+      color: var(--kls-primary);
+      margin: 0 0 var(--kls-space-4);
+    }
+    section.ds-section > h3 {
+      font-family: var(--kls-font-display);
+      font-size: var(--kls-fs-lg);
+      color: var(--kls-ink-soft);
+      margin: var(--kls-space-5) 0 var(--kls-space-3);
+    }
+    .ds-lead { color: var(--kls-muted); margin-bottom: var(--kls-space-5); }
+
+    .ds-swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: var(--kls-space-3);
+    }
+    .ds-swatch {
+      border-radius: var(--kls-radius-md);
+      overflow: hidden;
+      border: 1px solid var(--kls-border);
+      background: var(--kls-surface-1);
+    }
+    .ds-swatch__chip   { height: 80px; }
+    .ds-swatch__meta   { padding: var(--kls-space-2) var(--kls-space-3); font-size: var(--kls-fs-xs); }
+    .ds-swatch__name   { font-weight: var(--kls-fw-bold); display: block; color: var(--kls-ink); }
+    .ds-swatch__token  { color: var(--kls-muted); font-family: var(--kls-font-mono); display: block; }
+
+    .ds-row    { display: flex; flex-wrap: wrap; gap: var(--kls-space-3); align-items: center; margin-bottom: var(--kls-space-3); }
+    .ds-grid   { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--kls-space-4); }
+
+    .ds-spacing-row { display: flex; align-items: center; gap: var(--kls-space-3); margin-bottom: var(--kls-space-2); }
+    .ds-spacing-row code { width: 110px; }
+    .ds-spacing-bar { background: var(--kls-secondary); height: 18px; border-radius: var(--kls-radius-sm); }
+
+    .ds-radius {
+      width: 110px; height: 80px;
+      background: var(--kls-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--kls-font-mono); font-weight: 700;
+      color: var(--kls-ink);
+    }
+
+    .ds-shadow {
+      height: 80px;
+      background: var(--kls-surface-elev);
+      border-radius: var(--kls-radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--kls-font-mono); font-size: var(--kls-fs-xs);
+      color: var(--kls-muted);
+    }
+
+    .ds-motion-card {
+      width: 80px; height: 80px;
+      background: var(--kls-accent);
+      border-radius: var(--kls-radius-md);
+      cursor: pointer;
+      transition: transform var(--kls-dur-medium) var(--kls-ease-spring);
+    }
+    .ds-motion-card:hover { transform: translateY(-14px) rotate(-6deg) scale(1.08); }
+
+    .ds-mascot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--kls-space-5);
+    }
+    .ds-mascot { text-align: center; }
+    .ds-mascot svg {
+      width: 160px; height: 160px;
+      background: var(--kls-surface-2);
+      border-radius: var(--kls-radius-xl);
+      padding: var(--kls-space-3);
+      display: block;
+      margin: 0 auto;
+    }
+    .ds-mascot__label {
+      margin-top: var(--kls-space-2);
+      font-family: var(--kls-font-display);
+      font-weight: var(--kls-fw-semibold);
+    }
+
+    .ds-typeset h1 { font-size: var(--kls-fs-4xl); margin: 0 0 var(--kls-space-3); }
+    .ds-typeset h2 { font-size: var(--kls-fs-3xl); margin: 0 0 var(--kls-space-3); }
+    .ds-typeset h3 { font-size: var(--kls-fs-2xl); margin: 0 0 var(--kls-space-2); }
+    .ds-typeset p  { font-size: var(--kls-fs-base); line-height: var(--kls-lh-base); margin: 0 0 var(--kls-space-3); max-width: 60ch; }
+
+    @media (max-width: 760px) {
+      .ds-page { grid-template-columns: 1fr; }
+      .ds-nav  { position: static; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ====== Inlined symbol library for offline / file:// preview ====== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="pip-curious" viewBox="0 0 200 200">
+        <path d="M30,140 Q5,108 18,68 Q40,42 70,68 Q82,102 64,142 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M16,72 Q30,52 56,65 Q42,60 30,72 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <ellipse cx="110" cy="105" rx="58" ry="52" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M66,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M76,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M154,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M144,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M74,108 Q110,144 146,108 Q130,150 110,150 Q90,150 74,108 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <path d="M82,90 L96,87"   stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <path d="M124,87 L138,90" stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        <circle cx="90"  cy="103" r="7"   fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="130" cy="103" r="7"   fill="var(--pip-ink, #2D3436)"/>
+        <circle cx="92"  cy="100" r="2.4" fill="#fff"/>
+        <circle cx="132" cy="100" r="2.4" fill="#fff"/>
+        <ellipse cx="110" cy="124" rx="5" ry="3.6" fill="var(--pip-ink, #2D3436)"/>
+        <path d="M110,128 Q110,135 104,135 M110,128 Q110,135 116,135"
+              stroke="var(--pip-ink, #2D3436)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="78"  cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+        <circle cx="142" cy="118" r="5" fill="var(--pip-pink, #FFB39C)" opacity="0.55"/>
+      </symbol>
+
+      <symbol id="pip-cheering" viewBox="0 0 200 200">
+        <g fill="var(--pip-accent, #FFD93D)">
+          <path d="M38,38 l4,9 l9,4 l-9,4 l-4,9 l-4,-9 l-9,-4 l9,-4 z"/>
+          <path d="M172,52 l3,7 l7,3 l-7,3 l-3,7 l-3,-7 l-7,-3 l7,-3 z"/>
+          <path d="M168,140 l3,6 l6,3 l-6,3 l-3,6 l-3,-6 l-6,-3 l6,-3 z"/>
+        </g>
+        <path d="M28,138 Q-2,96 12,55 Q35,28 70,55 Q82,98 66,144 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M10,60 Q25,40 58,55 Q42,50 25,62 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <ellipse cx="110" cy="105" rx="58" ry="52" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M62,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M74,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M158,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M146,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+        <path d="M74,108 Q110,148 146,108 Q130,152 110,152 Q90,152 74,108 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <path d="M80,104 Q90,93 100,104"   stroke="var(--pip-ink, #2D3436)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M120,104 Q130,93 140,104" stroke="var(--pip-ink, #2D3436)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="124" rx="5" ry="3.6" fill="var(--pip-ink, #2D3436)"/>
+        <path d="M92,128 Q110,148 128,128 Q110,140 92,128 Z" fill="var(--pip-ink, #2D3436)"/>
+        <ellipse cx="110" cy="138" rx="7" ry="3.2" fill="#F08080"/>
+        <circle cx="76"  cy="120" r="6.5" fill="var(--pip-pink, #FFB39C)" opacity="0.75"/>
+        <circle cx="144" cy="120" r="6.5" fill="var(--pip-pink, #FFB39C)" opacity="0.75"/>
+      </symbol>
+
+      <symbol id="pip-thinking" viewBox="0 0 200 200">
+        <g fill="var(--pip-cream, #FFF0E1)" stroke="var(--pip-ink, #2D3436)" stroke-width="2">
+          <circle cx="170" cy="40" r="20"/>
+          <circle cx="148" cy="62" r="7"/>
+          <circle cx="138" cy="74" r="4"/>
+        </g>
+        <text x="170" y="48" text-anchor="middle" font-family="Fredoka, sans-serif" font-size="22" font-weight="700" fill="var(--pip-ink, #2D3436)">?</text>
+        <path d="M30,140 Q5,108 18,68 Q40,42 70,68 Q82,102 64,142 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M16,72 Q30,52 56,65 Q42,60 30,72 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <g transform="rotate(-7 110 105)">
+          <ellipse cx="110" cy="105" rx="58" ry="52" fill="var(--pip-fur, #FF8A65)"/>
+          <path d="M66,52 L80,98 L102,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+          <path d="M76,68 L82,92 L96,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+          <path d="M154,52 L140,98 L118,76 Z" fill="var(--pip-fur, #FF8A65)"/>
+          <path d="M144,68 L138,92 L124,80 Z" fill="var(--pip-pink, #FFB39C)"/>
+          <path d="M74,108 Q110,144 146,108 Q130,150 110,150 Q90,150 74,108 Z" fill="var(--pip-cream, #FFF0E1)"/>
+          <circle cx="94"  cy="100" r="7"   fill="var(--pip-ink, #2D3436)"/>
+          <circle cx="134" cy="100" r="7"   fill="var(--pip-ink, #2D3436)"/>
+          <circle cx="97"  cy="97"  r="2.4" fill="#fff"/>
+          <circle cx="137" cy="97"  r="2.4" fill="#fff"/>
+          <ellipse cx="110" cy="124" rx="5"   ry="3.6" fill="var(--pip-ink, #2D3436)"/>
+          <ellipse cx="110" cy="132" rx="3.2" ry="2.6" fill="var(--pip-ink, #2D3436)"/>
+        </g>
+      </symbol>
+
+      <symbol id="pip-sleeping" viewBox="0 0 200 200">
+        <g fill="var(--kls-secondary, #4ECDC4)" font-family="Fredoka, sans-serif" font-weight="700">
+          <text x="150" y="52" font-size="22">Z</text>
+          <text x="166" y="38" font-size="17">z</text>
+          <text x="178" y="26" font-size="13">z</text>
+        </g>
+        <path d="M40,154 Q14,142 22,108 Q42,90 64,108 Q74,130 66,150 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M22,112 Q36,100 58,108 Q44,104 30,112 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <ellipse cx="110" cy="120" rx="58" ry="48" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M66,82 Q72,100 92,93 Q76,84 66,82 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M154,82 Q148,100 128,93 Q144,84 154,82 Z" fill="var(--pip-fur, #FF8A65)"/>
+        <path d="M74,122 Q110,154 146,122 Q130,158 110,158 Q90,158 74,122 Z" fill="var(--pip-cream, #FFF0E1)"/>
+        <path d="M82,115 Q90,121 98,115"   stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M122,115 Q130,121 138,115" stroke="var(--pip-ink, #2D3436)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="136" rx="5" ry="3.6" fill="var(--pip-ink, #2D3436)"/>
+        <ellipse cx="110" cy="148" rx="3" ry="2.5" fill="var(--pip-ink, #2D3436)" opacity="0.75"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="ds-header">
+    <svg class="ds-hero-mascot" viewBox="0 0 200 200" role="img" aria-label="Pip the fox waving">
+      <use href="#pip-curious"/>
+    </svg>
+    <h1 class="ds-header__title">Design System</h1>
+    <p class="ds-header__lead">
+      Sunny Playground palette · Fredoka + Nunito · Pip the Fox · OKLCH tokens
+    </p>
+  </header>
+
+  <div class="ds-page">
+    <nav class="ds-nav" aria-label="Sections">
+      <h2>Sections</h2>
+      <ol>
+        <li><a href="#palette">Palette</a></li>
+        <li><a href="#typography">Typography</a></li>
+        <li><a href="#spacing">Spacing</a></li>
+        <li><a href="#radii">Radii</a></li>
+        <li><a href="#shadows">Shadows</a></li>
+        <li><a href="#motion">Motion</a></li>
+        <li><a href="#buttons">Buttons</a></li>
+        <li><a href="#tiles">Tile cards</a></li>
+        <li><a href="#progress">Progress &amp; stars</a></li>
+        <li><a href="#modal">Modal</a></li>
+        <li><a href="#toast">Toast &amp; celebration</a></li>
+        <li><a href="#audio">Audio</a></li>
+        <li><a href="#mascot">Mascot — Pip</a></li>
+      </ol>
+    </nav>
+
+    <main>
+      <section class="ds-section" id="palette">
+        <h2>Palette — Sunny Playground</h2>
+        <p class="ds-lead">
+          Defined in OKLCH for perceptual uniformity. Dark mode applies automatically via <code>prefers-color-scheme: dark</code>. All body text meets WCAG AA on its intended surface.
+        </p>
+        <h3>Brand</h3>
+        <div class="ds-swatches" id="sw-brand"></div>
+        <h3>Semantic</h3>
+        <div class="ds-swatches" id="sw-semantic"></div>
+        <h3>Neutrals</h3>
+        <div class="ds-swatches" id="sw-neutrals"></div>
+      </section>
+
+      <section class="ds-section" id="typography">
+        <h2>Typography</h2>
+        <p class="ds-lead">
+          Fredoka for display, Nunito for body. Body minimum 18px / line-height 1.5.
+        </p>
+        <div class="ds-typeset">
+          <h1>Cosmic Math Quest</h1>
+          <h2>Word Problem Adventure</h2>
+          <h3>Long Division Coach</h3>
+          <p>
+            The home team scored 36 points. The visitors scored 28 points. How many more points did the home team score than the visitors? Read the story carefully, find the numbers, and decide which operation fits.
+          </p>
+        </div>
+        <div class="ds-grid" style="margin-top: var(--kls-space-5);">
+          <div><strong>Display</strong><br><code>--kls-font-display</code><br>Fredoka 500 / 600 / 700</div>
+          <div><strong>Body</strong><br><code>--kls-font-body</code><br>Nunito 400 / 600 / 700 / 800</div>
+        </div>
+      </section>
+
+      <section class="ds-section" id="spacing">
+        <h2>Spacing — 4px base scale</h2>
+        <div id="ds-spacing"></div>
+      </section>
+
+      <section class="ds-section" id="radii">
+        <h2>Radii</h2>
+        <div class="ds-row" id="ds-radii"></div>
+      </section>
+
+      <section class="ds-section" id="shadows">
+        <h2>Shadows</h2>
+        <div class="ds-grid" id="ds-shadows"></div>
+      </section>
+
+      <section class="ds-section" id="motion">
+        <h2>Motion</h2>
+        <p class="ds-lead">
+          Spring-y easings for play. Respects <code>prefers-reduced-motion</code> — durations collapse to near-zero when set.
+        </p>
+        <div class="ds-row">
+          <div class="ds-motion-card" title="Hover me"></div>
+          <div class="ds-motion-card" style="background: var(--kls-secondary);" title="Hover me"></div>
+          <div class="ds-motion-card" style="background: var(--kls-primary);" title="Hover me"></div>
+        </div>
+        <p style="font-size: var(--kls-fs-sm); color: var(--kls-muted); margin-top: var(--kls-space-3);">
+          <code>--kls-ease-spring</code> = <code>cubic-bezier(0.34, 1.56, 0.64, 1)</code>
+        </p>
+      </section>
+
+      <section class="ds-section" id="buttons">
+        <h2>Buttons</h2>
+        <h3>Sizes</h3>
+        <div class="ds-row">
+          <button class="kls-btn kls-btn--primary kls-btn--lg" type="button">Large primary</button>
+          <button class="kls-btn kls-btn--primary"             type="button">Primary</button>
+          <button class="kls-btn kls-btn--primary kls-btn--sm" type="button">Small</button>
+        </div>
+        <h3>Variants</h3>
+        <div class="ds-row">
+          <button class="kls-btn kls-btn--primary"   type="button">Primary</button>
+          <button class="kls-btn kls-btn--secondary" type="button">Secondary</button>
+          <button class="kls-btn kls-btn--ghost"     type="button">Ghost</button>
+          <button class="kls-btn kls-btn--primary"   type="button" disabled>Disabled</button>
+        </div>
+        <h3>Icon buttons</h3>
+        <div class="ds-row">
+          <button class="kls-btn kls-btn--icon kls-btn--ghost" type="button" aria-label="Sound on">🔊</button>
+          <button class="kls-btn kls-btn--icon kls-btn--ghost" type="button" aria-label="Sound off">🔇</button>
+          <button class="kls-btn kls-btn--icon kls-btn--ghost" type="button" aria-label="Fullscreen">⛶</button>
+          <button class="kls-btn kls-btn--icon kls-btn--ghost" type="button" aria-label="Back to hub">←</button>
+        </div>
+      </section>
+
+      <section class="ds-section" id="tiles">
+        <h2>Tile cards</h2>
+        <p class="ds-lead">Game tile = illustration area, topic tag, title, subtitle, star meter, "last played," and a progress bar.</p>
+        <div class="hub__tiles">
+          <a class="tile" href="#">
+            <div class="tile__illo">📚</div>
+            <span class="tile__tag tile__tag--math">Math · Reading</span>
+            <h3 class="tile__title">Word Problem Adventure</h3>
+            <p class="tile__subtitle">Read the story. Add, subtract, compare, share.</p>
+            <div class="tile__stats">
+              <span class="tile__stars" aria-label="2 of 3 stars">★★☆</span>
+              <span class="tile__lastplayed">Played 2h ago</span>
+            </div>
+            <div class="kls-progress" style="margin-top: var(--kls-space-3);" aria-label="60% complete">
+              <div class="kls-progress__fill" style="width: 60%;"></div>
+            </div>
+          </a>
+          <a class="tile" href="#">
+            <div class="tile__illo">🚀</div>
+            <span class="tile__tag tile__tag--math">Math</span>
+            <h3 class="tile__title">Cosmic Math Quest</h3>
+            <p class="tile__subtitle">Multiplication &amp; division mastery missions.</p>
+            <div class="tile__stats">
+              <span class="tile__stars">★★★</span>
+              <span class="tile__lastplayed">Played 1d ago</span>
+            </div>
+            <div class="kls-progress" style="margin-top: var(--kls-space-3);">
+              <div class="kls-progress__fill" style="width: 92%;"></div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="ds-section" id="progress">
+        <h2>Progress &amp; star meter</h2>
+        <div class="kls-progress" style="margin-bottom: var(--kls-space-2);">
+          <div class="kls-progress__fill" style="width: 35%;"></div>
+        </div>
+        <span class="kls-progress__label">35% complete</span>
+        <h3>Star meter (animates on award)</h3>
+        <div class="ds-row" id="ds-star-meter"></div>
+        <button class="kls-btn kls-btn--sm" type="button" id="ds-replay-stars">Replay animation</button>
+      </section>
+
+      <section class="ds-section" id="modal">
+        <h2>Modal / Dialog</h2>
+        <p class="ds-lead">Center-stage panel on a softened backdrop. Click "Open" to preview.</p>
+        <button class="kls-btn kls-btn--primary" type="button" id="ds-open-modal">Open modal</button>
+      </section>
+
+      <section class="ds-section" id="toast">
+        <h2>Toast &amp; celebration</h2>
+        <div class="ds-row">
+          <button class="kls-btn kls-btn--secondary" type="button" data-toast="success">Success toast</button>
+          <button class="kls-btn kls-btn--secondary" type="button" data-toast="warning">Warning toast</button>
+          <button class="kls-btn kls-btn--secondary" type="button" data-toast="danger">Danger toast</button>
+          <button class="kls-btn kls-btn--primary"   type="button" id="ds-celebrate">Celebrate 🎉</button>
+        </div>
+      </section>
+
+      <section class="ds-section" id="audio">
+        <h2>Audio</h2>
+        <p class="ds-lead">
+          Subtle Web Audio SFX. Default is <strong>muted</strong>; toggle to enable. Preference persists across visits (<code>kls.audio.muted.v1</code> in localStorage).
+        </p>
+        <div class="ds-row">
+          <button class="kls-btn kls-btn--ghost" type="button" id="ds-audio-toggle"></button>
+          <button class="kls-btn kls-btn--ghost" type="button" data-sfx="click">Play click</button>
+          <button class="kls-btn kls-btn--ghost" type="button" data-sfx="success">Play success</button>
+          <button class="kls-btn kls-btn--ghost" type="button" data-sfx="fail">Play fail</button>
+          <button class="kls-btn kls-btn--ghost" type="button" data-sfx="level-complete">Play level-complete</button>
+        </div>
+        <p style="margin-top: var(--kls-space-3); color: var(--kls-muted); font-size: var(--kls-fs-sm);">
+          API: <code>window.KLS.audio.play('success')</code> · <code>.toggle()</code> · <code>.isMuted()</code> · <code>.onChange(fn)</code>
+        </p>
+      </section>
+
+      <section class="ds-section" id="mascot">
+        <h2>Mascot — Pip the Fox 🦊</h2>
+        <p class="ds-lead">
+          One SVG file in <code>shared/assets/mascot.svg</code>, four poses, referenced via <code>&lt;use href="…#pip-curious"/&gt;</code>. Colors honor parent-document CSS variables.
+        </p>
+        <div class="ds-mascot-grid">
+          <figure class="ds-mascot">
+            <svg viewBox="0 0 200 200" role="img" aria-label="Pip looking curious"><use href="#pip-curious"/></svg>
+            <figcaption class="ds-mascot__label">Curious<br><code>#pip-curious</code></figcaption>
+          </figure>
+          <figure class="ds-mascot">
+            <svg viewBox="0 0 200 200" role="img" aria-label="Pip cheering"><use href="#pip-cheering"/></svg>
+            <figcaption class="ds-mascot__label">Cheering<br><code>#pip-cheering</code></figcaption>
+          </figure>
+          <figure class="ds-mascot">
+            <svg viewBox="0 0 200 200" role="img" aria-label="Pip thinking"><use href="#pip-thinking"/></svg>
+            <figcaption class="ds-mascot__label">Thinking<br><code>#pip-thinking</code></figcaption>
+          </figure>
+          <figure class="ds-mascot">
+            <svg viewBox="0 0 200 200" role="img" aria-label="Pip sleeping"><use href="#pip-sleeping"/></svg>
+            <figcaption class="ds-mascot__label">Sleeping<br><code>#pip-sleeping</code></figcaption>
+          </figure>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="shared/scripts/audio.js"></script>
+  <script src="shared/scripts/celebrate.js"></script>
+  <script>
+    // ----- palette swatches -----
+    const PALETTES = {
+      brand: [
+        ['Primary',         '--kls-primary',         '#FF6B6B'],
+        ['Primary hover',   '--kls-primary-hover',   '#E85555'],
+        ['Primary soft',    '--kls-primary-soft',    'tint'],
+        ['Secondary',       '--kls-secondary',       '#4ECDC4'],
+        ['Accent',          '--kls-accent',          '#FFD93D'],
+      ],
+      semantic: [
+        ['Success', '--kls-success', '#5FD9A8'],
+        ['Warning', '--kls-warning', '#FFAE5C'],
+        ['Danger',  '--kls-danger',  '#E5544E'],
+        ['Info',    '--kls-info',    '#6FB7E8'],
+      ],
+      neutrals: [
+        ['Surface 0', '--kls-surface-0', 'page'],
+        ['Surface 1', '--kls-surface-1', 'card'],
+        ['Surface 2', '--kls-surface-2', 'raised'],
+        ['Surface 3', '--kls-surface-3', 'hover'],
+        ['Ink',       '--kls-ink',       'body text'],
+        ['Muted',     '--kls-muted',     'secondary text'],
+        ['Border',    '--kls-border',    ''],
+      ],
+    };
+    function buildSwatches(targetId, list) {
+      const root = document.getElementById(targetId);
+      list.forEach(([name, token, note]) => {
+        const w = document.createElement('div');
+        w.className = 'ds-swatch';
+        w.innerHTML = `
+          <div class="ds-swatch__chip" style="background: var(${token});"></div>
+          <div class="ds-swatch__meta">
+            <span class="ds-swatch__name">${name}</span>
+            <span class="ds-swatch__token">${token}</span>
+            <span class="ds-swatch__token">${note}</span>
+          </div>`;
+        root.appendChild(w);
+      });
+    }
+    buildSwatches('sw-brand',    PALETTES.brand);
+    buildSwatches('sw-semantic', PALETTES.semantic);
+    buildSwatches('sw-neutrals', PALETTES.neutrals);
+
+    // ----- spacing -----
+    const spacingRoot = document.getElementById('ds-spacing');
+    [1,2,3,4,5,6,7,8,9,10].forEach((i) => {
+      const row = document.createElement('div');
+      row.className = 'ds-spacing-row';
+      row.innerHTML = `
+        <code>--kls-space-${i}</code>
+        <div class="ds-spacing-bar" style="width: var(--kls-space-${i});"></div>
+        <span style="font-size: var(--kls-fs-sm); color: var(--kls-muted);"></span>`;
+      spacingRoot.appendChild(row);
+      const px = getComputedStyle(document.documentElement)
+        .getPropertyValue(`--kls-space-${i}`).trim();
+      row.querySelector('span').textContent = px;
+    });
+
+    // ----- radii -----
+    const radiiRoot = document.getElementById('ds-radii');
+    ['sm','md','lg','xl','pill'].forEach((k) => {
+      const card = document.createElement('div');
+      card.className = 'ds-radius';
+      card.style.borderRadius = `var(--kls-radius-${k})`;
+      card.textContent = k;
+      radiiRoot.appendChild(card);
+    });
+
+    // ----- shadows -----
+    const shadowRoot = document.getElementById('ds-shadows');
+    [1,2,3,4].forEach((k) => {
+      const card = document.createElement('div');
+      card.className = 'ds-shadow';
+      card.style.boxShadow = `var(--kls-shadow-${k})`;
+      card.textContent = `--kls-shadow-${k}`;
+      shadowRoot.appendChild(card);
+    });
+
+    // ----- star meter -----
+    const starRoot = document.getElementById('ds-star-meter');
+    function renderStars(filled) {
+      starRoot.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'kls-stars';
+      for (let i = 0; i < 3; i++) {
+        const s = document.createElement('span');
+        s.className = 'kls-stars__pip' + (i < filled ? ' kls-stars__pip--on' : '');
+        s.textContent = '★';
+        wrap.appendChild(s);
+      }
+      starRoot.appendChild(wrap);
+      starRoot.append(' ' + filled + ' / 3');
+    }
+    renderStars(2);
+    document.getElementById('ds-replay-stars').addEventListener('click', () => {
+      renderStars(0);
+      setTimeout(() => renderStars(3), 220);
+      if (window.KLS && window.KLS.audio) window.KLS.audio.play('success');
+    });
+
+    // ----- modal -----
+    document.getElementById('ds-open-modal').addEventListener('click', () => {
+      const m = document.createElement('div');
+      m.className = 'kls-modal';
+      m.innerHTML = `
+        <div class="kls-modal__panel" role="dialog" aria-modal="true" aria-labelledby="ds-modal-title">
+          <h2 class="kls-modal__title" id="ds-modal-title">Nice work!</h2>
+          <div class="kls-modal__body">
+            <p>You finished 10 questions in a row. Want to keep going or take a break?</p>
+          </div>
+          <div class="kls-modal__actions">
+            <button class="kls-btn kls-btn--ghost"   type="button" data-close>Take a break</button>
+            <button class="kls-btn kls-btn--primary" type="button" data-close>Keep going</button>
+          </div>
+        </div>`;
+      document.body.appendChild(m);
+      m.addEventListener('click', (e) => {
+        if (e.target === m || e.target.matches('[data-close]')) m.remove();
+      });
+    });
+
+    // ----- toast -----
+    function showToast(kind, msg) {
+      const t = document.createElement('div');
+      t.className = 'kls-toast' + (kind ? ' kls-toast--' + kind : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2400);
+    }
+    document.querySelectorAll('[data-toast]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.toast;
+        showToast(k, { success: '🎉 You got it!', warning: '⚠️ Try again carefully', danger: '❌ Not quite right' }[k]);
+        if (window.KLS && window.KLS.audio) window.KLS.audio.play(k === 'success' ? 'success' : 'fail');
+      });
+    });
+
+    // ----- celebration -----
+    document.getElementById('ds-celebrate').addEventListener('click', () => {
+      const c = document.createElement('div');
+      c.className = 'kls-celebration';
+      c.innerHTML = `
+        <div class="kls-celebration__panel">
+          <div class="kls-celebration__icon">🎉</div>
+          <h2 class="kls-celebration__title">Level Complete!</h2>
+          <p>Pip is proud of you.</p>
+          <button class="kls-btn kls-btn--primary" type="button" data-close>Awesome</button>
+        </div>`;
+      document.body.appendChild(c);
+      c.addEventListener('click', (e) => {
+        if (e.target === c || e.target.matches('[data-close]')) c.remove();
+      });
+      if (window.KLS && window.KLS.audio) window.KLS.audio.play('level-complete');
+      if (window.KLS && window.KLS.celebrate) window.KLS.celebrate.fire();
+    });
+
+    // ----- audio toggle -----
+    const audio = window.KLS.audio;
+    const audioBtn = document.getElementById('ds-audio-toggle');
+    function renderAudioBtn() {
+      audioBtn.textContent = audio.isMuted() ? '🔇 Sound: off' : '🔊 Sound: on';
+    }
+    renderAudioBtn();
+    audio.onChange(renderAudioBtn);
+    audioBtn.addEventListener('click', () => audio.toggle());
+    document.querySelectorAll('[data-sfx]').forEach((b) => {
+      b.addEventListener('click', () => audio.play(b.dataset.sfx));
+    });
+  </script>
+</body>
+</html>
