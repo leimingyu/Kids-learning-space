@@ -11,9 +11,35 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-HTML = ROOT / "word_problem_adventure.html"
+# Game was renamed from word_problem_adventure.html to index.html during the hub migration.
+HTML = ROOT.parent / "index.html"
 
 BANNED_SUBSTRINGS = ("rephrase", "Actually", "fix:", "… wait", "count problem:")
+
+# Vocabulary that previous review found confusing for 8–10-year-old US kids.
+# Reintroducing any of these should fail validation.
+BANNED_VOCAB = (
+    "fossil prints",      # mismatched noun in "How many cards" template
+    "spirit votes",       # uncommon school term
+    "rhythm sticks",      # uncommon instrument name; prefer "drumsticks"
+    "tide pool tray",     # uncommon setting; prefer "tray at the aquarium"
+)
+
+# True umbrella nouns. When the asked-noun is one of these, the two source
+# nouns don't need to match it (e.g. "drumsticks + bells → instruments").
+# Specific nouns like "cards" or "bagels" are NOT in here on purpose: those
+# must literally appear in both source groups.
+GENERIC_ASKER_NOUNS = {
+    "items", "things", "pieces", "parts", "objects",
+    "creatures", "animals", "bugs",
+    "instruments",
+    "snacks", "treats", "foods", "drinks", "veggies",
+    "supplies", "equipment",
+    "decorations",
+    "plants", "flowers", "fruits", "vegetables",
+    "toys", "tools",
+    "people",
+}
 
 EXPECTED_LEGACY_COUNTS = {"easy": 100, "medium": 100, "hard": 100}
 REQUIRED_TYPES = {
@@ -66,6 +92,7 @@ def parse_question_objects(script: str) -> list[dict]:
         ans = re.search(r"answer:\s*(\d+)", line)
         pt = re.search(r'problemType:\s*"([^"]*)"', line)
         st = re.search(r'sessionLevel:\s*"([^"]*)"', line)
+        tx = re.search(r'text:\s*"((?:[^"\\]|\\.)*?)"', line)
         if not oid or not ans or not pt:
             continue
         objs.append(
@@ -74,10 +101,127 @@ def parse_question_objects(script: str) -> list[dict]:
                 "answer": int(ans.group(1)),
                 "problemType": pt.group(1),
                 "sessionLevel": st.group(1) if st else None,
+                "text": tx.group(1) if tx else "",
                 "line": line,
             }
         )
     return objs
+
+
+# Conservative shape: "N <group_a> and M <group_b>. ... How many <asker>"
+# where both groups are 1-2 words and the asker is 1-3 words. This matches the
+# museum-cart template family but skips multi-step questions whose groups are
+# verb phrases or prepositional clauses (too parser-fragile to judge).
+SIMPLE_TWO_GROUP_RE = re.compile(
+    r"\b(\d+)\s+([A-Za-z][A-Za-z-]*(?:\s+[A-Za-z][A-Za-z-]*)?)\s+and\s+"
+    r"(\d+)\s+([A-Za-z][A-Za-z-]*(?:\s+[A-Za-z][A-Za-z-]*)?)\s*\."
+)
+SIMPLE_ASKER_RE = re.compile(
+    r"\bHow many\s+([A-Za-z][A-Za-z-]*(?:\s+[A-Za-z][A-Za-z-]*){0,2}?)"
+    r"\s+(?:are|is|do|does|did|was|were|have|has)\b",
+    re.IGNORECASE,
+)
+
+# Words that often follow "How many ..." as modifiers, not as the head noun.
+# When the parsed head matches one of these, we skip — the real head is earlier
+# in the asker and our regex didn't isolate it cleanly.
+NON_HEAD_WORDS = {
+    "more", "fewer", "longer", "taller", "shorter", "older", "younger",
+    "heavier", "lighter", "warmer", "cooler", "altogether", "total", "in",
+}
+
+
+def _words(phrase: str) -> list[str]:
+    return [w.lower() for w in re.findall(r"[A-Za-z][A-Za-z-]*", phrase)]
+
+
+def _singularize(w: str) -> str:
+    """Crude plural-to-singular for matching ('cards' ↔ 'card')."""
+    if len(w) > 3 and w.endswith("ies"):
+        return w[:-3] + "y"
+    if len(w) > 2 and w.endswith("es") and not w.endswith("ses"):
+        return w[:-2]
+    if len(w) > 2 and w.endswith("s") and not w.endswith("ss"):
+        return w[:-1]
+    return w
+
+
+def _word_match(a: str, b: str) -> bool:
+    return _singularize(a) == _singularize(b)
+
+
+def audit_text_quality(qs: list[dict]) -> list[str]:
+    """Return a list of human-readable error strings; empty list means clean."""
+    errors: list[str] = []
+
+    for q in qs:
+        text = q["text"]
+        if not text:
+            continue
+
+        # 1) Banned vocabulary check (cheap, case-insensitive)
+        text_lc = text.lower()
+        for bad in BANNED_VOCAB:
+            if bad in text_lc:
+                errors.append(f"{q['id']}: banned vocabulary {bad!r} → {text}")
+
+        # 2) Decimeter / dm units (US grade-school standard is in/ft/cm/m)
+        if re.search(r"\bdecimeter|\bdm\b", text):
+            errors.append(f"{q['id']}: uses decimeters/dm (not US grade-school standard) → {text}")
+
+        # 3) Two-group asked-noun consistency (museum-cart template family).
+        # Only meaningful for simple additive shapes. Compare/Multi-step/Money
+        # questions legitimately phrase the asker differently (e.g. "How many
+        # more votes...", "How many cents..." with coin groups).
+        if q["problemType"] not in {"Part–Part–Whole", "Join"}:
+            continue
+        hm = SIMPLE_ASKER_RE.search(text)
+        if not hm:
+            continue
+        tg = SIMPLE_TWO_GROUP_RE.search(text[: hm.start()])
+        if not tg:
+            continue
+        group_a, group_b = tg.group(2).strip(), tg.group(4).strip()
+        asker = hm.group(1).strip()
+        asker_words = _words(asker)
+        if not asker_words:
+            continue
+        head = asker_words[-1]
+        # Skip comparison-style asks where the head is a modifier, not a noun.
+        if head in NON_HEAD_WORDS:
+            continue
+        # Umbrella term in the asker = fine regardless of group nouns.
+        if any(w in GENERIC_ASKER_NOUNS for w in asker_words):
+            continue
+
+        a_words = _words(group_a)
+        b_words = _words(group_b)
+        in_a = any(_word_match(w, head) for w in a_words)
+        in_b = any(_word_match(w, head) for w in b_words)
+        if in_a and in_b:
+            continue
+        # If the head noun appears BEFORE the two-group span (setup mention
+        # like "A baker made 40 rolls."), the count is established upstream
+        # and the two groups are just adverbial — don't flag.
+        # Note: must be before the groups, not before "How many", otherwise the
+        # groups themselves can mask a mismatch.
+        lead_text = text[: tg.start()]
+        if any(_word_match(w, head) for w in _words(lead_text)):
+            continue
+        if not in_a and not in_b:
+            errors.append(
+                f"{q['id']}: asks 'How many {asker}' but neither group "
+                f"({group_a!r}, {group_b!r}) contains {head!r}, and "
+                f"the asker has no umbrella noun. → {text}"
+            )
+        else:
+            bad_side = group_a if not in_a else group_b
+            errors.append(
+                f"{q['id']}: asks 'How many {asker}' but only one group matches. "
+                f"Mismatched group: {bad_side!r}. Rename it or use an umbrella asker. → {text}"
+            )
+
+    return errors
 
 
 def main() -> None:
@@ -106,6 +250,13 @@ def main() -> None:
     if len(ids) != len(set(ids)):
         dupes = [i for i in ids if ids.count(i) > 1]
         raise SystemExit("Duplicate ids: " + str(set(dupes)))
+
+    text_errors = audit_text_quality(qs)
+    if text_errors:
+        print(f"\nText-quality audit found {len(text_errors)} issue(s):")
+        for e in text_errors:
+            print("  -", e)
+        raise SystemExit(f"Text-quality audit failed ({len(text_errors)} issues)")
 
     by_prefix = {"easy": [], "medium": [], "hard": []}
     for q in qs:

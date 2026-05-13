@@ -715,8 +715,9 @@
 
         <div class="controls-lower">
           <button type="button" class="btn btn-secondary" id="btn-hint">Show Hint</button>
-          <button type="button" class="btn btn-secondary hide-easy-only" id="btn-picture">Show Picture</button>
+          <button type="button" class="btn btn-secondary hide-easy-only" id="btn-picture" aria-pressed="false">Show Picture</button>
           <button type="button" class="btn btn-secondary" id="btn-skip">Next Question</button>
+          <button type="button" class="btn btn-secondary" id="btn-mute" aria-pressed="false">🔊 Sound On</button>
           <button type="button" class="btn btn-secondary" id="btn-exit-game">Exit Game</button>
         </div>
       </div>
@@ -727,11 +728,11 @@
           <div class="stat-big" id="stat-correct">0</div>
         </div>
         <div class="stat-line">
-          <h3>Attempted</h3>
+          <h3>Completed</h3>
           <div class="stat-big" id="stat-attempted">0</div>
         </div>
         <div class="stat-line">
-          <h3>Accuracy</h3>
+          <h3>First-try %</h3>
           <div class="stat-big" id="stat-accuracy">—</div>
         </div>
         <div class="stat-line">
@@ -750,6 +751,7 @@
       <div class="congrats-pop">
         <p class="congrats-title" id="congrats-message"></p>
         <p class="congrats-sub">Press Enter or wait — next story is on the way!</p>
+        <button type="button" class="btn btn-primary" id="btn-next-story" style="margin-top:14px;">Next Story →</button>
       </div>
     </div>
   </div>
@@ -759,9 +761,9 @@
     <h1>Session Summary</h1>
     <div class="card">
       <div class="summary-stats">
-        <div>Questions attempted: <span id="sum-attempted">0</span></div>
-        <div>Correct answers: <span id="sum-correct">0</span></div>
-        <div>Accuracy: <span id="sum-accuracy">0%</span></div>
+        <div>Questions completed: <span id="sum-attempted">0</span></div>
+        <div>Solved on first try: <span id="sum-correct">0</span></div>
+        <div>First-try accuracy: <span id="sum-accuracy">0%</span></div>
         <div>Session: <span id="sum-session-mode">—</span></div>
         <div>The longest streak (this session): <span id="sum-best-streak">0</span></div>
         <div>Personal best streak: <span id="sum-best-ever">0</span></div>
@@ -783,6 +785,9 @@
         <button type="button" class="btn btn-primary" id="btn-summary-play">Play Again</button>
         <button type="button" class="btn btn-secondary" id="btn-summary-home">Home</button>
       </div>
+      <p style="text-align:center;margin-top:18px;">
+        <button type="button" id="btn-reset-progress" style="background:none;border:none;color:var(--muted);cursor:pointer;text-decoration:underline;font:inherit;font-size:0.85rem;">Reset my saved progress</button>
+      </p>
     </div>
   </div>
 
@@ -799,7 +804,7 @@
   const QUESTIONS_EASY = [
     { id: "e001", text: "The sandbox has 4 red shovels and 5 green shovels. How many shovels are there?", answer: 9, band: 1, problemType: "Part–Part–Whole", visual: "🛝4+5", hintKeywords: ["how many", "more"], hint: "Add the two parts of the story to find the total.", explain: "🛝 4 + 5 = **9**." },
     { id: "e002", text: "5 ducklings rested on the bank. 4 more slid into the pond. How many ducklings are in the water now?", answer: 9, band: 1, problemType: "Join", visual: "🦆5+4", hintKeywords: ["more", "in all"], hint: "Add the two parts of the story to find the total.", explain: "🦆 5 + 4 = **9**." },
-    { id: "e003", text: "A music cart has 3 rhythm sticks and 7 bells. How many instruments are on the cart?", answer: 10, band: 1, problemType: "Part–Part–Whole", visual: "🎵3+7", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🎵 3 + 7 = **10**." },
+    { id: "e003", text: "A music cart has 3 drumsticks and 7 bells. How many instruments are on the cart?", answer: 10, band: 1, problemType: "Part–Part–Whole", visual: "🎵3+7", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🎵 3 + 7 = **10**." },
     { id: "e004", text: "7 kids waited in line. 3 more kids joined the line. How many kids are in line now?", answer: 10, band: 1, problemType: "Join", visual: "👧7+3", hintKeywords: ["now", "together"], hint: "Add the two parts of the story to find the total.", explain: "👧 7 + 3 = **10**." },
     { id: "e005", text: "The craft bin has 6 pompoms and 4 pipe cleaners. How many craft pieces are in the bin?", answer: 10, band: 1, problemType: "Part–Part–Whole", visual: "✂️6+4", hintKeywords: ["how many", "altogether"], hint: "Add the two parts of the story to find the total.", explain: "✂️ 6 + 4 = **10**." },
     { id: "e006", text: "4 ants carried crumbs. 6 more ants came to help. How many ants are there now?", answer: 10, band: 1, problemType: "Join", visual: "🐜4+6", hintKeywords: ["how many", "more"], hint: "Add the two parts of the story to find the total.", explain: "🐜 4 + 6 = **10**." },
@@ -822,48 +827,48 @@
     { id: "e023", text: "The dress-up rack has 8 capes and 5 crowns. How many dress-up items are on the rack?", answer: 13, band: 1, problemType: "Part–Part–Whole", visual: "🎭8+5", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🎭 8 + 5 = **13**." },
     { id: "e024", text: "4 dancers spun in a circle. 8 dancers joined the circle. How many dancers are in the circle now?", answer: 12, band: 1, problemType: "Join", visual: "💃4+8", hintKeywords: ["now", "together"], hint: "Add the two parts of the story to find the total.", explain: "💃 4 + 8 = **12**." },
     { id: "e025", text: "A picnic blanket shows 8 sandwiches and 4 oranges. How many food items are on the blanket?", answer: 12, band: 1, problemType: "Part–Part–Whole", visual: "🥪8+4", hintKeywords: ["how many", "altogether"], hint: "Add the two parts of the story to find the total.", explain: "🥪 8 + 4 = **12**." },
-    { id: "e026", text: "6 minnows darted left. 7 minnows darted right. How many minnows are in the school?", answer: 13, band: 1, problemType: "Join", visual: "🐟6+7", hintKeywords: ["how many", "more"], hint: "Add the two parts of the story to find the total.", explain: "🐟 6 + 7 = **13**." },
+    { id: "e026", text: "6 minnows darted left. 7 minnows darted right. How many minnows are there in all?", answer: 13, band: 1, problemType: "Join", visual: "🐟6+7", hintKeywords: ["how many", "more"], hint: "Add the two parts of the story to find the total.", explain: "🐟 6 + 7 = **13**." },
     { id: "e027", text: "The puppet stage has 7 hand puppets and 6 finger puppets. How many puppets are ready?", answer: 13, band: 1, problemType: "Part–Part–Whole", visual: "🎪7+6", hintKeywords: ["more", "in all"], hint: "Add the two parts of the story to find the total.", explain: "🎪 7 + 6 = **13**." },
     { id: "e028", text: "3 hikers rested at the sign. 8 hikers caught up from the trail. How many hikers are at the sign now?", answer: 11, band: 1, problemType: "Join", visual: "🥾3+8", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🥾 3 + 8 = **11**." },
     { id: "e029", text: "A bead tray has 8 round beads and 3 square beads. How many beads are on the tray?", answer: 11, band: 1, problemType: "Part–Part–Whole", visual: "📿8+3", hintKeywords: ["now", "together"], hint: "Add the two parts of the story to find the total.", explain: "📿 8 + 3 = **11**." },
     { id: "e030", text: "5 chicks peeped in the coop. 9 chicks peeked from the hay. How many chicks are there?", answer: 14, band: 1, problemType: "Join", visual: "🐣5+9", hintKeywords: ["how many", "altogether"], hint: "Add the two parts of the story to find the total.", explain: "🐣 5 + 9 = **14**." },
     { id: "e031", text: "The marble run has 9 long tubes and 5 short tubes. How many tubes are in the set?", answer: 14, band: 1, problemType: "Part–Part–Whole", visual: "🔮9+5", hintKeywords: ["how many", "more"], hint: "Add the two parts of the story to find the total.", explain: "🔮 9 + 5 = **14**." },
     { id: "e032", text: "6 singers hummed the tune. 8 singers joined the harmony. How many singers are there in all?", answer: 14, band: 1, problemType: "Join", visual: "🎤6+8", hintKeywords: ["more", "in all"], hint: "Add the two parts of the story to find the total.", explain: "🎤 6 + 8 = **14**." },
-    { id: "e033", text: "A tide pool tray has 8 hermit crabs and 6 snails. How many small creatures are on the tray?", answer: 14, band: 1, problemType: "Part–Part–Whole", visual: "🦀8+6", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🦀 8 + 6 = **14**." },
+    { id: "e033", text: "A tray at the aquarium has 8 hermit crabs and 6 snails. How many small creatures are on the tray?", answer: 14, band: 1, problemType: "Part–Part–Whole", visual: "🦀8+6", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🦀 8 + 6 = **14**." },
     { id: "e034", text: "7 scooters waited at the curb. 7 scooters rolled up. How many scooters are at the curb now?", answer: 14, band: 1, problemType: "Join", visual: "🛴7+7", hintKeywords: ["now", "together"], hint: "Add the two parts of the story to find the total.", explain: "🛴 7 + 7 = **14**." },
     { id: "e035", text: "A baker set out 9 plain bagels and 8 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 8 = **17**." },
     { id: "e036", text: "The relay team passed the baton 8 times in practice, then 9 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️8+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 9 = **17**." },
-    { id: "e037", text: "The museum cart has 10 fossil prints and 7 shell cards. How many cards are on the cart?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 7 = **17**." },
+    { id: "e037", text: "The museum cart has 10 fossil cards and 7 shell cards. How many cards are on the cart?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 7 = **17**." },
     { id: "e038", text: "A baker set out 7 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 10 = **17**." },
     { id: "e039", text: "The relay team passed the baton 11 times in practice, then 6 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️11+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 6 = **17**." },
     { id: "e040", text: "6 students sat in the front row. 11 students sat in the back row. How many students sat in those two rows?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 11 = **17**." },
     { id: "e041", text: "A baker set out 12 plain bagels and 5 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 5 = **17**." },
     { id: "e042", text: "The relay team passed the baton 5 times in practice, then 12 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️5+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 12 = **17**." },
-    { id: "e043", text: "The museum cart has 10 fossil prints and 8 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 8 = **18**." },
+    { id: "e043", text: "The museum cart has 10 fossil cards and 8 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 8 = **18**." },
     { id: "e044", text: "A baker set out 8 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️8+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 10 = **18**." },
     { id: "e045", text: "The relay team passed the baton 9 times in practice, then 9 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️9+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 9 = **18**." },
     { id: "e046", text: "11 students sat in the front row. 7 students sat in the back row. How many students sat in those two rows?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️11+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 7 = **18**." },
     { id: "e047", text: "A baker set out 7 plain bagels and 11 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 11 = **18**." },
     { id: "e048", text: "The relay team passed the baton 12 times in practice, then 6 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️12+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 6 = **18**." },
-    { id: "e049", text: "The museum cart has 6 fossil prints and 12 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 12 = **18**." },
+    { id: "e049", text: "The museum cart has 6 fossil cards and 12 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 12 = **18**." },
     { id: "e050", text: "A baker set out 13 plain bagels and 5 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️13+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 13 + 5 = **18**." },
     { id: "e051", text: "The relay team passed the baton 5 times in practice, then 13 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️5+13", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 13 = **18**." },
     { id: "e052", text: "10 students sat in the front row. 9 students sat in the back row. How many students sat in those two rows?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 9 = **19**." },
     { id: "e053", text: "A baker set out 9 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 10 = **19**." },
     { id: "e054", text: "The relay team passed the baton 11 times in practice, then 8 more times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️11+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 8 = **19**." },
-    { id: "e055", text: "The museum cart has 8 fossil prints and 11 shell cards. How many cards are on the cart?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️8+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 11 = **19**." },
+    { id: "e055", text: "The museum cart has 8 fossil cards and 11 shell cards. How many cards are on the cart?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️8+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 11 = **19**." },
     { id: "e056", text: "A baker set out 12 plain bagels and 7 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 7 = **19**." },
     { id: "e057", text: "The relay team passed the baton 7 times in practice, then 12 more times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️7+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 12 = **19**." },
     { id: "e058", text: "13 students sat in the front row. 6 students sat in the back row. How many students sat in those two rows?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️13+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 13 + 6 = **19**." },
     { id: "e059", text: "A baker set out 6 plain bagels and 13 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+13", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 13 = **19**." },
     { id: "e060", text: "The relay team passed the baton 14 times in practice, then 4 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️14+4", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 14 + 4 = **18**." },
-    { id: "e061", text: "The museum cart has 4 fossil prints and 14 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️4+14", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 14 = **18**." },
+    { id: "e061", text: "The museum cart has 4 fossil cards and 14 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️4+14", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 14 = **18**." },
     { id: "e062", text: "A baker set out 10 plain bagels and 6 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 6 = **16**." },
     { id: "e063", text: "The relay team passed the baton 6 times in practice, then 10 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️6+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 10 = **16**." },
     { id: "e064", text: "9 students sat in the front row. 7 students sat in the back row. How many students sat in those two rows?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 7 = **16**." },
     { id: "e065", text: "A baker set out 7 plain bagels and 9 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 9 = **16**." },
     { id: "e066", text: "The relay team passed the baton 11 times in practice, then 5 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️11+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 5 = **16**." },
-    { id: "e067", text: "The museum cart has 5 fossil prints and 11 shell cards. How many cards are on the cart?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️5+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 11 = **16**." },
+    { id: "e067", text: "The museum cart has 5 fossil cards and 11 shell cards. How many cards are on the cart?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️5+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 11 = **16**." },
     { id: "e068", text: "A baker set out 12 plain bagels and 4 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+4", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 4 = **16**." },
     { id: "e069", text: "The relay team passed the baton 4 times in practice, then 12 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️4+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 12 = **16**." },
     { id: "e070", text: "Liam had 18 trading cards. He traded away 9 cards at the swap. How many cards does Liam have now?", answer: 9, band: 3, problemType: "Separate", visual: "📦18−9", hintKeywords: ["left", "still", "now"], hint: "Start with the bigger number and subtract what was taken away.", explain: "📦 18 − 9 = **9**." },
@@ -894,9 +899,9 @@
     { id: "e095", text: "A game table has 10 red tokens and 3 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲10+3", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 10 + 3 = **13**." },
     { id: "e096", text: "A game table has 3 red tokens and 10 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲3+10", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 3 + 10 = **13**." },
     { id: "e097", text: "A game table has 7 red tokens and 6 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲7+6", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 7 + 6 = **13**." },
-    { id: "e098", text: "A game table has 6 red tokens and 7 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲6+7", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 6 + 7 = **13**." },
-    { id: "e099", text: "A game table has 8 red tokens and 5 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲8+5", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 8 + 5 = **13**." },
-    { id: "e100", text: "A game table has 5 red tokens and 8 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲5+8", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 5 + 8 = **13**." }
+    { id: "e098", text: "A game table has 2 red tokens and 11 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲2+11", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 2 + 11 = **13**." },
+    { id: "e099", text: "A game table has 11 red tokens and 2 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲11+2", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 11 + 2 = **13**." },
+    { id: "e100", text: "A game table has 1 red token and 12 blue tokens. How many tokens are on the table?", answer: 13, band: 3, problemType: "Part–Part–Whole", visual: "🎲1+12", hintKeywords: ["how many"], hint: "Red group + blue group = total tokens.", explain: "🎲 1 + 12 = **13**." }
   ];
   /** @type {Question[]} */
   const QUESTIONS_MEDIUM = [
@@ -917,7 +922,7 @@
     { id: "m015", text: "There were 46 blocks ready for the bin. After 27 were put away, how many blocks are left?", answer: 19, band: 1, problemType: "Separate", visual: "🧱46−27", hintKeywords: ["left", "put"], hint: "Start with 46, then subtract the 27 that were put away.", explain: "🧱 46 − 27 = **19** left." },
     { id: "m016", text: "There were 49 song sheets ready for the chorus. After 21 were handed out, how many song sheets are left?", answer: 28, band: 1, problemType: "Separate", visual: "🎵49−21", hintKeywords: ["left", "handed"], hint: "Start with 49, then subtract the 21 that were handed out.", explain: "🎵 49 − 21 = **28** left." },
     { id: "m017", text: "There were 43 cookies ready for the lunch. After 17 were packed, how many cookies are left?", answer: 26, band: 1, problemType: "Separate", visual: "🍪43−17", hintKeywords: ["left", "packed"], hint: "Start with 43, then subtract the 17 that were packed.", explain: "🍪 43 − 17 = **26** left." },
-    { id: "m018", text: "The blue team earned 40 spirit votes. The gold team earned 22 votes. How many more votes did blue get?", answer: 18, band: 1, problemType: "Compare", visual: "📊40−22", hintKeywords: ["how many more", "difference"], hint: "Subtract the smaller amount from the larger amount to compare.", explain: "📊 40 − 22 = **18**." },
+    { id: "m018", text: "The blue team earned 40 votes. The gold team earned 22 votes. How many more votes did blue get?", answer: 18, band: 1, problemType: "Compare", visual: "📊40−22", hintKeywords: ["how many more", "difference"], hint: "Subtract the smaller amount from the larger amount to compare.", explain: "📊 40 − 22 = **18**." },
     { id: "m019", text: "There were 54 yarn balls ready for the club. After 26 were knitted, how many yarn balls are left?", answer: 28, band: 1, problemType: "Separate", visual: "🧵54−26", hintKeywords: ["left", "knitted"], hint: "Start with 54, then subtract the 26 that were knitted.", explain: "🧵 54 − 26 = **28** left." },
     { id: "m020", text: "There were 37 viewers ready for the night sky. After 15 were signed up, how many viewers are left?", answer: 22, band: 1, problemType: "Separate", visual: "🔭37−15", hintKeywords: ["left", "signed"], hint: "Start with 37, then subtract the 15 that were signed up.", explain: "🔭 37 − 15 = **22** left." },
     { id: "m021", text: "Aunt Kim is 31 years old. Cousin Jay is 14 years old. How many years older is Aunt Kim?", answer: 17, band: 1, problemType: "Compare", visual: "🐢31−14", hintKeywords: ["how many", "fewer"], hint: "Subtract the smaller amount from the larger amount to compare.", explain: "🐢 31 − 14 = **17**." },
@@ -934,109 +939,109 @@
     { id: "m032", text: "Kona’s bag has 52 dog treats. Nico’s bag has 35 treats. How many more treats does Kona have?", answer: 17, band: 1, problemType: "Compare", visual: "🐕52−35", hintKeywords: ["how many more", "difference"], hint: "Subtract the smaller amount from the larger amount to compare.", explain: "🐕 52 − 35 = **17**." },
     { id: "m033", text: "There were 39 balloons ready for the setup. After 22 were popped, how many balloons are left?", answer: 17, band: 1, problemType: "Separate", visual: "🎪39−22", hintKeywords: ["left", "popped"], hint: "Start with 39, then subtract the 22 that were popped.", explain: "🎪 39 − 22 = **17** left." },
     { id: "m034", text: "There were 45 photos ready for the club. After 27 were printed, how many photos are left?", answer: 18, band: 1, problemType: "Separate", visual: "📷45−27", hintKeywords: ["left", "printed"], hint: "Start with 45, then subtract the 27 that were printed.", explain: "📷 45 − 27 = **18** left." },
-    { id: "m035", text: "Some shells were in a bucket. A friend added 19 shells. Now there are 46 shells. How many were in the bucket at first?", answer: 27, band: 2, problemType: "Change Unknown", visual: "?+19=46", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **27**." },
-    { id: "m036", text: "A piggy bank had some coins. After adding 14 coins, there are 51 coins. How many coins were there before?", answer: 37, band: 2, problemType: "Change Unknown", visual: "?+14=51", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **37**." },
-    { id: "m037", text: "There were some minutes on the timer. The teacher added 22 minutes. Now it shows 40 minutes. How many minutes were on the timer at first?", answer: 18, band: 2, problemType: "Change Unknown", visual: "?+22=40", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **18**." },
-    { id: "m038", text: "Some water was in a jug. Another 16 cups were poured in. Now there are 44 cups. How many cups were there at the start?", answer: 28, band: 2, problemType: "Change Unknown", visual: "?+16=44", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **28**." },
-    { id: "m039", text: "A score started unknown. After earning 25 points, the board shows 48 points. What was the score before?", answer: 23, band: 2, problemType: "Change Unknown", visual: "?+25=48", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **23**." },
-    { id: "m040", text: "Mia spent $13 on a snack. Then she had $26 left. How much did she have before buying the snack?", answer: 39, band: 2, problemType: "Change Unknown", visual: "?−13=26", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **39**." },
-    { id: "m041", text: "A crate had some oranges. The cook used 21 for juice. 15 oranges are left. How many oranges were in the crate at first?", answer: 36, band: 2, problemType: "Change Unknown", visual: "?−21=15", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **36**." },
-    { id: "m042", text: "Some kids were on the bus. 17 got off at the museum. 24 stayed on. How many kids were on the bus before the stop?", answer: 41, band: 2, problemType: "Change Unknown", visual: "?−17=24", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **41**." },
-    { id: "m043", text: "A ribbon was some length. 18 inches were cut off. 22 inches remain. How long was the ribbon before the cut?", answer: 40, band: 2, problemType: "Change Unknown", visual: "?−18=22", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **40**." },
-    { id: "m044", text: "There were some stickers. After giving away 12, 31 stickers remained. How many stickers were there at the start?", answer: 43, band: 2, problemType: "Change Unknown", visual: "?−12=31", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **43**." },
-    { id: "m045", text: "An elevator was on an unknown floor. It went up 11 floors and stopped on floor 29. What floor did it start on?", answer: 18, band: 2, problemType: "Join", visual: "?+11=29", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **18**." },
-    { id: "m046", text: "48 athletes signed up. 19 chose soccer and the rest chose track. How many chose track?", answer: 29, band: 2, problemType: "Separate", visual: "48−19", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **29**." },
-    { id: "m047", text: "There are 55 beads on a string. 28 are red and the rest are blue. How many blue beads are there?", answer: 27, band: 2, problemType: "Separate", visual: "55−28", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **27**." },
-    { id: "m048", text: "A box holds 50 tiles. 23 are triangles and the rest are squares. How many square tiles are there?", answer: 27, band: 2, problemType: "Separate", visual: "50−23", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **27**." },
-    { id: "m049", text: "The club raised $62 on Saturday and $18 on Sunday. How much did they raise on the two days together?", answer: 80, band: 2, problemType: "Part–Part–Whole", visual: "62+18", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **80**." },
-    { id: "m050", text: "Room 10 recycled 34 cans. Room 11 recycled 27 cans. How many cans did both rooms recycle together?", answer: 61, band: 2, problemType: "Part–Part–Whole", visual: "34+27", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **61**." },
-    { id: "m051", text: "One snake is 38 inches long. Another is 24 inches long. How many inches longer is the longer snake?", answer: 14, band: 2, problemType: "Compare", visual: "38−24", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **14**." },
-    { id: "m052", text: "A movie runs from 4:10 to 4:55. How many minutes long is it?", answer: 45, band: 2, problemType: "Compare", visual: "minutes", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **45**." },
-    { id: "m053", text: "A baker had 52 muffins. She sold 26 before noon. How many muffins were left after noon?", answer: 26, band: 2, problemType: "Change Unknown", visual: "52−26", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **26**." },
-    { id: "m054", text: "Yellow team has 33 points. Green has 19. How many more points does yellow have?", answer: 14, band: 2, problemType: "Compare", visual: "33−19", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **14**." },
-    { id: "m055", text: "There are 47 chairs. 18 are still in stacks. How many are set out for the assembly?", answer: 29, band: 2, problemType: "Separate", visual: "47−18", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **29**." },
-    { id: "m056", text: "A farmer had 45 pumpkins. She sold 17 at the stand. How many pumpkins does she still have?", answer: 28, band: 2, problemType: "Separate", visual: "45−17", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **28**." },
-    { id: "m057", text: "Two ropes are 29 dm and 15 dm. How many decimeters longer is the longer rope?", answer: 14, band: 2, problemType: "Compare", visual: "29−15", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **14**." },
-    { id: "m058", text: "The vote was 36 for pizza and 21 for tacos. How many more votes did pizza get?", answer: 15, band: 2, problemType: "Compare", visual: "36−21", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **15**." },
-    { id: "m059", text: "A parking deck has 54 spots. 16 are reserved. How many spots are open for visitors?", answer: 38, band: 2, problemType: "Separate", visual: "54−16", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **38**." },
-    { id: "m060", text: "A class read 28 pages Monday and 24 Tuesday. How many pages on both days?", answer: 52, band: 2, problemType: "Part–Part–Whole", visual: "28+24", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **52**." },
-    { id: "m061", text: "There were 43 pencils. 16 were sharpened and given out. How many pencils are still in the box?", answer: 27, band: 2, problemType: "Separate", visual: "43−16", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **27**." },
-    { id: "m062", text: "One poster used 31 stickers. Another used 19. How many stickers did both posters use?", answer: 50, band: 2, problemType: "Part–Part–Whole", visual: "31+19", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **50**." },
-    { id: "m063", text: "A tank had 40 fish. 14 were moved to a new tank. How many fish stayed?", answer: 26, band: 2, problemType: "Separate", visual: "40−14", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **26**." },
-    { id: "m064", text: "Teams scored 27 and 35 goals. How many more goals did the higher team score?", answer: 8, band: 2, problemType: "Compare", visual: "35−27", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **8**." },
-    { id: "m065", text: "A shelf had 38 games. The library lent out 19. How many games are still on the shelf?", answer: 19, band: 2, problemType: "Separate", visual: "38−19", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **19**." },
-    { id: "m066", text: "Two classes brought 32 and 29 cans. How many cans altogether?", answer: 61, band: 2, problemType: "Part–Part–Whole", visual: "32+29", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **61**." },
-    { id: "m067", text: "There are 51 students. 22 wear glasses. How many do not wear glasses?", answer: 29, band: 2, problemType: "Separate", visual: "51−22", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "✨ The answer is **29**." },
-    { id: "m068", text: "The team ordered 38 water bottles. They drank 11 before the game and 14 after. How many bottles are left?", answer: 13, band: 3, problemType: "Multi-step", visual: "38−11−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **13**." },
-    { id: "m069", text: "A shop had 45 hats. 16 sold in the morning and 12 in the afternoon. How many hats are still in the shop?", answer: 17, band: 3, problemType: "Multi-step", visual: "45−16−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **17**." },
-    { id: "m070", text: "There were 41 kids at camp. 13 went hiking and 9 went canoeing. The rest stayed at the lodge. How many stayed? (No overlap.)", answer: 19, band: 3, problemType: "Multi-step", visual: "41−13−9", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **19**." },
-    { id: "m071", text: "Librarians shelved 36 new books: 15 before lunch and 14 after. How many are not shelved yet?", answer: 7, band: 3, problemType: "Multi-step", visual: "36−15−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **7**." },
-    { id: "m072", text: "Parker had some cards. He gave 17 away and now has 28. How many did he start with?", answer: 45, band: 3, problemType: "Separate", visual: "?−17=28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **45**." },
-    { id: "m073", text: "There are 56 students on the bus. 19 sit in front and the rest in back. How many sit in back?", answer: 37, band: 3, problemType: "Separate", visual: "56−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **37**." },
-    { id: "m074", text: "Rope A is 44 cm. Rope B is 18 cm shorter than A. How long is Rope B?", answer: 26, band: 3, problemType: "Compare", visual: "44−18", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **26**." },
-    { id: "m075", text: "Class C collected 29 bottles. Class D collected 11 more than Class C. How many did Class D collect?", answer: 40, band: 3, problemType: "Compare", visual: "29+11", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **40**." },
-    { id: "m076", text: "A farmer picked 48 squash. She sold 21 at market and kept the rest. How many did she keep?", answer: 27, band: 3, problemType: "Separate", visual: "48−21", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **27**." },
-    { id: "m077", text: "There were 39 guests. 14 went to the patio and 12 to the kitchen. How many stayed in the dining room? (No overlap.)", answer: 13, band: 3, problemType: "Multi-step", visual: "39−14−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **13**." },
-    { id: "m078", text: "Ken ran 24 minutes Tuesday and 18 Wednesday. How many minutes on both days?", answer: 42, band: 3, problemType: "Separate", visual: "24+18", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **42**." },
-    { id: "m079", text: "A cart had 33 glue sticks. 9 were shared in art and 8 in science. How many glue sticks are left?", answer: 16, band: 3, problemType: "Multi-step", visual: "33−9−8", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **16**." },
-    { id: "m080", text: "Some money was saved. Then $20 was added and the total became $71. How much was saved before the $20?", answer: 51, band: 3, problemType: "Change Unknown", visual: "?+20=71", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **51**." },
-    { id: "m081", text: "There are 54 chairs. 22 need repairs. How many chairs are ready to use?", answer: 32, band: 3, problemType: "Separate", visual: "54−22", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **32**." },
-    { id: "m082", text: "Team A scored 31 and 24 in two quarters. Team B scored 40 total. How many more points did Team A score?", answer: 15, band: 3, problemType: "Compare", visual: "(31+24)−40", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **15**." },
-    { id: "m083", text: "A baker made 40 rolls. She sold 15 at breakfast and 11 at lunch. How many rolls are left?", answer: 14, band: 3, problemType: "Multi-step", visual: "40−15−11", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **14**." },
-    { id: "m084", text: "Two snakes measure 33 inches and 19 inches. How much longer is the longer snake?", answer: 14, band: 3, problemType: "Compare", visual: "33−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **14**." },
-    { id: "m085", text: "A number story: I think of a number, add 16, and get 52. What is my number?", answer: 36, band: 3, problemType: "Change Unknown", visual: "?+16=52", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **36**." },
-    { id: "m086", text: "There were 47 apples. 18 were used for pie and 14 for sauce. How many apples are left?", answer: 15, band: 3, problemType: "Multi-step", visual: "47−18−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **15**." },
-    { id: "m087", text: "Jada’s skipping rope is 41 dm long. Mateo’s is 14 dm shorter. How long is Mateo’s rope?", answer: 27, band: 3, problemType: "Compare", visual: "41−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **27**." },
-    { id: "m088", text: "The school ordered 52 notebooks. 19 went to grade 3 and 21 to grade 4. How many notebooks are left?", answer: 12, band: 3, problemType: "Multi-step", visual: "52−19−21", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **12**." },
-    { id: "m089", text: "A parking lot has 60 spaces. 23 are taken. How many spaces are free?", answer: 37, band: 3, problemType: "Separate", visual: "60−23", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **37**." },
-    { id: "m090", text: "One jar has 28 fireflies drawn on it. Another has 35. How many more on the second jar?", answer: 7, band: 3, problemType: "Compare", visual: "35−28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **7**." },
-    { id: "m091", text: "There were some marbles. After adding 24, there are 61 marbles. How many at the start?", answer: 37, band: 3, problemType: "Separate", visual: "?+24=61", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **37**." },
-    { id: "m092", text: "A club had 43 members. 15 graduated. How many members stayed?", answer: 28, band: 3, problemType: "Separate", visual: "43−15", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **28**." },
-    { id: "m093", text: "Two friends folded 26 and 19 paper cranes. How many cranes together?", answer: 45, band: 3, problemType: "Part–Part–Whole", visual: "26+19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **45**." },
-    { id: "m094", text: "A rope 50 meters long had 17 m cut off, then another 12 m. How many meters are left?", answer: 21, band: 3, problemType: "Separate", visual: "50−17−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **21**." },
-    { id: "m095", text: "There are 58 kids. 24 play tag and 19 play catch. How many do something else? (No overlap.)", answer: 15, band: 3, problemType: "Separate", visual: "58−24−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **15**." },
-    { id: "m096", text: "Ana had some stickers. She used 19 and has 22 left. How many did she start with?", answer: 41, band: 3, problemType: "Multi-step", visual: "?−19=22", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **41**." },
-    { id: "m097", text: "The vote was 40 to 28. How many more votes did the winner get?", answer: 12, band: 3, problemType: "Compare", visual: "40−28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **12**." },
-    { id: "m098", text: "A store had 37 balloons. 14 floated away in the wind. How many are left?", answer: 23, band: 3, problemType: "Separate", visual: "37−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **23**." },
-    { id: "m099", text: "Marcus read 31 pages and then 17 more. How many pages in all?", answer: 48, band: 3, problemType: "Part–Part–Whole", visual: "31+17", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **48**." },
-    { id: "m100", text: "There were 46 fish. 20 were gold and the rest were silver. How many silver fish?", answer: 26, band: 3, problemType: "Separate", visual: "46−20", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 The answer is **26**." }
+    { id: "m035", text: "Some shells were in a bucket. A friend added 19 shells. Now there are 46 shells. How many were in the bucket at first?", answer: 27, band: 2, problemType: "Change Unknown", visual: "?+19=46", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 46 − 19 = **27** at the start." },
+    { id: "m036", text: "A piggy bank had some coins. After adding 14 coins, there are 51 coins. How many coins were there before?", answer: 37, band: 2, problemType: "Change Unknown", visual: "?+14=51", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 51 − 14 = **37** at the start." },
+    { id: "m037", text: "There were some minutes on the timer. The teacher added 22 minutes. Now it shows 40 minutes. How many minutes were on the timer at first?", answer: 18, band: 2, problemType: "Change Unknown", visual: "?+22=40", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 40 − 22 = **18** at the start." },
+    { id: "m038", text: "Some water was in a jug. Another 16 cups were poured in. Now there are 44 cups. How many cups were there at the start?", answer: 28, band: 2, problemType: "Change Unknown", visual: "?+16=44", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 44 − 16 = **28** at the start." },
+    { id: "m039", text: "A score started unknown. After earning 25 points, the board shows 48 points. What was the score before?", answer: 23, band: 2, problemType: "Change Unknown", visual: "?+25=48", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 48 − 25 = **23** at the start." },
+    { id: "m040", text: "Mia spent $13 on a snack. Then she had $26 left. How much did she have before buying the snack?", answer: 39, band: 2, problemType: "Change Unknown", visual: "?−13=26", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 26 + 13 = **39** at the start." },
+    { id: "m041", text: "A crate had some oranges. The cook used 21 for juice. 15 oranges are left. How many oranges were in the crate at first?", answer: 36, band: 2, problemType: "Change Unknown", visual: "?−21=15", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 15 + 21 = **36** at the start." },
+    { id: "m042", text: "Some kids were on the bus. 17 got off at the museum. 24 stayed on. How many kids were on the bus before the stop?", answer: 41, band: 2, problemType: "Change Unknown", visual: "?−17=24", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 24 + 17 = **41** at the start." },
+    { id: "m043", text: "A ribbon was some length. 18 inches were cut off. 22 inches remain. How long was the ribbon before the cut?", answer: 40, band: 2, problemType: "Change Unknown", visual: "?−18=22", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 22 + 18 = **40** at the start." },
+    { id: "m044", text: "There were some stickers. After giving away 12, 31 stickers remained. How many stickers were there at the start?", answer: 43, band: 2, problemType: "Change Unknown", visual: "?−12=31", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 31 + 12 = **43** at the start." },
+    { id: "m045", text: "An elevator was on an unknown floor. It went up 11 floors and stopped on floor 29. What floor did it start on?", answer: 18, band: 2, problemType: "Join", visual: "?+11=29", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "🔍 Work backward: 29 − 11 = **18** at the start." },
+    { id: "m046", text: "48 athletes signed up. 19 chose soccer and the rest chose track. How many chose track?", answer: 29, band: 2, problemType: "Separate", visual: "48−19", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 48 − 19 = **29**." },
+    { id: "m047", text: "There are 55 beads on a string. 28 are red and the rest are blue. How many blue beads are there?", answer: 27, band: 2, problemType: "Separate", visual: "55−28", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 55 − 28 = **27**." },
+    { id: "m048", text: "A box holds 50 tiles. 23 are triangles and the rest are squares. How many square tiles are there?", answer: 27, band: 2, problemType: "Separate", visual: "50−23", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 50 − 23 = **27**." },
+    { id: "m049", text: "The club raised $62 on Saturday and $18 on Sunday. How much did they raise on the two days together?", answer: 80, band: 2, problemType: "Part–Part–Whole", visual: "62+18", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➕ 62 + 18 = **80**." },
+    { id: "m050", text: "Room 10 recycled 34 cans. Room 11 recycled 27 cans. How many cans did both rooms recycle together?", answer: 61, band: 2, problemType: "Part–Part–Whole", visual: "34+27", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➕ 34 + 27 = **61**." },
+    { id: "m051", text: "One snake is 38 inches long. Another is 24 inches long. How many inches longer is the longer snake?", answer: 14, band: 2, problemType: "Compare", visual: "38−24", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 38 − 24 = **14**." },
+    { id: "m052", text: "A movie runs from 4:10 to 4:55. How many minutes long is it?", answer: 45, band: 2, problemType: "Elapsed Time", visual: "4:10→4:55", hintKeywords: ["how many"], hint: "Count from the start time up to the end time, minutes by minutes.", explain: "⏰ 4:10 → 4:55 is **45** minutes." },
+    { id: "m053", text: "A baker had 52 muffins. She sold 26 before noon. How many muffins were left after noon?", answer: 26, band: 2, problemType: "Change Unknown", visual: "52−26", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 52 − 26 = **26**." },
+    { id: "m054", text: "Yellow team has 33 points. Green has 19. How many more points does yellow have?", answer: 14, band: 2, problemType: "Compare", visual: "33−19", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 33 − 19 = **14**." },
+    { id: "m055", text: "There are 47 chairs. 18 are still in stacks. How many are set out for the assembly?", answer: 29, band: 2, problemType: "Separate", visual: "47−18", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 47 − 18 = **29**." },
+    { id: "m056", text: "A farmer had 45 pumpkins. She sold 17 at the stand. How many pumpkins does she still have?", answer: 28, band: 2, problemType: "Separate", visual: "45−17", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 45 − 17 = **28**." },
+    { id: "m057", text: "Two ropes are 29 inches and 15 inches. How many inches longer is the longer rope?", answer: 14, band: 2, problemType: "Compare", visual: "29−15", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 29 − 15 = **14**." },
+    { id: "m058", text: "The vote was 36 for pizza and 21 for tacos. How many more votes did pizza get?", answer: 15, band: 2, problemType: "Compare", visual: "36−21", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 36 − 21 = **15**." },
+    { id: "m059", text: "A parking deck has 54 spots. 16 are reserved. How many spots are open for visitors?", answer: 38, band: 2, problemType: "Separate", visual: "54−16", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 54 − 16 = **38**." },
+    { id: "m060", text: "A class read 28 pages Monday and 24 Tuesday. How many pages on both days?", answer: 52, band: 2, problemType: "Part–Part–Whole", visual: "28+24", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➕ 28 + 24 = **52**." },
+    { id: "m061", text: "There were 43 pencils. 16 were sharpened and given out. How many pencils are still in the box?", answer: 27, band: 2, problemType: "Separate", visual: "43−16", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 43 − 16 = **27**." },
+    { id: "m062", text: "One poster used 31 stickers. Another used 19. How many stickers did both posters use?", answer: 50, band: 2, problemType: "Part–Part–Whole", visual: "31+19", hintKeywords: ["left", "more"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➕ 31 + 19 = **50**." },
+    { id: "m063", text: "A tank had 40 fish. 14 were moved to a new tank. How many fish stayed?", answer: 26, band: 2, problemType: "Separate", visual: "40−14", hintKeywords: ["more", "together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 40 − 14 = **26**." },
+    { id: "m064", text: "Teams scored 27 and 35 goals. How many more goals did the higher team score?", answer: 8, band: 2, problemType: "Compare", visual: "35−27", hintKeywords: ["together"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 35 − 27 = **8**." },
+    { id: "m065", text: "A shelf had 38 games. The library lent out 19. How many games are still on the shelf?", answer: 19, band: 2, problemType: "Separate", visual: "38−19", hintKeywords: ["before", "at first"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 38 − 19 = **19**." },
+    { id: "m066", text: "Two classes brought 32 and 29 cans. How many cans altogether?", answer: 61, band: 2, problemType: "Part–Part–Whole", visual: "32+29", hintKeywords: ["at first", "rest"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➕ 32 + 29 = **61**." },
+    { id: "m067", text: "There are 51 students. 22 wear glasses. How many do not wear glasses?", answer: 29, band: 2, problemType: "Separate", visual: "51−22", hintKeywords: ["rest", "left"], hint: "Read what changed: addition or subtraction connects the numbers.", explain: "➖ 51 − 22 = **29**." },
+    { id: "m068", text: "The team ordered 38 water bottles. They drank 11 before the game and 14 after. How many bottles are left?", answer: 13, band: 3, problemType: "Multi-step", visual: "38−11−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 38 − 11 = 27, then 27 − 14 = **13**." },
+    { id: "m069", text: "A shop had 45 hats. 16 sold in the morning and 12 in the afternoon. How many hats are still in the shop?", answer: 17, band: 3, problemType: "Multi-step", visual: "45−16−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 45 − 16 = 29, then 29 − 12 = **17**." },
+    { id: "m070", text: "There were 41 kids at camp. 13 went hiking and 9 went canoeing. The rest stayed at the lodge. How many stayed? (No overlap.)", answer: 19, band: 3, problemType: "Multi-step", visual: "41−13−9", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 41 − 13 = 28, then 28 − 9 = **19**." },
+    { id: "m071", text: "Librarians shelved 36 new books: 15 before lunch and 14 after. How many are not shelved yet?", answer: 7, band: 3, problemType: "Multi-step", visual: "36−15−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 36 − 15 = 21, then 21 − 14 = **7**." },
+    { id: "m072", text: "Parker had some cards. He gave 17 away and now has 28. How many did he start with?", answer: 45, band: 3, problemType: "Separate", visual: "?−17=28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🔍 Work backward: 28 + 17 = **45** at the start." },
+    { id: "m073", text: "There are 56 students on the bus. 19 sit in front and the rest in back. How many sit in back?", answer: 37, band: 3, problemType: "Separate", visual: "56−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 56 − 19 = **37**." },
+    { id: "m074", text: "Rope A is 44 cm. Rope B is 18 cm shorter than A. How long is Rope B?", answer: 26, band: 3, problemType: "Compare", visual: "44−18", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 44 − 18 = **26**." },
+    { id: "m075", text: "Class C collected 29 bottles. Class D collected 11 more than Class C. How many did Class D collect?", answer: 40, band: 3, problemType: "Compare", visual: "29+11", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➕ 29 + 11 = **40**." },
+    { id: "m076", text: "A farmer picked 48 squash. She sold 21 at market and kept the rest. How many did she keep?", answer: 27, band: 3, problemType: "Separate", visual: "48−21", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 48 − 21 = **27**." },
+    { id: "m077", text: "There were 39 guests. 14 went to the patio and 12 to the kitchen. How many stayed in the dining room? (No overlap.)", answer: 13, band: 3, problemType: "Multi-step", visual: "39−14−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 39 − 14 = 25, then 25 − 12 = **13**." },
+    { id: "m078", text: "Ken ran 24 minutes Tuesday and 18 Wednesday. How many minutes on both days?", answer: 42, band: 3, problemType: "Separate", visual: "24+18", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➕ 24 + 18 = **42**." },
+    { id: "m079", text: "A cart had 33 glue sticks. 9 were shared in art and 8 in science. How many glue sticks are left?", answer: 16, band: 3, problemType: "Multi-step", visual: "33−9−8", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 33 − 9 = 24, then 24 − 8 = **16**." },
+    { id: "m080", text: "Some money was saved. Then $20 was added and the total became $71. How much was saved before the $20?", answer: 51, band: 3, problemType: "Change Unknown", visual: "?+20=71", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🔍 Work backward: 71 − 20 = **51** at the start." },
+    { id: "m081", text: "There are 54 chairs. 22 need repairs. How many chairs are ready to use?", answer: 32, band: 3, problemType: "Separate", visual: "54−22", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 54 − 22 = **32**." },
+    { id: "m082", text: "Team A scored 31 and 24 in two quarters. Team B scored 40 total. How many more points did Team A score?", answer: 15, band: 3, problemType: "Compare", visual: "(31+24)−40", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 31 + 24 = 55, then 55 − 40 = **15**." },
+    { id: "m083", text: "A baker made 40 rolls. She sold 15 at breakfast and 11 at lunch. How many rolls are left?", answer: 14, band: 3, problemType: "Multi-step", visual: "40−15−11", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 40 − 15 = 25, then 25 − 11 = **14**." },
+    { id: "m084", text: "Two snakes measure 33 inches and 19 inches. How much longer is the longer snake?", answer: 14, band: 3, problemType: "Compare", visual: "33−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 33 − 19 = **14**." },
+    { id: "m085", text: "A number story: I think of a number, add 16, and get 52. What is my number?", answer: 36, band: 3, problemType: "Change Unknown", visual: "?+16=52", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🔍 Work backward: 52 − 16 = **36** at the start." },
+    { id: "m086", text: "There were 47 apples. 18 were used for pie and 14 for sauce. How many apples are left?", answer: 15, band: 3, problemType: "Multi-step", visual: "47−18−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 47 − 18 = 29, then 29 − 14 = **15**." },
+    { id: "m087", text: "Jada’s skipping rope is 41 inches long. Mateo’s is 14 inches shorter. How long is Mateo’s rope?", answer: 27, band: 3, problemType: "Compare", visual: "41−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 41 − 14 = **27**." },
+    { id: "m088", text: "The school ordered 52 notebooks. 19 went to grade 3 and 21 to grade 4. How many notebooks are left?", answer: 12, band: 3, problemType: "Multi-step", visual: "52−19−21", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 52 − 19 = 33, then 33 − 21 = **12**." },
+    { id: "m089", text: "A parking lot has 60 spaces. 23 are taken. How many spaces are free?", answer: 37, band: 3, problemType: "Separate", visual: "60−23", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 60 − 23 = **37**." },
+    { id: "m090", text: "One jar has 28 fireflies drawn on it. Another has 35. How many more on the second jar?", answer: 7, band: 3, problemType: "Compare", visual: "35−28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 35 − 28 = **7**." },
+    { id: "m091", text: "There were some marbles. After adding 24, there are 61 marbles. How many at the start?", answer: 37, band: 3, problemType: "Separate", visual: "?+24=61", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🔍 Work backward: 61 − 24 = **37** at the start." },
+    { id: "m092", text: "A club had 43 members. 15 graduated. How many members stayed?", answer: 28, band: 3, problemType: "Separate", visual: "43−15", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 43 − 15 = **28**." },
+    { id: "m093", text: "Two friends folded 26 and 19 paper cranes. How many cranes together?", answer: 45, band: 3, problemType: "Part–Part–Whole", visual: "26+19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➕ 26 + 19 = **45**." },
+    { id: "m094", text: "A rope 50 meters long had 17 m cut off, then another 12 m. How many meters are left?", answer: 21, band: 3, problemType: "Separate", visual: "50−17−12", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 50 − 17 = 33, then 33 − 12 = **21**." },
+    { id: "m095", text: "There are 58 kids. 24 play tag and 19 play catch. How many do something else? (No overlap.)", answer: 15, band: 3, problemType: "Separate", visual: "58−24−19", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🧮 58 − 24 = 34, then 34 − 19 = **15**." },
+    { id: "m096", text: "Ana had some stickers. She used 19 and has 22 left. How many did she start with?", answer: 41, band: 3, problemType: "Multi-step", visual: "?−19=22", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "🔍 Work backward: 22 + 19 = **41** at the start." },
+    { id: "m097", text: "The vote was 40 to 28. How many more votes did the winner get?", answer: 12, band: 3, problemType: "Compare", visual: "40−28", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 40 − 28 = **12**." },
+    { id: "m098", text: "A store had 37 balloons. 14 floated away in the wind. How many are left?", answer: 23, band: 3, problemType: "Separate", visual: "37−14", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 37 − 14 = **23**." },
+    { id: "m099", text: "Marcus read 31 pages and then 17 more. How many pages in all?", answer: 48, band: 3, problemType: "Part–Part–Whole", visual: "31+17", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➕ 31 + 17 = **48**." },
+    { id: "m100", text: "There were 46 fish. 20 were gold and the rest were silver. How many silver fish?", answer: 26, band: 3, problemType: "Separate", visual: "46−20", hintKeywords: ["left", "rest", "start", "more", "both"], hint: "Work step by step: do one change, then the next.", explain: "➖ 46 − 20 = **26**." }
   ];
   /** @type {Question[]} */
   const QUESTIONS_HARD = [
-    { id: "h001", text: "5 crates hold 7 juice boxes each. The coach sets aside 11 boxes for staff. How many boxes are left for players?", answer: 24, band: 1, problemType: "Multi-step", visual: "5×7−11", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **24**." },
-    { id: "h002", text: "There were some apples. The store added 4 bags of 8 apples. Now there are 59 apples. How many were there before?", answer: 27, band: 1, problemType: "Unknown", visual: "?+32=59", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **27**.", minimalVisual: true },
-    { id: "h003", text: "Tia saves $6 a week for 6 weeks, then spends $15 on supplies. How many dollars does she have left?", answer: 21, band: 1, problemType: "Multi-step", visual: "6×6−15", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **21**." },
-    { id: "h004", text: "63 erasers are shared equally among 9 tables. How many erasers per table?", answer: 7, band: 1, problemType: "Sharing", visual: "63÷9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **7**." },
-    { id: "h005", text: "A bus has 8 rows with 6 seats each, but 5 seats are empty. How many passengers are seated?", answer: 43, band: 1, problemType: "Multi-step", visual: "8×6−5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **43**." },
-    { id: "h006", text: "The larger of two numbers is 52. Their difference is 14. What is the smaller number?", answer: 38, band: 1, problemType: "Compare", visual: "52−14", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **38**.", minimalVisual: true },
-    { id: "h007", text: "8 squads have 7 runners each. 9 runners are hurt and sit out. How many runners compete?", answer: 47, band: 1, problemType: "Multi-step", visual: "8×7−9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **47**." },
-    { id: "h008", text: "Donuts are packed 9 per box. There are 49 donuts and only full boxes count. How many donuts are left over?", answer: 4, band: 1, problemType: "Sharing", visual: "49 mod 9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **4**.", minimalVisual: true },
-    { id: "h009", text: "Priya buys 3 packs of 14 cards. She gives her brother one full pack and 6 cards from another. How many cards does she keep?", answer: 22, band: 1, problemType: "Multi-step", visual: "3×14−14−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **22**." },
-    { id: "h010", text: "A mystery number times 7 equals 56. What is the number?", answer: 8, band: 1, problemType: "Unknown", visual: "?×7=56", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **8**.", minimalVisual: true },
-    { id: "h011", text: "4 teams receive 11 cones each, then 6 cones are collected for storage. How many cones stay on the field?", answer: 38, band: 1, problemType: "Multi-step", visual: "4×11−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **38**." },
-    { id: "h012", text: "Some books sat on a cart. Staff added 5 stacks of 6 books. Now there are 71 books. How many were on the cart first?", answer: 41, band: 1, problemType: "Unknown", visual: "?+30=71", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **41**.", minimalVisual: true },
-    { id: "h013", text: "72 markers are split equally into boxes of 8. How many boxes?", answer: 9, band: 1, problemType: "Sharing", visual: "72÷8", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **9**." },
-    { id: "h014", text: "A number is 23 less than 61. What is the number?", answer: 38, band: 1, problemType: "Unknown", visual: "61−23", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **38**.", minimalVisual: true },
-    { id: "h015", text: "6 wagons carry 9 hay bales each. 13 bales are unloaded early. How many bales are still on the wagons?", answer: 41, band: 1, problemType: "Multi-step", visual: "6×9−13", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **41**." },
-    { id: "h016", text: "Rico thinks of a number, divides it by 4, and gets 11. What was the number?", answer: 44, band: 1, problemType: "Unknown", visual: "?÷4=11", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **44**.", minimalVisual: true },
-    { id: "h017", text: "There are 5 jars with 10 cookies each. 17 cookies are wrapped for gifts. How many cookies are left unwrapped?", answer: 33, band: 1, problemType: "Multi-step", visual: "5×10−17", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **33**." },
-    { id: "h018", text: "54 students form equal rows of 9. How many rows?", answer: 6, band: 1, problemType: "Sharing", visual: "54÷9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **6**." },
-    { id: "h019", text: "A farm packs 41 eggs in cartons of 12 (full cartons only). How many eggs are left out of cartons?", answer: 5, band: 1, problemType: "Sharing", visual: "41 mod 12", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **5**.", minimalVisual: true },
-    { id: "h020", text: "Mystery number plus 19 equals 67. What is the number?", answer: 48, band: 1, problemType: "Unknown", visual: "?+19=67", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **48**.", minimalVisual: true },
-    { id: "h021", text: "7 shelves hold 8 trophies each. 9 trophies are polished elsewhere. How many trophies are on the shelves?", answer: 47, band: 1, problemType: "Multi-step", visual: "7×8−9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **47**." },
-    { id: "h022", text: "88 inches of wire is cut into 8 equal pieces. How many pieces?", answer: 11, band: 1, problemType: "Sharing", visual: "88÷8", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **11**." },
-    { id: "h023", text: "Each of 6 tables gets 5 paint cups. 8 cups are refilled from a jug. How many cups are on tables in all?", answer: 30, band: 1, problemType: "Multi-step", visual: "6×5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **30**." },
-    { id: "h024", text: "Start unknown. Add 27 and the result is 74. What was the start?", answer: 47, band: 1, problemType: "Unknown", visual: "?+27=74", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **47**.", minimalVisual: true },
-    { id: "h025", text: "9 bags have 6 apples each. 14 apples are used for a demo. How many apples are left?", answer: 40, band: 1, problemType: "Multi-step", visual: "9×6−14", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **40**." },
-    { id: "h026", text: "65 ÷ mystery divisor equals 5. What is the divisor?", answer: 13, band: 1, problemType: "Unknown", visual: "65÷?=5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **13**.", minimalVisual: true },
-    { id: "h027", text: "4 boxes of 11 markers arrive. 15 markers are opened for a project. How many markers are still sealed in boxes?", answer: 29, band: 1, problemType: "Multi-step", visual: "4×11−15", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **29**." },
-    { id: "h028", text: "There were some coins in a jar. After adding 20 cents in nickels, the jar has 95 cents. How many cents were in the jar before?", answer: 75, band: 1, problemType: "Unknown", visual: "?+20=95", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **75**.", minimalVisual: true },
-    { id: "h029", text: "3 packs of 16 juice pouches. 12 pouches are chilled separately. How many pouches are still in packs?", answer: 36, band: 1, problemType: "Multi-step", visual: "3×16−12", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **36**." },
-    { id: "h030", text: "A number multiplied by 9 equals 81. What is the number?", answer: 9, band: 1, problemType: "Unknown", visual: "?×9=81", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **9**.", minimalVisual: true },
-    { id: "h031", text: "10 rows of 4 plants. 7 plants need replanting. How many look healthy in the rows?", answer: 33, band: 1, problemType: "Multi-step", visual: "10×4−7", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **33**." },
-    { id: "h032", text: "77 stickers are divided equally among 7 friends. How many each?", answer: 11, band: 1, problemType: "Sharing", visual: "77÷7", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **11**." },
-    { id: "h033", text: "Some tiles were in a box. 6 packs of 9 tiles were added. Now there are 92 tiles. How many were in the box before?", answer: 38, band: 1, problemType: "Unknown", visual: "?+54=92", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **38**.", minimalVisual: true },
-    { id: "h034", text: "8 classes borrow 5 microscopes each. 6 microscopes stay in the lab. How many are out with classes?", answer: 34, band: 1, problemType: "Multi-step", visual: "8×5−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "💡 The answer is **34**." },
+    { id: "h001", text: "5 crates hold 7 juice boxes each. The coach sets aside 11 boxes for staff. How many boxes are left for players?", answer: 24, band: 1, problemType: "Multi-step", visual: "5×7−11", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 5 × 7 = 35, then 35 − 11 = **24**." },
+    { id: "h002", text: "There were some apples. The store added 4 bags of 8 apples. Now there are 59 apples. How many were there before?", answer: 27, band: 1, problemType: "Unknown", visual: "?+32=59", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 59 − 32 = **27** at the start.", minimalVisual: true },
+    { id: "h003", text: "Tia saves $6 a week for 6 weeks, then spends $15 on supplies. How many dollars does she have left?", answer: 21, band: 1, problemType: "Multi-step", visual: "6×6−15", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 6 × 6 = 36, then 36 − 15 = **21**." },
+    { id: "h004", text: "63 erasers are shared equally among 9 tables. How many erasers per table?", answer: 7, band: 1, problemType: "Sharing", visual: "63÷9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 63 ÷ 9 = **7**." },
+    { id: "h005", text: "A bus has 8 rows with 6 seats each, but 5 seats are empty. How many passengers are seated?", answer: 43, band: 1, problemType: "Multi-step", visual: "8×6−5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 8 × 6 = 48, then 48 − 5 = **43**." },
+    { id: "h006", text: "The larger of two numbers is 52. Their difference is 14. What is the smaller number?", answer: 38, band: 1, problemType: "Compare", visual: "52−14", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➖ 52 − 14 = **38**.", minimalVisual: true },
+    { id: "h007", text: "8 squads have 7 runners each. 9 runners are hurt and sit out. How many runners compete?", answer: 47, band: 1, problemType: "Multi-step", visual: "8×7−9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 8 × 7 = 56, then 56 − 9 = **47**." },
+    { id: "h008", text: "Donuts are packed 9 per box. There are 49 donuts and only full boxes count. How many donuts are left over?", answer: 4, band: 1, problemType: "Sharing", visual: "49 mod 9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 49 ÷ 9 = 5 groups with **4** left over.", minimalVisual: true },
+    { id: "h009", text: "Priya buys 3 packs of 14 cards. She gives her brother one full pack and 6 cards from another. How many cards does she keep?", answer: 22, band: 1, problemType: "Multi-step", visual: "3×14−14−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 3 × 14 = 42, − 14 = 28, − 6 = **22**." },
+    { id: "h010", text: "A mystery number times 7 equals 56. What is the number?", answer: 8, band: 1, problemType: "Unknown", visual: "?×7=56", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Undo multiplication: 56 ÷ 7 = **8**.", minimalVisual: true },
+    { id: "h011", text: "4 teams receive 11 cones each, then 6 cones are collected for storage. How many cones stay on the field?", answer: 38, band: 1, problemType: "Multi-step", visual: "4×11−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 4 × 11 = 44, then 44 − 6 = **38**." },
+    { id: "h012", text: "Some books sat on a cart. Staff added 5 stacks of 6 books. Now there are 71 books. How many were on the cart first?", answer: 41, band: 1, problemType: "Unknown", visual: "?+30=71", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 71 − 30 = **41** at the start.", minimalVisual: true },
+    { id: "h013", text: "72 markers are split equally into boxes of 8. How many boxes?", answer: 9, band: 1, problemType: "Sharing", visual: "72÷8", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 72 ÷ 8 = **9**." },
+    { id: "h014", text: "A number is 23 less than 61. What is the number?", answer: 38, band: 1, problemType: "Unknown", visual: "61−23", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➖ 61 − 23 = **38**.", minimalVisual: true },
+    { id: "h015", text: "6 wagons carry 9 hay bales each. 13 bales are unloaded early. How many bales are still on the wagons?", answer: 41, band: 1, problemType: "Multi-step", visual: "6×9−13", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 6 × 9 = 54, then 54 − 13 = **41**." },
+    { id: "h016", text: "Rico thinks of a number, divides it by 4, and gets 11. What was the number?", answer: 44, band: 1, problemType: "Unknown", visual: "?÷4=11", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Undo division: 11 × 4 = **44**.", minimalVisual: true },
+    { id: "h017", text: "There are 5 jars with 10 cookies each. 17 cookies are wrapped for gifts. How many cookies are left unwrapped?", answer: 33, band: 1, problemType: "Multi-step", visual: "5×10−17", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 5 × 10 = 50, then 50 − 17 = **33**." },
+    { id: "h018", text: "54 students form equal rows of 9. How many rows?", answer: 6, band: 1, problemType: "Sharing", visual: "54÷9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 54 ÷ 9 = **6**." },
+    { id: "h019", text: "A farm packs 41 eggs in cartons of 12 (full cartons only). How many eggs are left out of cartons?", answer: 5, band: 1, problemType: "Sharing", visual: "41 mod 12", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 41 ÷ 12 = 3 groups with **5** left over.", minimalVisual: true },
+    { id: "h020", text: "Mystery number plus 19 equals 67. What is the number?", answer: 48, band: 1, problemType: "Unknown", visual: "?+19=67", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 67 − 19 = **48** at the start.", minimalVisual: true },
+    { id: "h021", text: "7 shelves hold 8 trophies each. 9 trophies are polished elsewhere. How many trophies are on the shelves?", answer: 47, band: 1, problemType: "Multi-step", visual: "7×8−9", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 7 × 8 = 56, then 56 − 9 = **47**." },
+    { id: "h022", text: "88 inches of wire is cut into 8 equal pieces. How many pieces?", answer: 11, band: 1, problemType: "Sharing", visual: "88÷8", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 88 ÷ 8 = **11**." },
+    { id: "h023", text: "Each of 6 tables gets 5 paint cups. 8 cups are refilled from a jug. How many cups are on tables in all?", answer: 30, band: 1, problemType: "Multi-step", visual: "6×5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "✖️ 6 × 5 = **30**." },
+    { id: "h024", text: "Start unknown. Add 27 and the result is 74. What was the start?", answer: 47, band: 1, problemType: "Unknown", visual: "?+27=74", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 74 − 27 = **47** at the start.", minimalVisual: true },
+    { id: "h025", text: "9 bags have 6 apples each. 14 apples are used for a demo. How many apples are left?", answer: 40, band: 1, problemType: "Multi-step", visual: "9×6−14", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 9 × 6 = 54, then 54 − 14 = **40**." },
+    { id: "h026", text: "65 ÷ mystery divisor equals 5. What is the divisor?", answer: 13, band: 1, problemType: "Unknown", visual: "65÷?=5", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Find the divisor: 65 ÷ 5 = **13**.", minimalVisual: true },
+    { id: "h027", text: "4 boxes of 11 markers arrive. 15 markers are opened for a project. How many markers are still sealed in boxes?", answer: 29, band: 1, problemType: "Multi-step", visual: "4×11−15", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 4 × 11 = 44, then 44 − 15 = **29**." },
+    { id: "h028", text: "There were some coins in a jar. After adding 20 cents in nickels, the jar has 95 cents. How many cents were in the jar before?", answer: 75, band: 1, problemType: "Unknown", visual: "?+20=95", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 95 − 20 = **75** at the start.", minimalVisual: true },
+    { id: "h029", text: "3 packs of 16 juice pouches. 12 pouches are chilled separately. How many pouches are still in packs?", answer: 36, band: 1, problemType: "Multi-step", visual: "3×16−12", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 3 × 16 = 48, then 48 − 12 = **36**." },
+    { id: "h030", text: "A number multiplied by 9 equals 81. What is the number?", answer: 9, band: 1, problemType: "Unknown", visual: "?×9=81", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Undo multiplication: 81 ÷ 9 = **9**.", minimalVisual: true },
+    { id: "h031", text: "10 rows of 4 plants. 7 plants need replanting. How many look healthy in the rows?", answer: 33, band: 1, problemType: "Multi-step", visual: "10×4−7", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 10 × 4 = 40, then 40 − 7 = **33**." },
+    { id: "h032", text: "77 stickers are divided equally among 7 friends. How many each?", answer: 11, band: 1, problemType: "Sharing", visual: "77÷7", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "➗ 77 ÷ 7 = **11**." },
+    { id: "h033", text: "Some tiles were in a box. 6 packs of 9 tiles were added. Now there are 92 tiles. How many were in the box before?", answer: 38, band: 1, problemType: "Unknown", visual: "?+54=92", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🔍 Work backward: 92 − 54 = **38** at the start.", minimalVisual: true },
+    { id: "h034", text: "8 classes borrow 5 microscopes each. 6 microscopes stay in the lab. How many are out with classes?", answer: 34, band: 1, problemType: "Multi-step", visual: "8×5−6", hintKeywords: ["each", "before", "left", "equally", "mystery", "difference"], hint: "Decide: multiply, divide, add, or subtract to match the story.", explain: "🧮 8 × 5 = 40, then 40 − 6 = **34**." },
     { id: "h035", text: "6 rows of 12 chairs. 21 chairs are folded. How many chairs are open?", answer: 51, band: 2, problemType: "Multi-step", visual: "6×12−21", hintKeywords: ["each", "before", "total", "undo"], hint: "Break the story into smaller math steps.", explain: "🌟 The answer is **51**.", minimalVisual: true },
     { id: "h036", text: "7 groups of 9 students tour the museum. 15 students wait outside. How many students are inside?", answer: 48, band: 2, problemType: "Multi-step", visual: "7×9−15", hintKeywords: ["each", "before", "total", "undo"], hint: "Break the story into smaller math steps.", explain: "🌟 The answer is **48**.", minimalVisual: true },
     { id: "h037", text: "Team Gold scores 26 and 29 in two periods. Team Blue scores 44 total. How many more points does Gold have?", answer: 11, band: 2, problemType: "Compare", visual: "(26+29)−44", hintKeywords: ["each", "before", "total", "undo"], hint: "Break the story into smaller math steps.", explain: "🌟 The answer is **11**.", minimalVisual: true },
@@ -1537,57 +1542,6 @@
     return out;
   }
 
-  function inferProblemType(q, level) {
-    if (q.problemType) return q.problemType;
-    var t = q.text;
-    var l = t.toLowerCase();
-    var vis = (q.visual || "").toLowerCase();
-
-    if (level === "easy") {
-      if (/left|gave away|gave \d|still|pop|moved|used \d minutes|how many minutes are left|how many fish stayed|how many stickers are on/i.test(t)) {
-        return "Separate";
-      }
-      if (/more|joined|came to play|handed|poured|stacked|swam over|walked in|went up|cracked more|in all|now\?$/i.test(t)) {
-        return "Join";
-      }
-      return "Part–Part–Whole";
-    }
-
-    if (level === "medium") {
-      if (/how many more|how many fewer|how much longer|how much taller|not red|older than|fewer laps|more points than/i.test(t)) {
-        return "Compare";
-      }
-      if (/had some|started with|at first|before\?|change unknown|how many were there before/i.test(t)) {
-        return "Change Unknown";
-      }
-      if (/\bthen\b.*\b(then|spent|left|sold)/i.test(t) || /first .+ then .+ how many/i.test(t)) {
-        return "Multi-step";
-      }
-      if (/goes up.*floor|starting floor/i.test(l)) {
-        return "Join";
-      }
-      return "Separate";
-    }
-
-    if (/\bequally\b|\bshared equally\b|\bdivided equally\b|\bsplit equally\b|each friend|each student|each basket|each person gets|÷|per crate|per shelf/i.test(t) || /÷/.test(vis)) {
-      return "Sharing";
-    }
-    if (/each pack|each box|each row|each tank|each tray|each cage|each shelf|equal rows|groups of|\d+\s*×\s*\d|rows of/i.test(t) || /×/.test(vis)) {
-      return "Equal Groups";
-    }
-    if (/some |at first|before\?|mystery number|how many (were|was).*at (first|the start)|what is the number|\? \+ \d =|− \? =/i.test(t)) {
-      return "Unknown";
-    }
-    if ((t.match(/\bthen\b/g) || []).length >= 1 && (/[+\-−].*[+\-−]/.test(vis) || /sell.*then|after paying|after buying|after eating/i.test(l))) {
-      return "Multi-step";
-    }
-    return "Multi-step";
-  }
-
-  function enrichQuestion(item, level) {
-    return Object.assign({}, item, { problemType: inferProblemType(item, level) });
-  }
-
   function getPoolSize(level) {
     return getQuestionsForLevel(level).length;
   }
@@ -1765,10 +1719,9 @@
     var bandsByNum = { 1: [], 2: [], 3: [] };
     var other = [];
     raw.forEach(function (item) {
-      var e = enrichQuestion(Object.assign({}, item), level);
       var b = getBandOf(item);
-      if (b === 1 || b === 2 || b === 3) bandsByNum[b].push(e);
-      else other.push(e);
+      if (b === 1 || b === 2 || b === 3) bandsByNum[b].push(item);
+      else other.push(item);
     });
 
     // Deprioritize recently seen questions inside each band.
@@ -1851,7 +1804,13 @@
   /** @type {Question[]} */
   let sessionQueue = [];
   let questionIndex = 0;
+  /** Distinct questions completed (correctly, skipped, or after exhausting hints). */
+  let questionsCompleted = 0;
+  /** Questions solved on the first submit (no hint/explain used). */
+  let firstTryCorrect = 0;
+  /** Questions whose final outcome was correct (any number of submits, no skip). */
   let correctCount = 0;
+  /** Total submit-button presses across the session — kept for power users / debugging. */
   let attemptedCount = 0;
   let streak = 0;
   let sessionBestStreak = 0;
@@ -1873,7 +1832,23 @@
     return audioCtx;
   }
 
+  function isMuted() {
+    try { return localStorage.getItem("wordProblemAdventure_muted") === "1"; }
+    catch (e) { return false; }
+  }
+
+  function setMuted(m) {
+    try { localStorage.setItem("wordProblemAdventure_muted", m ? "1" : "0"); }
+    catch (e) { /* ignore */ }
+    var btn = document.getElementById("btn-mute");
+    if (btn) {
+      btn.textContent = m ? "🔇 Sound Off" : "🔊 Sound On";
+      btn.setAttribute("aria-pressed", m ? "true" : "false");
+    }
+  }
+
   function playTone(freq, duration, type) {
+    if (isMuted()) return;
     try {
       const ctx = getAudioContext();
       const osc = ctx.createOscillator();
@@ -1997,8 +1972,9 @@
 
   function updateSidePanel() {
     document.getElementById("stat-correct").textContent = String(correctCount);
-    document.getElementById("stat-attempted").textContent = String(attemptedCount);
-    const acc = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : null;
+    document.getElementById("stat-attempted").textContent = String(questionsCompleted);
+    // Accuracy = first-try-correct / questions completed. Hint/explain or skip doesn't count toward "got it".
+    const acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : null;
     document.getElementById("stat-accuracy").textContent = acc === null ? "—" : acc + "%";
     document.getElementById("stat-level").textContent = selectedLevel ? LEVEL_NAMES[selectedLevel] : "—";
     document.getElementById("stat-streak").textContent = String(sessionBestStreak);
@@ -2060,6 +2036,7 @@
     if (selectedLevel === "easy") {
       picBtn.classList.add("easy-visible");
       picBtn.textContent = "Show Picture";
+      picBtn.setAttribute("aria-pressed", "false");
     } else {
       picBtn.classList.remove("easy-visible");
     }
@@ -2079,6 +2056,12 @@
 
   var SUCCESS_MESSAGES = ["Great Job! 😊", "Great job! 🌟", "Awesome! 🎉", "You got it! ⭐", "Super! 💫"];
 
+  function prefersReducedMotion() {
+    try {
+      return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch (e) { return false; }
+  }
+
   function showFeedbackCorrect() {
     const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
     const fb = document.getElementById("feedback");
@@ -2090,14 +2073,34 @@
     if (overlay) {
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");
+      // When reduced-motion is on, swap the auto-advance hint for an explicit Next prompt.
+      var sub = overlay.querySelector(".congrats-sub");
+      if (sub) {
+        sub.textContent = prefersReducedMotion()
+          ? "Press Enter when you're ready for the next story."
+          : "Press Enter or wait — next story is on the way!";
+      }
     }
     playCorrectSound();
     setAnswerStateBanner("correct");
     setAnsweringControlsEnabled(false);
     document.getElementById("btn-skip").classList.add("skip-hidden");
-    advanceTimer = setTimeout(function () {
-      goNextQuestion();
-    }, 2000);
+    // Focus the Next button so Enter/Space works for keyboard users.
+    var nextBtn = document.getElementById("btn-next-story");
+    if (nextBtn) nextBtn.focus();
+    if (!prefersReducedMotion()) {
+      advanceTimer = setTimeout(function () {
+        goNextQuestion();
+      }, 2000);
+    }
+  }
+
+  function refocusAnswerInput() {
+    var input = document.getElementById("answer-input");
+    if (input && !input.disabled) {
+      input.focus();
+      input.select();
+    }
   }
 
   function showFeedbackHint(q) {
@@ -2113,6 +2116,7 @@
       highlightKeywords(hintBody, q.hintKeywords) +
       "</p>";
     setAnswerStateBanner("hint");
+    refocusAnswerInput();
   }
 
   function showFeedbackExplain(q) {
@@ -2124,6 +2128,7 @@
       formatExplain(escapeHtml(q.explain)) +
       "</div>";
     setAnswerStateBanner("explain");
+    refocusAnswerInput();
   }
 
   function parseAnswer(val) {
@@ -2145,14 +2150,23 @@
     }
 
     attemptedCount += 1;
-    if (selectedLevel) levelStats[selectedLevel].attempted += 1;
-    updateSidePanel();
 
     if (ans === q.answer) {
+      var firstTry = wrongSubmitsOnQuestion === 0;
+      questionsCompleted += 1;
       correctCount += 1;
-      streak += 1;
-      sessionBestStreak = Math.max(sessionBestStreak, streak);
-      if (selectedLevel) levelStats[selectedLevel].correct += 1;
+      if (selectedLevel) {
+        levelStats[selectedLevel].attempted += 1;
+        levelStats[selectedLevel].correct += 1;
+      }
+      if (firstTry) {
+        firstTryCorrect += 1;
+        streak += 1;
+        sessionBestStreak = Math.max(sessionBestStreak, streak);
+      } else {
+        // Got there with help — credit completion but break the streak.
+        streak = 0;
+      }
       var pt = q.problemType || "Other";
       typeCorrect[pt] = (typeCorrect[pt] || 0) + 1;
       updateSidePanel();
@@ -2189,10 +2203,12 @@
       vb.classList.remove("hidden");
       vb.setAttribute("aria-hidden", "false");
       btn.textContent = "Hide Picture";
+      btn.setAttribute("aria-pressed", "true");
     } else {
       vb.classList.add("hidden");
       vb.setAttribute("aria-hidden", "true");
       btn.textContent = "Show Picture";
+      btn.setAttribute("aria-pressed", "false");
     }
   }
 
@@ -2204,7 +2220,7 @@
       goNextQuestion();
       return;
     }
-    attemptedCount += 1;
+    questionsCompleted += 1;
     if (selectedLevel) levelStats[selectedLevel].attempted += 1;
     streak = 0;
     updateSidePanel();
@@ -2228,6 +2244,8 @@
     var want = sessionMode === "full" ? pool : Math.min(parseInt(sessionMode, 10) || pool, pool);
     sessionQueue = buildSessionQueue(level, want);
     questionIndex = 0;
+    questionsCompleted = 0;
+    firstTryCorrect = 0;
     correctCount = 0;
     attemptedCount = 0;
     streak = 0;
@@ -2248,9 +2266,9 @@
   function endSession(completedAll) {
     clearAdvanceTimer();
     hideCongratsOverlay();
-    const acc = attemptedCount > 0 ? Math.round((correctCount / attemptedCount) * 100) : 0;
-    document.getElementById("sum-attempted").textContent = String(attemptedCount);
-    document.getElementById("sum-correct").textContent = String(correctCount);
+    const acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : 0;
+    document.getElementById("sum-attempted").textContent = String(questionsCompleted);
+    document.getElementById("sum-correct").textContent = String(firstTryCorrect);
     document.getElementById("sum-accuracy").textContent = acc + "%";
     var sumSess = document.getElementById("sum-session-mode");
     if (sumSess) sumSess.textContent = selectedSessionLabel || "—";
@@ -2272,7 +2290,7 @@
           ? "<p style=\"margin-top:10px;color:var(--hard-dark);font-weight:700;\">Hard challenge: you finished the full Hard pool this run.</p>"
           : "";
       rowsEl.innerHTML =
-        "<p>Correct: <strong>" + s.correct + "</strong> · Attempts: <strong>" + s.attempted + "</strong> · Accuracy: <strong>" + accL + "%</strong></p>" +
+        "<p>Got it eventually: <strong>" + s.correct + "</strong> of <strong>" + s.attempted + "</strong> · Overall: <strong>" + accL + "%</strong></p>" +
         hardChallenge;
     } else if (rowsEl) {
       rowsEl.textContent = "—";
@@ -2281,32 +2299,71 @@
     var masteryWrap = document.getElementById("summary-mastery-wrap");
     var masteryEl = document.getElementById("summary-mastery");
     if (masteryWrap && masteryEl) {
-      var badges = [];
       var needBadge = sessionQueue.length >= 25 ? 5 : 3;
-      if ((typeCorrect["Compare"] || 0) >= needBadge) badges.push("🏅 Compare Master");
-      if ((typeCorrect["Multi-step"] || 0) >= needBadge) badges.push("⭐ Multi-Step Star");
-      if ((typeCorrect["Sharing"] || 0) >= needBadge) badges.push("🎯 Great at Sharing");
-      if ((typeCorrect["Unknown"] || 0) >= needBadge) badges.push("🔍 Unknown-Number Whiz");
-      if ((typeCorrect["Equal Groups"] || 0) >= needBadge) badges.push("✨ Equal-Groups Expert");
-      if ((typeCorrect["Money / Measurement Conversion"] || 0) >= needBadge) badges.push("💰 Money & Measurement Pro");
-      if ((typeCorrect["Remainder Interpretation"] || 0) >= needBadge) badges.push("🚌 Remainder Reasoner");
-      if ((typeCorrect["Two-Step Compare"] || 0) >= needBadge) badges.push("🔁 Two-Step Compare Star");
-      if ((typeCorrect["Elapsed Time"] || 0) >= needBadge) badges.push("⏰ Time Tracker");
-      if ((typeCorrect["Fraction of a Set"] || 0) >= needBadge) badges.push("🍕 Fraction of a Set Champ");
-      if (badges.length) {
+      var BADGE_DEFS = [
+        { type: "Compare",                          label: "🏅 Compare Master" },
+        { type: "Multi-step",                       label: "⭐ Multi-Step Star" },
+        { type: "Sharing",                          label: "🎯 Great at Sharing" },
+        { type: "Unknown",                          label: "🔍 Unknown-Number Whiz" },
+        { type: "Equal Groups",                     label: "✨ Equal-Groups Expert" },
+        { type: "Money / Measurement Conversion",   label: "💰 Money & Measurement Pro" },
+        { type: "Remainder Interpretation",         label: "🚌 Remainder Reasoner" },
+        { type: "Two-Step Compare",                 label: "🔁 Two-Step Compare Star" },
+        { type: "Elapsed Time",                     label: "⏰ Time Tracker" },
+        { type: "Fraction of a Set",                label: "🍕 Fraction of a Set Champ" },
+      ];
+      var earned = [];
+      var progress = [];
+      BADGE_DEFS.forEach(function (b) {
+        var n = typeCorrect[b.type] || 0;
+        if (n >= needBadge) earned.push(b.label);
+        else if (n > 0) progress.push(b.label + " (" + n + "/" + needBadge + ")");
+      });
+      if (earned.length || progress.length) {
         masteryWrap.style.display = "block";
-        masteryEl.innerHTML = "<p>" + badges.join(" · ") + "</p>";
+        var html = "";
+        if (earned.length) html += "<p><strong>Earned:</strong> " + earned.join(" · ") + "</p>";
+        if (progress.length) html += "<p style=\"color:var(--muted);\"><strong>Toward badges:</strong> " + progress.join(" · ") + "</p>";
+        masteryEl.innerHTML = html;
       } else {
         masteryWrap.style.display = "none";
         masteryEl.textContent = "—";
       }
     }
 
+    postSessionToHub(completedAll, acc);
     showScreen("screen-summary");
   }
 
   function exitToSummary() {
     endSession(false);
+  }
+
+  function starsForAccuracy(acc, completed) {
+    // No stars unless the kid actually completed a few questions.
+    if (completed < 3) return 0;
+    if (acc >= 85) return 3;
+    if (acc >= 65) return 2;
+    if (acc >= 40) return 1;
+    return 0;
+  }
+
+  function postSessionToHub(completedAll, acc) {
+    if (!(window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded())) return;
+    if (!selectedLevel) return;
+    var bridge = window.KLS.bridge;
+    bridge.played();
+    bridge.session(selectedLevel, {
+      questionsAnswered: questionsCompleted,
+      accuracy: acc,
+      bestStreak: sessionBestStreak,
+    });
+    var stars = starsForAccuracy(acc, questionsCompleted);
+    if (stars > 0) bridge.stars(selectedLevel, stars);
+    if (completedAll && selectedSessionWasFull && selectedLevel === "hard") {
+      bridge.sticker("hard-pool-complete");
+    }
+    bridge.celebrate();
   }
 
   // Welcome
@@ -2380,7 +2437,27 @@
   document.getElementById("btn-hint").addEventListener("click", showHintManual);
   document.getElementById("btn-picture").addEventListener("click", togglePicture);
   document.getElementById("btn-skip").addEventListener("click", skipQuestion);
+  document.getElementById("btn-mute").addEventListener("click", function () {
+    setMuted(!isMuted());
+  });
   document.getElementById("btn-exit-game").addEventListener("click", exitToSummary);
+  setMuted(isMuted()); // sync button label on load
+  document.getElementById("btn-next-story").addEventListener("click", function () {
+    clearAdvanceTimer();
+    goNextQuestion();
+  });
+
+  // Global Enter handler for the post-correct overlay (input is disabled then, so
+  // its own keydown listener can't fire). Only acts when the game screen is active.
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter") return;
+    if (answerState !== "correct") return;
+    var gameScreen = document.getElementById("screen-game");
+    if (!gameScreen || !gameScreen.classList.contains("active")) return;
+    e.preventDefault();
+    clearAdvanceTimer();
+    goNextQuestion();
+  });
 
   document.getElementById("btn-summary-play").addEventListener("click", function () {
     showScreen("screen-level");
@@ -2393,18 +2470,14 @@
   document.getElementById("btn-summary-home").addEventListener("click", function () {
     showScreen("screen-welcome");
   });
+  document.getElementById("btn-reset-progress").addEventListener("click", function () {
+    if (!window.confirm("Reset your saved best streak and recent-question history? Your mute setting will stay.")) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+    window.alert("Progress reset. Have fun!");
+  });
 })();
   </script>
 
   <script src="../../shared/scripts/game-bridge.js"></script>
-  <script>
-    // KLS hub wiring: post a "played" event when the Session Summary screen appears.
-    if (window.KLS && window.KLS.bridge) {
-      window.KLS.bridge.onVisible('#screen-summary.active', function () {
-        window.KLS.bridge.played();
-        window.KLS.bridge.celebrate();
-      });
-    }
-  </script>
 </body>
 </html>
