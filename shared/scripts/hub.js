@@ -2,6 +2,7 @@
   const { qs, el, formatRelative } = window.KLS.util;
   const progress = window.KLS.progress;
   const chrome = window.KLS.chrome;
+  const profileUI = window.KLS.profileUI;
 
   const GAMES = [
     {
@@ -56,8 +57,14 @@
   let activeTopic = 'all';
 
   function parseHash() {
-    const m = (location.hash || '').match(/^#\/games\/([^/?#]+)/);
-    if (m && SLUGS.has(m[1])) return { route: 'game', slug: m[1] };
+    const h = location.hash || '';
+    let m;
+    if ((m = h.match(/^#\/games\/([^/?#]+)/))) {
+      if (SLUGS.has(m[1])) return { route: 'game', slug: m[1] };
+    }
+    if (h === '#/profiles')      return { route: 'profiles' };
+    if (h === '#/profiles/new')  return { route: 'profiles-new' };
+    if (h === '#/parent')        return { route: 'parent' };
     return { route: 'hub' };
   }
 
@@ -80,7 +87,16 @@
 
   function makeTile(g) {
     const stars = gameStarsTotal(g.slug);
-    const last = progress.getGame(g.slug).lastPlayedAt;
+    const game = progress.getGame(g.slug);
+    const last = game.lastPlayedAt;
+    const stickers = (game.stickers || []).length;
+    const hasSaved = !!game.gameState;
+
+    const badges = [];
+    if (stars > 0)    badges.push(el('span', { class: 'tile__badge tile__badge--stars' }, '⭐ ' + stars));
+    if (stickers > 0) badges.push(el('span', { class: 'tile__badge tile__badge--stickers' }, '🏆 ' + stickers));
+    if (hasSaved)    badges.push(el('span', { class: 'tile__badge tile__badge--saved', title: 'Saved game waiting' }, '💾 Continue'));
+
     return el('a', {
       class: 'tile',
       href: '#/games/' + g.slug,
@@ -90,6 +106,7 @@
       el('span', { class: 'tile__tag ' + (g.tagClass || '') }, g.tag),
       el('h2', { class: 'tile__title' }, g.title),
       el('p', { class: 'tile__subtitle' }, g.subtitle),
+      el('div', { class: 'tile__badges' }, badges),
       el('div', { class: 'tile__stats' },
         el('span', { class: 'tile__stars', 'aria-label': stars + ' stars earned' }, starString(stars)),
         el('span', { class: 'tile__lastplayed' },
@@ -147,12 +164,11 @@
     const stage = qs('#stage-root');
     stage.hidden = true;
     hub.hidden = false;
+    hub.className = 'hub';
     playEnter(hub);
 
     const profile = progress.get().profile;
 
-    // innerHTML for the header so the inline <svg><use> element gets the
-    // correct SVG namespace (DOM API would require createElementNS).
     hub.innerHTML = ''
       + '<header class="hub__header">'
       +   '<svg class="hub__mascot" viewBox="0 0 200 200" role="img" aria-label="Pip the fox">'
@@ -160,16 +176,21 @@
       +   '</svg>'
       +   '<h1 class="hub__title">Kids Learning Space</h1>'
       +   '<p class="hub__subtitle">Pick a game and start learning!</p>'
-      +   '<div class="hub__profile">'
-      +     '<span class="hub__profile-avatar" aria-hidden="true" style="font-size:1.4rem"></span>'
+      +   '<button type="button" class="hub__profile-pill" id="hub-profile-pill" aria-label="Switch profile">'
+      +     '<span class="hub__profile-avatar" aria-hidden="true"></span>'
       +     '<span class="hub__profile-name"></span>'
-      +   '</div>'
+      +     '<span class="hub__profile-hint" aria-hidden="true">Switch ▾</span>'
+      +   '</button>'
       + '</header>'
       + '<div id="hub-filter" class="hub__filter" role="group" aria-label="Filter games by topic"></div>'
-      + '<div id="hub-tiles" class="hub__tiles"></div>';
+      + '<div id="hub-tiles" class="hub__tiles"></div>'
+      + '<p class="hub__parent-link"><a href="#/parent">Parent / Data Page</a></p>';
 
-    qs('.hub__profile-avatar', hub).textContent = profile.avatar;
-    qs('.hub__profile-name',   hub).textContent = profile.displayName;
+    qs('.hub__profile-avatar', hub).textContent = profile ? profile.avatar : '🦊';
+    qs('.hub__profile-name',   hub).textContent = profile ? profile.displayName : 'Friend';
+    qs('#hub-profile-pill', hub).addEventListener('click', function () {
+      location.hash = '#/profiles';
+    });
 
     renderFilter();
     renderTiles();
@@ -180,28 +201,61 @@
     const stage = qs('#stage-root');
     const frame = qs('#stage-frame');
 
-    hub.hidden = true;
-    stage.hidden = false;
-    playEnter(stage);
-    chrome.mount();
+    function actuallyStart(resumeBlob) {
+      hub.hidden = true;
+      stage.hidden = false;
+      playEnter(stage);
+      chrome.mount();
 
-    // Explicit index.html so this works on file:// (which has no directory
-    // index resolution) as well as HTTP servers.
-    const desired = 'games/' + slug + '/index.html';
-    if (frame.getAttribute('src') !== desired) frame.setAttribute('src', desired);
+      // Explicit index.html so this works on file:// (which has no directory
+      // index resolution) as well as HTTP servers.
+      const desired = 'games/' + slug + '/index.html';
+      // Force reload even if same src (so resumeBlob delivery is deterministic).
+      frame.setAttribute('src', desired);
 
-    const meta = GAMES.find((g) => g.slug === slug);
-    document.title = (meta ? meta.title : 'Game') + ' — Kids Learning Space';
+      const meta = GAMES.find((g) => g.slug === slug);
+      document.title = (meta ? meta.title : 'Game') + ' — Kids Learning Space';
+
+      if (resumeBlob != null && chrome.pushResumeState) {
+        chrome.pushResumeState(slug, resumeBlob);
+      }
+    }
+
+    // Resume gate: if a saved blob exists, ask the kid before loading the iframe.
+    const saved = progress.getGameState(slug);
+    if (saved != null && profileUI && profileUI.confirmResume) {
+      profileUI.confirmResume(slug, saved,
+        function onResume() { actuallyStart(saved); },
+        function onStartOver() { progress.clearGameState(slug); actuallyStart(null); }
+      );
+    } else {
+      actuallyStart(null);
+    }
   }
 
   function route() {
     const r = parseHash();
     if (r.route === 'game') {
       renderGame(r.slug);
-    } else {
-      document.title = 'Kids Learning Space';
-      renderHub();
+      return;
     }
+    // All non-game routes show the hub doc (chrome unmounted, stage hidden).
+    qs('#stage-root').hidden = true;
+    chrome.unmount();
+
+    if (r.route === 'profiles')      { profileUI.renderManager();   document.title = 'Profiles — Kids Learning Space'; return; }
+    if (r.route === 'profiles-new')  { profileUI.renderCreateNew({ firstTime: false, onCreated: function () { location.hash = ''; } }); document.title = 'New Profile — Kids Learning Space'; return; }
+    if (r.route === 'parent')        { profileUI.renderParent();     document.title = 'Parent — Kids Learning Space'; return; }
+
+    document.title = 'Kids Learning Space';
+    renderHub();
+  }
+
+  function boot() {
+    // First-visit gate: ensure there's an active profile before showing anything.
+    profileUI.ensureProfileOrPick(function () {
+      route();
+    });
   }
 
   // Live-refresh tiles when progress changes (so "Played 2m ago" stays current
@@ -212,8 +266,8 @@
 
   window.addEventListener('hashchange', route);
   if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', route);
+    window.addEventListener('DOMContentLoaded', boot);
   } else {
-    route();
+    boot();
   }
 })();

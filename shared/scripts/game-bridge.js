@@ -12,8 +12,17 @@
  *   { type: 'kls:progress', event: 'session',      level, stats          }
  *   { type: 'kls:progress', event: 'awardStars',   level, stars          }
  *   { type: 'kls:progress', event: 'awardSticker', stickerId             }
+ *   { type: 'kls:progress', event: 'saveState',    state                 }
+ *   { type: 'kls:progress', event: 'clearState'                          }
  * Parent validates the iframe slug before applying, so games cannot write
  * to one another's records.
+ *
+ * The parent may also send messages TO the game:
+ *   { type: 'kls:hub', event: 'requestState' }
+ *     → game should immediately reply with bridge.saveState(currentBlob)
+ *   { type: 'kls:hub', event: 'resumeState', state: <blob> }
+ *     → parent's reply to a freshly-loaded game that has saved state,
+ *       once the user has opted to resume on the hub side.
  */
 (function () {
   const embedded = (function () {
@@ -83,6 +92,23 @@
     }
   }
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Hub → game message dispatch
+  // ──────────────────────────────────────────────────────────────────────
+  const hubHandlers = {};
+  function onHubMessage(event, fn) {
+    if (!hubHandlers[event]) hubHandlers[event] = [];
+    hubHandlers[event].push(fn);
+  }
+  if (embedded) {
+    window.addEventListener('message', function (ev) {
+      const data = ev.data;
+      if (!data || data.type !== 'kls:hub') return;
+      const fns = hubHandlers[data.event] || [];
+      fns.forEach(function (fn) { try { fn(data); } catch (e) { console.error('[KLS bridge]', e); } });
+    });
+  }
+
   window.KLS = window.KLS || {};
   window.KLS.bridge = {
     isEmbedded() { return embedded; },
@@ -91,6 +117,12 @@
     stars(level, n) { post('awardStars', { level: level, stars: n }); },
     sticker(stickerId) { post('awardSticker', { stickerId: stickerId }); },
     celebrate() { post('celebrate'); },
+    /** Persist an opaque per-game state blob on the hub. */
+    saveState(blob) { post('saveState', { state: blob == null ? null : blob }); },
+    /** Drop the saved blob (e.g. when the game's own "start over" is confirmed). */
+    clearState() { post('clearState'); },
+    /** Subscribe to hub-→game messages: 'requestState', 'resumeState'. */
+    onHubMessage: onHubMessage,
     onVisible: onVisible,
   };
 })();
