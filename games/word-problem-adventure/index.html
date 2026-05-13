@@ -590,10 +590,203 @@
     }
 
     .summary-extra h4 { margin: 0 0 8px; font-size: 1rem; color: var(--muted); }
+
+    /* ─── Journey map ──────────────────────────────────────────────────── */
+    .journey { max-width: 720px; margin: 0 auto; padding: 8px 12px 48px; }
+    .journey__intro {
+      text-align: center;
+      margin: 8px 0 24px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .journey__unit { margin-bottom: 40px; }
+    .journey__unit-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      color: #fff;
+      box-shadow: var(--shadow);
+      border: 3px solid #fff;
+      margin-bottom: 12px;
+    }
+    .journey__unit-header .unit-title { font-size: 1.4rem; font-weight: 800; line-height: 1.15; }
+    .journey__unit-header .unit-sub { font-size: 0.95rem; opacity: 0.92; }
+    .journey__unit-header .unit-progress { margin-left: auto; font-weight: 800; font-size: 1.05rem; white-space: nowrap; }
+
+    .journey__path {
+      display: flex; flex-direction: column; align-items: center; gap: 22px;
+      position: relative;
+      padding: 12px 0 4px;
+    }
+    .journey__node-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      width: 100%;
+    }
+    /* Zigzag the nodes left-right-left-right with margin offsets. */
+    .journey__node-wrap:nth-child(odd)  .journey__node-pos { transform: translateX(-60px); }
+    .journey__node-wrap:nth-child(even) .journey__node-pos { transform: translateX(60px); }
+    @media (max-width: 480px) {
+      .journey__node-wrap:nth-child(odd)  .journey__node-pos { transform: translateX(-30px); }
+      .journey__node-wrap:nth-child(even) .journey__node-pos { transform: translateX(30px); }
+    }
+    .journey__node-pos {
+      position: relative;
+      display: flex; align-items: center; gap: 14px;
+      transition: transform 0.25s ease;
+    }
+    .journey__node {
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 2rem;
+      line-height: 1;
+      border: 4px solid #fff;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.18), var(--shadow);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      background: linear-gradient(180deg, #b2bec3 0%, #8d9598 100%);
+      color: #fff;
+      padding: 0;
+    }
+    .journey__node:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0,0,0,0.18); }
+    .journey__node.locked { cursor: not-allowed; opacity: 0.55; filter: grayscale(0.6); }
+    .journey__node.locked .node-emoji { filter: blur(0.5px); }
+    .journey__node.done {
+      background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+    }
+    .journey__node.current {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      animation: nodePulse 1.8s ease-in-out infinite;
+    }
+    .journey__node.boss {
+      width: 108px; height: 108px;
+      box-shadow: 0 0 0 4px var(--sun), 0 6px 0 rgba(0,0,0,0.18), var(--shadow);
+      background: linear-gradient(180deg, #ffe66d 0%, #f6b73c 100%);
+      color: var(--accent-dark);
+    }
+    .journey__node.boss.done {
+      background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+      color: #fff;
+    }
+    .journey__node .node-emoji { display: block; font-size: 2.1rem; line-height: 1; }
+    .journey__node .node-stars { display: block; font-size: 0.9rem; margin-top: 4px; letter-spacing: 1px; }
+
+    @keyframes nodePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,107,0.5), 0 6px 0 rgba(0,0,0,0.18), var(--shadow); }
+      50%      { box-shadow: 0 0 0 14px rgba(255,107,107,0),   0 6px 0 rgba(0,0,0,0.18), var(--shadow); }
+    }
+
+    .journey__node-label {
+      text-align: center;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--muted);
+      max-width: 200px;
+      margin-top: 6px;
+      line-height: 1.25;
+    }
+    .journey__node-wrap.current .journey__node-label { color: var(--accent-dark); }
+
+    /* "START" badge floating above the current node. */
+    .journey__node-pos .start-badge {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent-dark);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* Pip the Fox peeks out next to the current node. */
+    .journey__pip {
+      width: 84px; height: 84px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .journey__pip-bubble {
+      position: absolute;
+      top: -10px;
+      background: #fff;
+      border: 3px solid var(--accent);
+      border-radius: 14px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-dark);
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+    /* Pip on the LEFT of a node (node-wrap is odd) → bubble points right.
+       Pip on the RIGHT (node-wrap is even) → bubble points left. */
+    .journey__node-wrap:nth-child(odd)  .journey__pip { order: -1; }
+    .journey__node-wrap:nth-child(odd)  .journey__pip-bubble  { right: -8px; }
+    .journey__node-wrap:nth-child(even) .journey__pip-bubble  { left: -8px; }
+
+    /* Dashed connector between consecutive nodes within a unit. */
+    .journey__connector {
+      width: 4px;
+      height: 28px;
+      background-image: linear-gradient(to bottom, var(--muted) 50%, transparent 50%);
+      background-size: 4px 14px;
+      background-repeat: repeat-y;
+      opacity: 0.4;
+      margin: -10px 0;
+    }
+    .journey__connector.done { opacity: 0.85; background-image: linear-gradient(to bottom, var(--secondary) 50%, transparent 50%); }
+
+    /* The "current" node label gets a pop. */
+    .journey__node-wrap.current .journey__node-pos { transform: translateX(0) scale(1.04); }
+
+    /* ─── Lesson summary hero ──────────────────────────────────────────── */
+    .lesson-hero { max-width: 720px; margin: 0 auto 12px; }
+    .lesson-hero:empty { display: none; }
+    .lesson-hero__inner {
+      background: linear-gradient(165deg, #fff9e6 0%, #d4edda 50%, #fff 100%);
+      border: 4px solid #28a745;
+      border-radius: 28px;
+      box-shadow: 0 12px 32px rgba(39,174,96,0.25);
+      text-align: center;
+      padding: 22px 24px;
+    }
+    .lesson-hero__title { font-size: 1.5rem; font-weight: 800; color: #155724; }
+    .lesson-hero__stars { font-size: 2.4rem; letter-spacing: 6px; margin: 8px 0; }
+    .lesson-hero__sub   { color: var(--muted); font-size: 1rem; }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
 <body>
+  <!-- Pip the Fox SVG library (mascot peeking next to the current lesson). -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="wpa-pip" viewBox="0 0 200 200">
+        <ellipse cx="110" cy="110" rx="60" ry="54" fill="#FF8A65"/>
+        <path d="M66,56 L80,102 L102,80 Z" fill="#FF8A65"/>
+        <path d="M76,72 L82,96 L96,84 Z" fill="#FFB39C"/>
+        <path d="M154,56 L140,102 L118,80 Z" fill="#FF8A65"/>
+        <path d="M144,72 L138,96 L124,84 Z" fill="#FFB39C"/>
+        <path d="M74,112 Q110,148 146,112 Q130,154 110,154 Q90,154 74,112 Z" fill="#FFF0E1"/>
+        <circle cx="90"  cy="106" r="7"   fill="#2D3436"/>
+        <circle cx="130" cy="106" r="7"   fill="#2D3436"/>
+        <circle cx="92"  cy="103" r="2.4" fill="#fff"/>
+        <circle cx="132" cy="103" r="2.4" fill="#fff"/>
+        <ellipse cx="110" cy="128" rx="5" ry="3.6" fill="#2D3436"/>
+        <path d="M110,131 Q110,138 104,138 M110,131 Q110,138 116,138" stroke="#2D3436" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="78"  cy="122" r="5" fill="#FFB39C" opacity="0.55"/>
+        <circle cx="142" cy="122" r="5" fill="#FFB39C" opacity="0.55"/>
+      </symbol>
+    </defs>
+  </svg>
+
   <!-- Welcome -->
   <div id="screen-welcome" class="screen active">
     <h1>Word Problem Adventure</h1>
@@ -611,63 +804,21 @@
     </div>
   </div>
 
+  <!-- Journey Map -->
+  <div id="screen-map" class="screen">
+    <h1>Your Adventure</h1>
+    <p class="journey__intro">Follow the path. Each stop is a tiny lesson. Earn stars to unlock the next one!</p>
+    <div class="journey" id="journey-root"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-muted" id="btn-map-home">Back to Welcome</button>
+    </div>
+  </div>
+
   <!-- End message from welcome -->
   <div id="screen-end" class="screen">
     <div class="card end-msg">Keep Playing and Keep Learning! 🌟</div>
     <div class="btn-row">
       <button type="button" class="btn btn-secondary" id="btn-back-from-end">Back to Welcome</button>
-    </div>
-  </div>
-
-  <!-- Level select -->
-  <div id="screen-level" class="screen">
-    <h1>Pick Your Level</h1>
-    <p class="subtitle">Large buttons — tap the one that fits you best!</p>
-    <div class="level-grid">
-      <button type="button" class="btn level-btn easy" data-level="easy">
-        Easy
-        <span class="small">Simple addition · Picture hidden until you tap “Show Picture”</span>
-      </button>
-      <button type="button" class="btn level-btn medium" data-level="medium">
-        Medium
-        <span class="small">Subtraction &amp; “how many more / fewer”</span>
-      </button>
-      <button type="button" class="btn level-btn hard" data-level="hard">
-        Hard
-        <span class="small">Mystery numbers, multi-step, groups &amp; sharing</span>
-      </button>
-    </div>
-    <div class="btn-row">
-      <button type="button" class="btn btn-primary" id="btn-begin-level" disabled>Let's Start</button>
-      <button type="button" class="btn btn-muted" id="btn-level-back">Back</button>
-    </div>
-  </div>
-
-  <!-- Session length -->
-  <div id="screen-session" class="screen">
-    <h1>How many stories?</h1>
-    <p class="subtitle" id="session-level-summary">Pick a length for this run.</p>
-    <div class="card">
-      <p style="text-align: center; line-height: 1.65; color: var(--muted); margin: 0 0 8px;">
-        Questions are shuffled inside three bands in this level (starter, then building, then stronger) so each run still ramps up. We try to favor stories you have not seen recently.
-      </p>
-      <div class="session-mode-grid">
-        <button type="button" class="btn btn-secondary session-mode-btn" data-session="10" data-label="Quick Play">
-          Quick Play
-          <span class="small">10 questions</span>
-        </button>
-        <button type="button" class="btn btn-secondary session-mode-btn" data-session="20" data-label="Standard Play">
-          Standard Play
-          <span class="small">20 questions</span>
-        </button>
-        <button type="button" class="btn btn-secondary session-mode-btn" data-session="full" data-label="Full Level">
-          Full Level
-          <span class="small">All in this pool</span>
-        </button>
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn btn-muted" id="btn-session-back">Back to levels</button>
-      </div>
     </div>
   </div>
 
@@ -758,6 +909,7 @@
 
   <!-- Summary -->
   <div id="screen-summary" class="screen">
+    <div id="lesson-hero" class="lesson-hero"></div>
     <h1>Session Summary</h1>
     <div class="card">
       <div class="summary-stats">
@@ -779,11 +931,12 @@
       <p style="text-align: center; font-size: 1.25rem; font-weight: 700; color: var(--secondary-dark);">
         Great effort! Keep practicing!
       </p>
-      <p style="text-align: center; color: var(--muted); margin-top: 8px;">Pick another level or play again to keep learning!</p>
+      <p style="text-align: center; color: var(--muted); margin-top: 8px;">Keep your journey going!</p>
       <p style="text-align: center; font-size: 0.9rem; color: var(--muted);">Your best streak is saved in this browser.</p>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary" id="btn-summary-play">Play Again</button>
-        <button type="button" class="btn btn-secondary" id="btn-summary-home">Home</button>
+        <button type="button" class="btn btn-primary"   id="btn-summary-continue">Continue Journey →</button>
+        <button type="button" class="btn btn-secondary" id="btn-summary-retry">Retry Lesson</button>
+        <button type="button" class="btn btn-muted"     id="btn-summary-home">Welcome</button>
       </div>
       <p style="text-align:center;margin-top:18px;">
         <button type="button" id="btn-reset-progress" style="background:none;border:none;color:var(--muted);cursor:pointer;text-decoration:underline;font:inherit;font-size:0.85rem;">Reset my saved progress</button>
@@ -1711,6 +1864,42 @@
     return out;
   }
 
+  /**
+   * Lesson-aware queue builder. Pulls `count` questions matching the lesson's
+   * filter (problemTypes + optional band), preferring fresh over recently-seen.
+   * Mixes types when more than one is allowed; bosses skew toward later bands.
+   */
+  function buildLessonQueue(lesson) {
+    var level = lesson.level;
+    var pool = getQuestionsForLevel(level).slice();
+    var types = (lesson.filter && lesson.filter.types) || null;
+    var bandFilter = (lesson.filter && lesson.filter.band) || null;
+    var filtered = pool.filter(function (q) {
+      if (types && types.indexOf(q.problemType) === -1) return false;
+      if (bandFilter && getBandOf(q) !== bandFilter) return false;
+      return true;
+    });
+    var p = loadPersisted();
+    var recentArr = (p.recentQuestionIds && p.recentQuestionIds[level]) || [];
+    var recentSet = new Set(recentArr);
+    var fresh = [];
+    var stale = [];
+    filtered.forEach(function (q) {
+      if (q.id && recentSet.has(q.id)) stale.push(q);
+      else fresh.push(q);
+    });
+    var ordered = shuffle(fresh).concat(shuffle(stale));
+    // Bosses interleave types and ramp from earlier band to later band where possible.
+    if (lesson.boss) {
+      ordered.sort(function (a, b) {
+        var ba = getBandOf(a) || 2;
+        var bb = getBandOf(b) || 2;
+        return ba - bb;
+      });
+    }
+    return ordered.slice(0, lesson.length);
+  }
+
   function buildSessionQueue(level, sessionCap) {
     var raw = getQuestionsForLevel(level).slice();
     var p = loadPersisted();
@@ -1779,9 +1968,13 @@
   function loadPersisted() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : { bestStreakEver: 0 };
+      var p = raw ? JSON.parse(raw) : {};
+      if (typeof p.bestStreakEver !== "number") p.bestStreakEver = 0;
+      if (!p.journey || typeof p.journey !== "object") p.journey = { lessons: {} };
+      if (!p.journey.lessons) p.journey.lessons = {};
+      return p;
     } catch (e) {
-      return { bestStreakEver: 0 };
+      return { bestStreakEver: 0, journey: { lessons: {} } };
     }
   }
 
@@ -1793,7 +1986,98 @@
     } catch (e) { /* ignore */ }
   }
 
+  /**
+   * Lesson state: { stars: 0..3, completedAt: ISO, attempts: int }
+   * Stars is the BEST first-try accuracy ever achieved on this lesson.
+   */
+  function getLessonState(lessonId) {
+    var p = loadPersisted();
+    return p.journey.lessons[lessonId] || { stars: 0, completedAt: null, attempts: 0 };
+  }
+
+  function recordLessonResult(lessonId, stars) {
+    try {
+      var p = loadPersisted();
+      var prev = p.journey.lessons[lessonId] || { stars: 0, completedAt: null, attempts: 0 };
+      prev.attempts = (prev.attempts || 0) + 1;
+      if (stars > prev.stars) prev.stars = stars;
+      if (stars > 0 && !prev.completedAt) prev.completedAt = new Date().toISOString();
+      p.journey.lessons[lessonId] = prev;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+    } catch (e) { /* ignore */ }
+  }
+
+  /** A lesson is unlocked if it's the first OR the previous lesson has ≥1 star. */
+  function isLessonUnlocked(lessonId) {
+    var idx = -1;
+    for (var i = 0; i < LESSONS.length; i++) if (LESSONS[i].id === lessonId) { idx = i; break; }
+    if (idx < 0) return false;
+    if (idx === 0) return true;
+    var prev = LESSONS[idx - 1];
+    return getLessonState(prev.id).stars >= 1;
+  }
+
+  /** The single "current" lesson: first lesson that is unlocked but not yet completed. */
+  function currentLessonId() {
+    for (var i = 0; i < LESSONS.length; i++) {
+      var l = LESSONS[i];
+      if (!isLessonUnlocked(l.id)) continue;
+      if (getLessonState(l.id).stars < 1) return l.id;
+    }
+    // All complete — point at the last for re-tries.
+    return LESSONS[LESSONS.length - 1].id;
+  }
+
   const LEVEL_NAMES = { easy: "Easy", medium: "Medium", hard: "Hard" };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Journey map: a Duolingo-style lesson path. Three units, six lessons each.
+  // Each lesson pulls a fixed number of questions from a filtered slice of the
+  // pool (problemTypes + optional band). Bosses pull 8 questions, mixed types.
+  // ───────────────────────────────────────────────────────────────────────────
+  const UNITS = [
+    { id: "u1", title: "Number Beginnings", subtitle: "Joining and adding stories",   level: "easy",   color: "#74b9ff" },
+    { id: "u2", title: "Story Detective",   subtitle: "Take away, compare, mystery",  level: "medium", color: "#fdcb6e" },
+    { id: "u3", title: "Master Solver",     subtitle: "Multi-step, share, time",      level: "hard",   color: "#ff7675" },
+  ];
+
+  /**
+   * @typedef {{
+   *   id: string, unitId: string, title: string, emoji: string, level: "easy"|"medium"|"hard",
+   *   filter: { types?: string[], band?: number }, length: number, boss?: boolean
+   * }} Lesson
+   */
+  const LESSONS = [
+    // Unit 1 — Easy
+    { id: "u1l1", unitId: "u1", title: "Find the total",         emoji: "🍎", level: "easy",   filter: { types: ["Part–Part–Whole"], band: 1 }, length: 5 },
+    { id: "u1l2", unitId: "u1", title: "When more arrive",       emoji: "🐣", level: "easy",   filter: { types: ["Join"], band: 1 },             length: 5 },
+    { id: "u1l3", unitId: "u1", title: "Bigger numbers",         emoji: "🧱", level: "easy",   filter: { types: ["Part–Part–Whole", "Join"], band: 2 }, length: 5 },
+    { id: "u1l4", unitId: "u1", title: "Taking away",            emoji: "📦", level: "easy",   filter: { types: ["Separate"], band: 3 },         length: 5 },
+    { id: "u1l5", unitId: "u1", title: "Story clocks",           emoji: "⏰", level: "easy",   filter: { types: ["Elapsed Time"] },              length: 5 },
+    { id: "u1l6", unitId: "u1", title: "Number Beginnings Boss", emoji: "🏆", level: "easy",   filter: { types: ["Part–Part–Whole", "Join", "Separate"] }, length: 8, boss: true },
+    // Unit 2 — Medium
+    { id: "u2l1", unitId: "u2", title: "Subtract to find left",  emoji: "🍊", level: "medium", filter: { types: ["Separate"], band: 1 },         length: 5 },
+    { id: "u2l2", unitId: "u2", title: "How many more?",         emoji: "📏", level: "medium", filter: { types: ["Compare"], band: 1 },          length: 5 },
+    { id: "u2l3", unitId: "u2", title: "Find the start",         emoji: "🔍", level: "medium", filter: { types: ["Change Unknown", "Unknown"] }, length: 5 },
+    { id: "u2l4", unitId: "u2", title: "Money & cents",          emoji: "💰", level: "medium", filter: { types: ["Money / Measurement Conversion"] }, length: 5 },
+    { id: "u2l5", unitId: "u2", title: "Two-step stories",       emoji: "🧮", level: "medium", filter: { types: ["Multi-step"] },                length: 5 },
+    { id: "u2l6", unitId: "u2", title: "Story Detective Boss",   emoji: "🏆", level: "medium", filter: { types: ["Separate", "Compare", "Change Unknown", "Money / Measurement Conversion"] }, length: 8, boss: true },
+    // Unit 3 — Hard
+    { id: "u3l1", unitId: "u3", title: "Share fairly",           emoji: "🍕", level: "hard",   filter: { types: ["Sharing"] },                   length: 5 },
+    { id: "u3l2", unitId: "u3", title: "Leftovers",              emoji: "🧁", level: "hard",   filter: { types: ["Remainder Interpretation"] },  length: 5 },
+    { id: "u3l3", unitId: "u3", title: "Two-step compare",       emoji: "🏃", level: "hard",   filter: { types: ["Two-Step Compare"] },          length: 5 },
+    { id: "u3l4", unitId: "u3", title: "Fractions of a set",     emoji: "🥧", level: "hard",   filter: { types: ["Fraction of a Set"] },         length: 5 },
+    { id: "u3l5", unitId: "u3", title: "Multi-step master",      emoji: "🧮", level: "hard",   filter: { types: ["Multi-step"] },                length: 5 },
+    { id: "u3l6", unitId: "u3", title: "Master Solver Boss",     emoji: "👑", level: "hard",   filter: { types: ["Sharing", "Remainder Interpretation", "Two-Step Compare", "Fraction of a Set", "Multi-step"] }, length: 8, boss: true },
+  ];
+
+  function lessonById(id) {
+    for (var i = 0; i < LESSONS.length; i++) if (LESSONS[i].id === id) return LESSONS[i];
+    return null;
+  }
+  function lessonsInUnit(unitId) {
+    return LESSONS.filter(function (l) { return l.unitId === unitId; });
+  }
 
   /** @type {"easy"|"medium"|"hard"|null} */
   let selectedLevel = null;
@@ -2228,21 +2512,152 @@
     renderQuestion();
   }
 
-  function openSessionPicker() {
-    if (!selectedLevel) return;
-    var pool = getPoolSize(selectedLevel);
-    var el = document.getElementById("session-level-summary");
-    if (el) el.textContent = LEVEL_NAMES[selectedLevel] + " · " + pool + " story problems in the pool";
-    showScreen("screen-session");
+  // ───────────────────────────────────────────────────────────────────────────
+  // Journey-map rendering
+  // ───────────────────────────────────────────────────────────────────────────
+  var PIP_MESSAGES = {
+    fresh:    ["Let's go!", "You got this!", "Ready?"],
+    midUnit:  ["Keep going!", "Almost there!", "Nice streak!"],
+    boss:     ["Boss time! 💪", "You're ready!", "Big one!"],
+    encore:   ["Try again for more stars!", "One more time?"],
+  };
+
+  function pipMessageFor(lesson, state) {
+    var pool;
+    if (lesson.boss) pool = PIP_MESSAGES.boss;
+    else if (state.stars > 0) pool = PIP_MESSAGES.encore;
+    else if (state.attempts > 0) pool = PIP_MESSAGES.midUnit;
+    else pool = PIP_MESSAGES.fresh;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  function startGame(level, sessionMode, sessionLabel) {
-    selectedLevel = level;
-    selectedSessionLabel = sessionLabel || "—";
-    selectedSessionWasFull = sessionMode === "full";
-    var pool = getPoolSize(level);
-    var want = sessionMode === "full" ? pool : Math.min(parseInt(sessionMode, 10) || pool, pool);
-    sessionQueue = buildSessionQueue(level, want);
+  function makeStarRow(n) {
+    var full = "⭐".repeat(Math.max(0, Math.min(3, n)));
+    var dim  = "·".repeat(Math.max(0, 3 - n));
+    return full + dim;
+  }
+
+  function renderJourneyMap() {
+    var root = document.getElementById("journey-root");
+    if (!root) return;
+    root.innerHTML = "";
+    var currentId = currentLessonId();
+
+    UNITS.forEach(function (unit) {
+      var lessons = lessonsInUnit(unit.id);
+      var doneCount = lessons.filter(function (l) { return getLessonState(l.id).stars >= 1; }).length;
+
+      // Unit header
+      var header = document.createElement("div");
+      header.className = "journey__unit-header";
+      header.style.background = "linear-gradient(135deg, " + unit.color + " 0%, " + unit.color + "cc 100%)";
+      header.innerHTML =
+        '<div>' +
+          '<div class="unit-title">' + escapeHtml(unit.title) + '</div>' +
+          '<div class="unit-sub">' + escapeHtml(unit.subtitle) + '</div>' +
+        '</div>' +
+        '<div class="unit-progress">' + doneCount + ' / ' + lessons.length + '</div>';
+
+      var unitWrap = document.createElement("div");
+      unitWrap.className = "journey__unit";
+      unitWrap.append(header);
+
+      var path = document.createElement("div");
+      path.className = "journey__path";
+
+      lessons.forEach(function (lesson, idx) {
+        var state = getLessonState(lesson.id);
+        var unlocked = isLessonUnlocked(lesson.id);
+        var isCurrent = lesson.id === currentId;
+        var isDone = state.stars >= 1;
+
+        var wrap = document.createElement("div");
+        wrap.className = "journey__node-wrap";
+        if (isCurrent) wrap.classList.add("current");
+
+        var pos = document.createElement("div");
+        pos.className = "journey__node-pos";
+
+        // Node button
+        var node = document.createElement("button");
+        node.type = "button";
+        node.className = "journey__node";
+        if (!unlocked) node.classList.add("locked");
+        if (isDone)    node.classList.add("done");
+        if (isCurrent) node.classList.add("current");
+        if (lesson.boss) node.classList.add("boss");
+        node.setAttribute("aria-label",
+          lesson.title + (unlocked ? "" : " (locked)") +
+          " — " + (isDone ? state.stars + " of 3 stars" : "not yet started"));
+        node.disabled = !unlocked;
+        var emoji = unlocked ? lesson.emoji : "🔒";
+        node.innerHTML =
+          '<span class="node-emoji" aria-hidden="true">' + emoji + '</span>' +
+          (unlocked ? '<span class="node-stars" aria-hidden="true">' + makeStarRow(state.stars) + '</span>' : '');
+
+        if (unlocked) {
+          node.addEventListener("click", function () { startLesson(lesson.id); });
+        }
+        pos.append(node);
+
+        // START badge on the current node
+        if (isCurrent) {
+          var badge = document.createElement("div");
+          badge.className = "start-badge";
+          badge.textContent = lesson.boss ? "BOSS" : "START";
+          pos.append(badge);
+
+          // Pip peeking out with a speech bubble
+          var pip = document.createElement("div");
+          pip.className = "journey__pip";
+          var bubble = document.createElement("div");
+          bubble.className = "journey__pip-bubble";
+          bubble.textContent = pipMessageFor(lesson, state);
+          pip.innerHTML = '<svg viewBox="0 0 200 200" width="84" height="84" role="img" aria-label="Pip the fox"><use href="#wpa-pip"></use></svg>';
+          pip.append(bubble);
+          pos.append(pip);
+        }
+
+        wrap.append(pos);
+
+        var label = document.createElement("div");
+        label.className = "journey__node-label";
+        label.textContent = lesson.title;
+        wrap.append(label);
+
+        path.append(wrap);
+
+        // Connector to the next lesson in this unit
+        if (idx < lessons.length - 1) {
+          var conn = document.createElement("div");
+          conn.className = "journey__connector";
+          if (isDone) conn.classList.add("done");
+          path.append(conn);
+        }
+      });
+
+      unitWrap.append(path);
+      root.append(unitWrap);
+    });
+  }
+
+  /** @type {Lesson|null} The lesson currently in progress. */
+  let activeLesson = null;
+
+  function startLesson(lessonId) {
+    var lesson = lessonById(lessonId);
+    if (!lesson) return;
+    if (!isLessonUnlocked(lessonId)) return;
+    activeLesson = lesson;
+    selectedLevel = lesson.level;
+    selectedSessionLabel = lesson.title + (lesson.boss ? " (Boss)" : "");
+    selectedSessionWasFull = false;
+    sessionQueue = buildLessonQueue(lesson);
+    if (!sessionQueue.length) {
+      // No pool available for this filter; nothing to do.
+      window.alert("No questions available for this lesson yet.");
+      return;
+    }
     questionIndex = 0;
     questionsCompleted = 0;
     firstTryCorrect = 0;
@@ -2257,7 +2672,7 @@
     renderQuestion();
     try {
       var p = loadPersisted();
-      p.lastLevel = level;
+      p.lastLevel = lesson.level;
       p.lastPlayed = new Date().toISOString();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
     } catch (e) { /* ignore */ }
@@ -2331,6 +2746,33 @@
       }
     }
 
+    // Persist lesson result (if a lesson is active) and render a lesson hero
+    // banner at the top of the summary.
+    var lessonHero = document.getElementById("lesson-hero");
+    if (lessonHero) lessonHero.innerHTML = "";
+    if (activeLesson && lessonHero) {
+      var lessonStars = starsForAccuracy(acc, questionsCompleted);
+      recordLessonResult(activeLesson.id, lessonStars);
+      var nextLesson = null;
+      var idx = LESSONS.findIndex(function (l) { return l.id === activeLesson.id; });
+      for (var k = idx + 1; k < LESSONS.length; k++) {
+        if (isLessonUnlocked(LESSONS[k].id) || lessonStars >= 1) { nextLesson = LESSONS[k]; break; }
+      }
+      lessonHero.innerHTML =
+        '<div class="lesson-hero__inner">' +
+          '<div class="lesson-hero__title">' +
+            (lessonStars >= 1 ? 'Lesson cleared!' : 'Lesson complete') +
+          '</div>' +
+          '<div class="lesson-hero__stars" aria-label="' + lessonStars + ' of 3 stars">' +
+            makeStarRow(lessonStars).replace(/⭐/g, '<span style="color:#f6b73c">⭐</span>') +
+          '</div>' +
+          '<div class="lesson-hero__sub">' +
+            escapeHtml(activeLesson.title) +
+            (lessonStars < 1 ? ' — get at least 40% on first try to earn a star.' : '') +
+          '</div>' +
+        '</div>';
+    }
+
     postSessionToHub(completedAll, acc);
     showScreen("screen-summary");
   }
@@ -2353,13 +2795,20 @@
     if (!selectedLevel) return;
     var bridge = window.KLS.bridge;
     bridge.played();
-    bridge.session(selectedLevel, {
+    // "level" for the hub: use the lesson id when in lesson mode so the hub
+    // records stars per-lesson; fall back to easy/medium/hard for legacy play.
+    var hubLevel = activeLesson ? activeLesson.id : selectedLevel;
+    bridge.session(hubLevel, {
       questionsAnswered: questionsCompleted,
       accuracy: acc,
       bestStreak: sessionBestStreak,
     });
     var stars = starsForAccuracy(acc, questionsCompleted);
-    if (stars > 0) bridge.stars(selectedLevel, stars);
+    if (stars > 0) bridge.stars(hubLevel, stars);
+    // Whole-unit completion sticker: when a boss is cleared with ≥1 star.
+    if (activeLesson && activeLesson.boss && stars >= 1) {
+      bridge.sticker(activeLesson.unitId + "-boss-clear");
+    }
     if (completedAll && selectedSessionWasFull && selectedLevel === "hard") {
       bridge.sticker("hard-pool-complete");
     }
@@ -2368,46 +2817,17 @@
 
   // Welcome
   document.getElementById("btn-start-welcome").addEventListener("click", function () {
-    showScreen("screen-level");
+    renderJourneyMap();
+    showScreen("screen-map");
+  });
+  document.getElementById("btn-map-home").addEventListener("click", function () {
+    showScreen("screen-welcome");
   });
   document.getElementById("btn-end-welcome").addEventListener("click", function () {
     showScreen("screen-end");
   });
   document.getElementById("btn-back-from-end").addEventListener("click", function () {
     showScreen("screen-welcome");
-  });
-
-  // Level select
-  document.querySelectorAll(".level-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll(".level-btn").forEach(function (b) {
-        b.classList.remove("selected");
-      });
-      btn.classList.add("selected");
-      selectedLevel = btn.getAttribute("data-level");
-      document.getElementById("btn-begin-level").disabled = false;
-    });
-  });
-  document.getElementById("btn-begin-level").addEventListener("click", function () {
-    if (selectedLevel) openSessionPicker();
-  });
-  document.getElementById("btn-level-back").addEventListener("click", function () {
-    showScreen("screen-welcome");
-  });
-
-  document.getElementById("btn-session-back").addEventListener("click", function () {
-    showScreen("screen-level");
-  });
-  document.querySelectorAll(".session-mode-btn").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      if (!selectedLevel) return;
-      var mode = btn.getAttribute("data-session");
-      var label = btn.getAttribute("data-label") || "";
-      var pool = getPoolSize(selectedLevel);
-      if (mode === "full") label = label + " (" + pool + " stories)";
-      else label = label + " (" + mode + " stories)";
-      startGame(selectedLevel, mode, label);
-    });
   });
 
   // Game
@@ -2459,15 +2879,17 @@
     goNextQuestion();
   });
 
-  document.getElementById("btn-summary-play").addEventListener("click", function () {
-    showScreen("screen-level");
-    document.querySelectorAll(".level-btn").forEach(function (b) {
-      b.classList.remove("selected");
-    });
-    document.getElementById("btn-begin-level").disabled = true;
-    selectedLevel = null;
+  document.getElementById("btn-summary-continue").addEventListener("click", function () {
+    activeLesson = null;
+    renderJourneyMap();
+    showScreen("screen-map");
+  });
+  document.getElementById("btn-summary-retry").addEventListener("click", function () {
+    if (activeLesson) startLesson(activeLesson.id);
+    else { renderJourneyMap(); showScreen("screen-map"); }
   });
   document.getElementById("btn-summary-home").addEventListener("click", function () {
+    activeLesson = null;
     showScreen("screen-welcome");
   });
   document.getElementById("btn-reset-progress").addEventListener("click", function () {
