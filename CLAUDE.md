@@ -41,7 +41,7 @@ Each game is the **original game, byte-for-byte** (modulo filename — three wer
 
 ### Progress data flow
 
-Single versioned localStorage blob owned by the hub: `kls.progress.v1`. Games keep their own internal localStorage (e.g. `cosmicMathQuest_v1`, `cosmicMathQuest_wrongs_v1`) — leave it untouched; the hub's key is a separate summary layer.
+The hub owns a multi-profile localStorage blob: `kls.progress.v2` (migrated from the legacy `kls.progress.v1`). It holds every profile's stars/stickers/levels per game. Games keep their own internal localStorage for things the hub doesn't track (e.g. journey state, recent-question history, practice wrongs) — leave it untouched; the hub's key is a separate summary layer.
 
 ```
 game (iframe)  ──postMessage──▶  chrome.js  ──▶  progress.js  ──▶  localStorage
@@ -50,7 +50,21 @@ game (iframe)  ──postMessage──▶  chrome.js  ──▶  progress.js  �
                                        before applying (prevents cross-game writes)
 ```
 
-Games opt into the hub via `shared/scripts/game-bridge.js`. Loaded standalone, every bridge method is a no-op so the game still works. Loaded in the iframe, the bridge adds `body.kls-embedded` and exposes `window.KLS.bridge.{played, session, stars, sticker, celebrate, onVisible}`. All four games currently load it.
+Games opt into the hub via `shared/scripts/game-bridge.js`. Loaded standalone, every bridge method is a no-op so the game still works. Loaded in the iframe, the bridge adds `body.kls-embedded` and exposes `window.KLS.bridge.{played, session, stars, sticker, celebrate, saveState, clearState, resetProgress, onVisible, onHubMessage, getProfileId, onProfileReady}`. All four games currently load it.
+
+### Per-profile state — the load-bearing rule
+
+**Every new profile starts at zero.** No stars, no stickers, no journey progress, no saved wrong-questions list — nothing. Creating a profile in the hub must give the kid a clean slate in every game. This is not negotiable; do not write code that lets one profile inherit another's progress.
+
+To make that true, **a game's own localStorage MUST be scoped by the active hub profile id**. The pattern is:
+
+1. The hub sends the iframe a `{ type: 'kls:hub', event: 'setProfile', profileId }` message right after the iframe loads (chrome.js `pushProfileToIframe`, retried up to ~1.5s so it survives a slow first paint).
+2. The bridge caches it. Games read it synchronously via `KLS.bridge.getProfileId()` and prefix their keys: e.g. `wordProblemAdventure_v1__<profileId>`.
+3. Standalone (no hub) → `getProfileId()` returns null → game falls back to its un-scoped key so direct-file:// play still works.
+4. **Device-level preferences** (mute, volume, theme) are NOT per-profile — keep those un-scoped.
+5. **Do NOT auto-migrate un-scoped legacy data into any profile.** It looks helpful and is not — it gives whichever profile first opens the game an unfair head start. If users had pre-multi-profile data, they can keep using standalone mode for it, or replay. Future "import legacy" can be an explicit opt-in button if anyone asks for it; never silent.
+
+A "Reset my progress" affordance is owed to every kid on every game that stores progress. The game wipes its own profile-scoped key AND posts `bridge.resetProgress()` so the hub also drops its per-game record (stars/stickers/levels) for the active profile. Other profiles are untouched.
 
 ### Module map (shared/)
 
@@ -78,6 +92,7 @@ Games opt into the hub via `shared/scripts/game-bridge.js`. Loaded standalone, e
 1. Drop into `games/<new-slug>/index.html` (self-contained).
 2. Add an entry to the `GAMES` array in `shared/scripts/hub.js` (slug, title, emoji, subtitle, topics, tag, tagClass).
 3. Optional: `<link>` `shared/styles/tokens.css` and `<script src="../../shared/scripts/game-bridge.js">` to wire progress. Hook `KLS.bridge.onVisible('#end-screen', () => { KLS.bridge.played(); KLS.bridge.celebrate(); })`.
+4. **If your game persists state**, scope its localStorage by `KLS.bridge.getProfileId()` so each profile starts clean — see "Per-profile state" above. Add a visible "Reset my progress" affordance.
 
 If you add a new topic, also add it to the `TOPICS` filter array in `hub.js`.
 
