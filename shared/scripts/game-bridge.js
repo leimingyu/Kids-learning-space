@@ -14,6 +14,10 @@
  *   { type: 'kls:progress', event: 'awardSticker', stickerId             }
  *   { type: 'kls:progress', event: 'saveState',    state                 }
  *   { type: 'kls:progress', event: 'clearState'                          }
+ *   { type: 'kls:progress', event: 'resetProgress'                       }
+ *     → hub clears its own per-game record for this slug under the active
+ *       profile (stars/levels/stickers/lastPlayedAt). Use sparingly — this
+ *       is for an explicit "start over" affordance, not auto-saves.
  * Parent validates the iframe slug before applying, so games cannot write
  * to one another's records.
  *
@@ -23,6 +27,12 @@
  *   { type: 'kls:hub', event: 'resumeState', state: <blob> }
  *     → parent's reply to a freshly-loaded game that has saved state,
  *       once the user has opted to resume on the hub side.
+ *   { type: 'kls:hub', event: 'setProfile', profileId: <string> }
+ *     → tells the game which profile is currently active in the hub. Games
+ *       MUST use this id to scope their own localStorage so each profile
+ *       has its own progress. When opened standalone (no hub) the bridge
+ *       returns null from getProfileId() and games should fall back to
+ *       an un-scoped legacy key.
  */
 (function () {
   const embedded = (function () {
@@ -100,13 +110,46 @@
     if (!hubHandlers[event]) hubHandlers[event] = [];
     hubHandlers[event].push(fn);
   }
+
+  // Active profile id — populated when the hub sends a `setProfile` message.
+  // Games should call getProfileId() to scope their localStorage. Null when
+  // running standalone (no hub) or before the hub's first push arrives.
+  let _profileId = null;
+  const _profileReadyCbs = [];
+
+  function setProfileFromHub(id) {
+    if (typeof id !== 'string' || !id) return;
+    const changed = _profileId !== id;
+    _profileId = id;
+    if (changed) {
+      // Drain ready-callbacks; they each run at most once.
+      const queued = _profileReadyCbs.splice(0, _profileReadyCbs.length);
+      queued.forEach(function (cb) {
+        try { cb(id); } catch (e) { console.error('[KLS bridge]', e); }
+      });
+    }
+  }
+
   if (embedded) {
     window.addEventListener('message', function (ev) {
       const data = ev.data;
       if (!data || data.type !== 'kls:hub') return;
+      // Intercept setProfile here so the bridge always has a fresh value
+      // regardless of game-side handlers.
+      if (data.event === 'setProfile') setProfileFromHub(data.profileId);
       const fns = hubHandlers[data.event] || [];
       fns.forEach(function (fn) { try { fn(data); } catch (e) { console.error('[KLS bridge]', e); } });
     });
+  }
+
+  /** Synchronously returns the active profile id, or null. */
+  function getProfileId() { return _profileId; }
+
+  /** Fire cb(profileId) the first time the hub announces a profile.
+   *  Fires immediately if a profile is already known. */
+  function onProfileReady(cb) {
+    if (_profileId) { try { cb(_profileId); } catch (e) { console.error('[KLS bridge]', e); } return; }
+    _profileReadyCbs.push(cb);
   }
 
   window.KLS = window.KLS || {};
@@ -121,8 +164,15 @@
     saveState(blob) { post('saveState', { state: blob == null ? null : blob }); },
     /** Drop the saved blob (e.g. when the game's own "start over" is confirmed). */
     clearState() { post('clearState'); },
-    /** Subscribe to hub-→game messages: 'requestState', 'resumeState'. */
+    /** Tell the hub to wipe its own per-game record for this slug under the
+     *  active profile. Pairs with the game clearing its own localStorage. */
+    resetProgress() { post('resetProgress'); },
+    /** Subscribe to hub-→game messages: 'requestState', 'resumeState', 'setProfile'. */
     onHubMessage: onHubMessage,
     onVisible: onVisible,
+    /** Profile id for the currently active hub profile, or null if standalone. */
+    getProfileId: getProfileId,
+    /** cb fires once when the profile id becomes known. */
+    onProfileReady: onProfileReady,
   };
 })();

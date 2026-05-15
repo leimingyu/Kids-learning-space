@@ -216,6 +216,12 @@
       const meta = GAMES.find((g) => g.slug === slug);
       document.title = (meta ? meta.title : 'Game') + ' — Kids Learning Space';
 
+      // Tell the game which profile is active so it can scope its own
+      // localStorage. Runs before resumeState so the game has profile context
+      // by the time it processes any saved blob.
+      if (chrome.pushProfileToIframe) {
+        chrome.pushProfileToIframe(slug);
+      }
       if (resumeBlob != null && chrome.pushResumeState) {
         chrome.pushResumeState(slug, resumeBlob);
       }

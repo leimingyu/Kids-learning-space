@@ -146,6 +146,11 @@
       case 'clearState':
         progress.clearGameState(expected);
         break;
+      case 'resetProgress':
+        // Game requested a full wipe of hub-level data for itself (active profile).
+        progress.reset(expected);
+        flashSaved();
+        break;
       case 'celebrate':
         if (window.KLS && window.KLS.celebrate) window.KLS.celebrate.fire();
         break;
@@ -199,6 +204,23 @@
     });
   }
 
+  /** Push the active profile id into a freshly-loaded game so it can scope its
+   *  own localStorage per profile. Retries because the bridge listener attaches
+   *  on iframe load, not before. */
+  function pushProfileToIframe(slug) {
+    const snap = progress.get();
+    const pid = (snap.profile && snap.profile.id) || null;
+    if (!pid) return;
+    const tries = [40, 120, 300, 700, 1500];
+    tries.forEach(function (delay) {
+      setTimeout(function () {
+        const expected = expectedSlugFromIframe();
+        if (expected !== slug) return;
+        postToFrame('setProfile', { profileId: pid });
+      }, delay);
+    });
+  }
+
   window.KLS = window.KLS || {};
-  window.KLS.chrome = { mount, unmount, registerSlugs, pushResumeState };
+  window.KLS.chrome = { mount, unmount, registerSlugs, pushResumeState, pushProfileToIframe };
 })();

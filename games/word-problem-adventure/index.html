@@ -761,6 +761,144 @@
     .lesson-hero__title { font-size: 1.5rem; font-weight: 800; color: #155724; }
     .lesson-hero__stars { font-size: 2.4rem; letter-spacing: 6px; margin: 8px 0; }
     .lesson-hero__sub   { color: var(--muted); font-size: 1rem; }
+
+    /* ─── Practice-by-Type picker ──────────────────────────────────────── */
+    .practice-intro {
+      max-width: 720px;
+      margin: 0 auto 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .practice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      max-width: 1080px;
+      margin: 0 auto 20px;
+    }
+    .practice-card {
+      background: #fff;
+      border: 3px solid #e3e8f0;
+      border-radius: 22px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .practice-card__emoji {
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+    .practice-card__title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #2d3748;
+      line-height: 1.2;
+    }
+    .practice-card__type {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .practice-card__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      font-size: 0.88rem;
+      color: #4a5568;
+    }
+    .practice-card__stat strong { color: #2d3748; }
+    .practice-card__wrongs {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: #fff3cd;
+      border: 2px solid #f0c674;
+      color: #6c4400;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .practice-card__actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+    .practice-card__actions .btn {
+      padding: 9px 14px;
+      font-size: 0.95rem;
+      flex: 1 1 auto;
+    }
+    .practice-card .btn-review {
+      background: linear-gradient(135deg, #fcb045 0%, #fd7e14 100%);
+      color: #fff;
+      border: none;
+    }
+    .practice-card .btn-review:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .practice-card__progress {
+      height: 6px;
+      background: #edf2f7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .practice-card__progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--secondary, #28a745) 0%, var(--secondary, #28a745) 100%);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    /* ─── Practice summary ─────────────────────────────────────────────── */
+    .practice-hero {
+      max-width: 720px;
+      margin: 0 auto 12px;
+      text-align: center;
+    }
+    .practice-hero__emoji { font-size: 3.4rem; line-height: 1; }
+    .practice-hero__title {
+      font-size: 1.6rem; font-weight: 800; color: #2d3748;
+      margin: 6px 0 2px;
+    }
+    .practice-hero__sub { color: var(--muted); }
+    .practice-hero__stars {
+      font-size: 2.2rem; letter-spacing: 6px; margin: 8px 0;
+    }
+    .practice-summary__row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px dashed #e3e8f0;
+      font-size: 1rem;
+    }
+    .practice-summary__row:last-child { border-bottom: none; }
+    .practice-summary__row strong { color: #2d3748; font-weight: 800; }
+    .practice-summary__rewards {
+      margin: 12px 0;
+      padding: 14px;
+      background: linear-gradient(165deg, #fff9e6 0%, #d4edda 50%, #fff 100%);
+      border: 3px solid #28a745;
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 700;
+      color: #155724;
+    }
+    .practice-summary__rewards p { margin: 4px 0; }
+    .practice-summary__wrongs-line {
+      margin-top: 10px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .practice-summary__wrongs-line.cleared {
+      color: #155724; font-weight: 700;
+    }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -798,9 +936,25 @@
         Tap <strong>Start Game</strong> to pick a level and begin your adventure.
       </p>
       <div class="btn-row">
-        <button type="button" class="btn btn-primary" id="btn-start-welcome">Start Game</button>
-        <button type="button" class="btn btn-muted" id="btn-end-welcome">End Game</button>
+        <button type="button" class="btn btn-primary"   id="btn-start-welcome">🗺️ Adventure</button>
+        <button type="button" class="btn btn-secondary" id="btn-practice-welcome">🎯 Practice by Type</button>
+        <button type="button" class="btn btn-muted"     id="btn-end-welcome">End Game</button>
       </div>
+      <p style="text-align:center;margin-top:14px;font-size:0.9rem;color:var(--muted);">
+        <button type="button" id="btn-reset-welcome" style="background:none;border:none;color:var(--muted);cursor:pointer;text-decoration:underline;font:inherit;font-size:0.9rem;">
+          🧹 Reset my progress (start from the very beginning)
+        </button>
+      </p>
+    </div>
+  </div>
+
+  <!-- Practice picker -->
+  <div id="screen-practice-picker" class="screen">
+    <h1>Practice by Type</h1>
+    <p class="practice-intro">Pick a question type. Answer every question — order is shuffled each time. Missed ones come back next visit until you get them right.</p>
+    <div id="practice-grid" class="practice-grid"></div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-muted" id="btn-practice-home">Back to Welcome</button>
     </div>
   </div>
 
@@ -944,13 +1098,67 @@
     </div>
   </div>
 
+  <!-- Practice summary -->
+  <div id="screen-practice-summary" class="screen">
+    <div class="practice-hero">
+      <div class="practice-hero__emoji" id="practice-sum-emoji">🎯</div>
+      <div class="practice-hero__title" id="practice-sum-title">Practice complete!</div>
+      <div class="practice-hero__sub"   id="practice-sum-sub">Nice work.</div>
+      <div class="practice-hero__stars" id="practice-sum-stars" aria-label="stars earned">·····</div>
+    </div>
+    <div class="card">
+      <div class="practice-summary__row">
+        <span>Questions answered</span>
+        <strong id="practice-sum-answered">0</strong>
+      </div>
+      <div class="practice-summary__row">
+        <span>Solved on first try</span>
+        <strong id="practice-sum-firsttry">0</strong>
+      </div>
+      <div class="practice-summary__row">
+        <span>First-try accuracy</span>
+        <strong id="practice-sum-accuracy">0%</strong>
+      </div>
+      <div class="practice-summary__row">
+        <span>Best streak (this run)</span>
+        <strong id="practice-sum-streak">0</strong>
+      </div>
+      <div class="practice-summary__row">
+        <span>Your best score on this type</span>
+        <strong id="practice-sum-best">—</strong>
+      </div>
+      <div class="practice-summary__rewards" id="practice-sum-rewards" style="display:none;"></div>
+      <div class="practice-summary__wrongs-line" id="practice-sum-wrongs">—</div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary"   id="btn-practice-again">Practice this type again</button>
+        <button type="button" class="btn btn-secondary" id="btn-practice-pick">Pick another type</button>
+        <button type="button" class="btn btn-muted"     id="btn-practice-summary-home">Welcome</button>
+      </div>
+    </div>
+  </div>
+
   <script>
 (function () {
   "use strict";
 
   /** @typedef {{ id: string, text: string, answer: number, visual?: string, hintKeywords: string[], hint: string, explain: string, problemType?: string, band?: number, minimalVisual?: boolean, sessionLevel?: string }} Question */
 
-  var STORAGE_KEY = "wordProblemAdventure_v1";
+  // Storage is scoped per hub-profile so each kid has their own progress.
+  // Every new profile MUST start with zero stars / zero stickers / nothing
+  // saved. We deliberately do NOT auto-migrate any pre-existing un-scoped
+  // localStorage into a profile — that would let one profile inherit
+  // another's stars. The legacy un-scoped key is only used when the game
+  // is opened standalone (no hub, no profile).
+  var STORAGE_KEY_BASE = "wordProblemAdventure_v1";
+  function storageKey() {
+    try {
+      var pid = (window.KLS && window.KLS.bridge && window.KLS.bridge.getProfileId)
+        ? window.KLS.bridge.getProfileId() : null;
+      return pid ? STORAGE_KEY_BASE + "__" + pid : STORAGE_KEY_BASE;
+    } catch (e) {
+      return STORAGE_KEY_BASE;
+    }
+  }
   var RECENT_QUESTION_IDS_MAX = 48;
 
   /** @type {Question[]} */
@@ -1424,6 +1632,19 @@
   ];
 
   const QUESTIONS_ELAPSED_TIME = [
+    // ── Easy Story Clocks: same hour, small intervals (5/10/15/20 min), "how long?" only ──
+    { id: "ete001", text: "School lunch starts at 12:00 and ends at 12:20. How many minutes is lunch?", answer: 20, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 12:00 → 12:20", hintKeywords: ["minutes", "how many"], hint: "Both times share the same hour. Subtract the start minute from the end minute.", explain: "⏰ From 12:00 to 12:20 is **20** minutes (20 − 0 = 20)." },
+    { id: "ete002", text: "Story time goes from 1:00 to 1:10. How many minutes is story time?", answer: 10, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 1:00 → 1:10", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 1:00 to 1:10 is **10** minutes (10 − 0 = 10)." },
+    { id: "ete003", text: "Rest time is from 2:30 to 2:45. How many minutes is rest time?", answer: 15, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 2:30 → 2:45", hintKeywords: ["minutes", "how many"], hint: "Both times share the same hour. Subtract the start minute from the end minute.", explain: "⏰ From 2:30 to 2:45 is **15** minutes (45 − 30 = 15)." },
+    { id: "ete004", text: "Snack time begins at 10:00 and ends at 10:15. How many minutes is snack time?", answer: 15, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 10:00 → 10:15", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 10:00 to 10:15 is **15** minutes (15 − 0 = 15)." },
+    { id: "ete005", text: "A short cartoon plays from 4:00 to 4:05. How many minutes is the cartoon?", answer: 5, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 4:00 → 4:05", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 4:00 to 4:05 is **5** minutes (5 − 0 = 5)." },
+    { id: "ete006", text: "Center time runs from 9:00 to 9:20. How many minutes is center time?", answer: 20, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 9:00 → 9:20", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 9:00 to 9:20 is **20** minutes (20 − 0 = 20)." },
+    { id: "ete007", text: "Sing-along is from 3:15 to 3:25. How many minutes is sing-along?", answer: 10, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 3:15 → 3:25", hintKeywords: ["minutes", "how many"], hint: "Same hour: subtract the start minute from the end minute.", explain: "⏰ From 3:15 to 3:25 is **10** minutes (25 − 15 = 10)." },
+    { id: "ete008", text: "A short bus ride goes from 8:00 to 8:15. How many minutes is the ride?", answer: 15, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 8:00 → 8:15", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 8:00 to 8:15 is **15** minutes (15 − 0 = 15)." },
+    { id: "ete009", text: "Morning meeting is from 8:30 to 8:45. How many minutes is the meeting?", answer: 15, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 8:30 → 8:45", hintKeywords: ["minutes", "how many"], hint: "Same hour: subtract the start minute from the end minute.", explain: "⏰ From 8:30 to 8:45 is **15** minutes (45 − 30 = 15)." },
+    { id: "ete010", text: "Quiet read is from 11:00 to 11:10. How many minutes is quiet read?", answer: 10, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 11:00 → 11:10", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 11:00 to 11:10 is **10** minutes (10 − 0 = 10)." },
+    { id: "ete011", text: "Brain break starts at 1:20 and ends at 1:25. How many minutes is the brain break?", answer: 5, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 1:20 → 1:25", hintKeywords: ["minutes", "how many"], hint: "Same hour: subtract the start minute from the end minute.", explain: "⏰ From 1:20 to 1:25 is **5** minutes (25 − 20 = 5)." },
+    { id: "ete012", text: "A song plays from 5:30 to 5:35. How many minutes is the song?", answer: 5, band: 1, sessionLevel: "easy", problemType: "Elapsed Time", visual: "⏰ 5:30 → 5:35", hintKeywords: ["minutes", "how many"], hint: "Same hour: end minutes minus start minutes.", explain: "⏰ From 5:30 to 5:35 is **5** minutes (35 − 30 = 5)." },
     { id: "et001", text: "Recess runs from 9:10 to 9:40. How many minutes long is recess?", answer: 30, band: 1, sessionLevel: "medium", problemType: "Elapsed Time", visual: "40−10min", hintKeywords: ["minutes", "time"], hint: "Subtract the start minute from the end minute.", explain: "⏰ From 9:10 to 9:40 is **30** minutes (40 − 10 = 30)." },
     { id: "et002", text: "Reading time is from 10:15 to 10:45. How many minutes is reading time?", answer: 30, band: 1, sessionLevel: "medium", problemType: "Elapsed Time", visual: "45−15min", hintKeywords: ["minutes", "time"], hint: "Both times share the same hour. Subtract minutes.", explain: "⏰ From 10:15 to 10:45 is **30** minutes (45 − 15 = 30)." },
     { id: "et003", text: "A bus ride starts at 11:05 and ends at 11:35. How many minutes was the ride?", answer: 30, band: 1, sessionLevel: "medium", problemType: "Elapsed Time", visual: "35−5min", hintKeywords: ["minutes", "time"], hint: "Find the difference in minutes.", explain: "⏰ From 11:05 to 11:35 is **30** minutes (35 − 5 = 30)." },
@@ -1699,6 +1920,156 @@
     return getQuestionsForLevel(level).length;
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Practice-by-Type: kid-friendly labels, helpers, persisted state.
+  // ───────────────────────────────────────────────────────────────────────────
+  var TYPE_INFO = {
+    "Part–Part–Whole":                  { label: "Find the total",          emoji: "🧩" },
+    "Join":                             { label: "Add to a group",          emoji: "➕" },
+    "Separate":                         { label: "Take some away",          emoji: "✂️" },
+    "Change Unknown":                   { label: "Find the change",         emoji: "🔍" },
+    "Unknown":                          { label: "Find the missing number", emoji: "❓" },
+    "Compare":                          { label: "Which is more?",          emoji: "⚖️" },
+    "Money / Measurement Conversion":   { label: "Money & measuring",       emoji: "💰" },
+    "Multi-step":                       { label: "Two-step puzzles",        emoji: "🧠" },
+    "Elapsed Time":                     { label: "How long did it take?",   emoji: "⏰" },
+    "Sharing":                          { label: "Share equally",           emoji: "🤝" },
+    "Remainder Interpretation":         { label: "What's left over?",       emoji: "🍪" },
+    "Two-Step Compare":                 { label: "Two-step compare",        emoji: "🪜" },
+    "Fraction of a Set":                { label: "Fraction of a group",     emoji: "🍕" },
+  };
+
+  function typeInfo(t) {
+    return TYPE_INFO[t] || { label: t || "Other", emoji: "❓" };
+  }
+
+  function slugifyType(t) {
+    return String(t || "other").toLowerCase()
+      .replace(/[\s/]+/g, "-")
+      .replace(/[^\w-]/g, "")  // strip em-dashes, accents, etc.
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      || "other";
+  }
+
+  /** Every question across easy/medium/hard, plus extras. Used by Practice mode. */
+  function getAllQuestions() {
+    var all = [].concat(
+      QUESTIONS_EASY || [],
+      QUESTIONS_MEDIUM || [],
+      QUESTIONS_HARD || []
+    );
+    EXTRA_QUESTION_BANKS.forEach(function (arr) { all = all.concat(arr || []); });
+    // De-dupe by id (some extras may overlap a tier).
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      var q = all[i];
+      if (!q || !q.id || seen[q.id]) continue;
+      seen[q.id] = true;
+      out.push(q);
+    }
+    return out;
+  }
+
+  /** Map of id → Question, lazily built. */
+  var _qIndex = null;
+  function getQuestionById(id) {
+    if (!_qIndex) {
+      _qIndex = {};
+      getAllQuestions().forEach(function (q) { _qIndex[q.id] = q; });
+    }
+    return _qIndex[id] || null;
+  }
+
+  /** All questions for a given problemType, in source order. */
+  function questionsByType(type) {
+    return getAllQuestions().filter(function (q) { return q.problemType === type; });
+  }
+
+  /** Distinct problem types that have at least one question, in canonical order. */
+  function getPracticeTypes() {
+    var preferred = [
+      "Part–Part–Whole", "Join", "Separate", "Change Unknown", "Unknown",
+      "Compare", "Money / Measurement Conversion", "Multi-step", "Elapsed Time",
+      "Sharing", "Remainder Interpretation", "Two-Step Compare", "Fraction of a Set",
+    ];
+    var counts = {};
+    getAllQuestions().forEach(function (q) {
+      if (!q.problemType) return;
+      counts[q.problemType] = (counts[q.problemType] || 0) + 1;
+    });
+    var seen = {};
+    var ordered = [];
+    preferred.forEach(function (t) {
+      if (counts[t] > 0) { ordered.push(t); seen[t] = true; }
+    });
+    // Append any types not in the preferred list (defensive — keeps new types visible).
+    Object.keys(counts).forEach(function (t) {
+      if (!seen[t]) ordered.push(t);
+    });
+    return ordered;
+  }
+
+  function defaultPracticeState() {
+    return {
+      bestRunCorrect: 0,
+      bestRunTotal: 0,
+      runsCompleted: 0,
+      lastPlayedAt: null,
+      wrongIds: [],
+    };
+  }
+
+  /** Returns a *copy* you can mutate; call savePracticeState() to persist. */
+  function getPracticeState(type) {
+    try {
+      var p = loadPersisted();
+      var bucket = (p.practice && p.practice[type]) || null;
+      var s = Object.assign(defaultPracticeState(), bucket || {});
+      // Drop any wrongIds that no longer exist in the bank.
+      s.wrongIds = (s.wrongIds || []).filter(function (id) {
+        var q = getQuestionById(id);
+        return q && q.problemType === type;
+      });
+      return s;
+    } catch (e) {
+      return defaultPracticeState();
+    }
+  }
+
+  function savePracticeState(type, state) {
+    try {
+      var p = loadPersisted();
+      if (!p.practice || typeof p.practice !== "object") p.practice = {};
+      p.practice[type] = {
+        bestRunCorrect: state.bestRunCorrect | 0,
+        bestRunTotal:   state.bestRunTotal   | 0,
+        runsCompleted:  state.runsCompleted  | 0,
+        lastPlayedAt:   state.lastPlayedAt || null,
+        wrongIds:       Array.isArray(state.wrongIds) ? state.wrongIds.slice() : [],
+      };
+      localStorage.setItem(storageKey(), JSON.stringify(p));
+    } catch (e) { /* ignore */ }
+  }
+
+  function addPracticeWrong(type, qid) {
+    var s = getPracticeState(type);
+    if (s.wrongIds.indexOf(qid) === -1) {
+      s.wrongIds.push(qid);
+      savePracticeState(type, s);
+    }
+  }
+
+  function removePracticeWrong(type, qid) {
+    var s = getPracticeState(type);
+    var i = s.wrongIds.indexOf(qid);
+    if (i !== -1) {
+      s.wrongIds.splice(i, 1);
+      savePracticeState(type, s);
+    }
+  }
+
   function deprioritizeRecents(band, recentSet) {
     var fresh = [];
     var stale = [];
@@ -1961,13 +2332,13 @@
       while (arr.length > RECENT_QUESTION_IDS_MAX) arr.shift();
       p.recentQuestionIds[selectedLevel] = arr;
       if (typeof p.bestStreakEver !== "number") p.bestStreakEver = 0;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      localStorage.setItem(storageKey(), JSON.stringify(p));
     } catch (e) { /* ignore */ }
   }
 
   function loadPersisted() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      var raw = localStorage.getItem(storageKey());
       var p = raw ? JSON.parse(raw) : {};
       if (typeof p.bestStreakEver !== "number") p.bestStreakEver = 0;
       if (!p.journey || typeof p.journey !== "object") p.journey = { lessons: {} };
@@ -1982,7 +2353,7 @@
     try {
       var p = loadPersisted();
       p.bestStreakEver = ever;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      localStorage.setItem(storageKey(), JSON.stringify(p));
     } catch (e) { /* ignore */ }
   }
 
@@ -2003,7 +2374,7 @@
       if (stars > prev.stars) prev.stars = stars;
       if (stars > 0 && !prev.completedAt) prev.completedAt = new Date().toISOString();
       p.journey.lessons[lessonId] = prev;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      localStorage.setItem(storageKey(), JSON.stringify(p));
     } catch (e) { /* ignore */ }
   }
 
@@ -2108,6 +2479,15 @@
   let levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
   /** Count correct answers by problem type (for mastery badges) */
   let typeCorrect = {};
+
+  // ── Practice-by-Type session globals (only set when isPracticeMode === true) ──
+  let isPracticeMode = false;
+  /** @type {string|null} */
+  let practiceType = null;
+  /** "all" | "review" */
+  let practiceMode = null;
+  /** Snapshot of practiceState.wrongIds at run start, for "all clear" sticker detection. */
+  let practiceInitialWrongs = 0;
 
   function getAudioContext() {
     if (!audioCtx) {
@@ -2447,9 +2827,17 @@
         firstTryCorrect += 1;
         streak += 1;
         sessionBestStreak = Math.max(sessionBestStreak, streak);
+        // Practice mode: first-try correct clears this id from the wrong-list.
+        if (isPracticeMode && practiceType && q.id) {
+          removePracticeWrong(practiceType, q.id);
+        }
       } else {
         // Got there with help — credit completion but break the streak.
         streak = 0;
+        // Practice mode: needed hint/explanation → still counts as a wrong to retry.
+        if (isPracticeMode && practiceType && q.id) {
+          addPracticeWrong(practiceType, q.id);
+        }
       }
       var pt = q.problemType || "Other";
       typeCorrect[pt] = (typeCorrect[pt] || 0) + 1;
@@ -2464,6 +2852,11 @@
 
     if (wrongSubmitsOnQuestion === 0) {
       wrongSubmitsOnQuestion = 1;
+      // First wrong submit on this question — save to wrong-list right away so a
+      // mid-session quit (or a kid who gives up and skips) still preserves it.
+      if (isPracticeMode && practiceType && q.id) {
+        addPracticeWrong(practiceType, q.id);
+      }
       showFeedbackHint(q);
     } else {
       wrongSubmitsOnQuestion = 2;
@@ -2641,6 +3034,256 @@
     });
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Practice-by-Type screens
+  // ───────────────────────────────────────────────────────────────────────────
+  function renderPracticePicker() {
+    var grid = document.getElementById("practice-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    var types = getPracticeTypes();
+    if (!types.length) {
+      grid.innerHTML = '<p class="practice-intro">No practice types found.</p>';
+      return;
+    }
+    types.forEach(function (type) {
+      var info = typeInfo(type);
+      var pool = questionsByType(type);
+      var state = getPracticeState(type);
+      var wrongs = state.wrongIds.length;
+      var bestFrac = state.bestRunTotal > 0
+        ? state.bestRunCorrect + " / " + state.bestRunTotal
+        : "—";
+      var bestPct = state.bestRunTotal > 0
+        ? Math.round((state.bestRunCorrect / state.bestRunTotal) * 100) + "%"
+        : null;
+      var pctFill = bestPct ? Math.round((state.bestRunCorrect / state.bestRunTotal) * 100) : 0;
+
+      var card = document.createElement("div");
+      card.className = "practice-card";
+
+      var wrongBadge = wrongs > 0
+        ? '<span class="practice-card__wrongs" title="' + wrongs + ' to retry">❗ ' + wrongs + '</span>'
+        : "";
+
+      card.innerHTML =
+        wrongBadge +
+        '<div class="practice-card__emoji" aria-hidden="true">' + info.emoji + '</div>' +
+        '<div>' +
+          '<div class="practice-card__title">' + escapeHtml(info.label) + '</div>' +
+          '<div class="practice-card__type">' + escapeHtml(type) + '</div>' +
+        '</div>' +
+        '<div class="practice-card__stats">' +
+          '<span class="practice-card__stat">📚 <strong>' + pool.length + '</strong> questions</span>' +
+          '<span class="practice-card__stat">🏆 Best: <strong>' + bestFrac + '</strong>' + (bestPct ? ' (' + bestPct + ')' : '') + '</span>' +
+        '</div>' +
+        '<div class="practice-card__progress" aria-hidden="true">' +
+          '<div class="practice-card__progress-fill" style="width:' + pctFill + '%;"></div>' +
+        '</div>' +
+        '<div class="practice-card__actions">' +
+          '<button type="button" class="btn btn-primary" data-action="all">Practice all</button>' +
+          '<button type="button" class="btn btn-review"' + (wrongs > 0 ? '' : ' disabled') +
+            ' data-action="review">Review wrong (' + wrongs + ')</button>' +
+        '</div>';
+
+      // Bind buttons (delegating via dataset to keep handlers tidy).
+      var btns = card.querySelectorAll('.practice-card__actions .btn');
+      btns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var mode = b.getAttribute('data-action');
+          if (b.disabled) return;
+          startPracticeRun(type, mode === 'review' ? 'review' : 'all');
+        });
+      });
+
+      grid.append(card);
+    });
+  }
+
+  /** Initialize a practice run and switch to the question screen. */
+  function startPracticeRun(type, mode) {
+    var info = typeInfo(type);
+    var pool = questionsByType(type);
+    if (!pool.length) {
+      window.alert("No questions available for this type yet.");
+      return;
+    }
+
+    var queue;
+    if (mode === "review") {
+      var state = getPracticeState(type);
+      queue = state.wrongIds
+        .map(function (id) { return getQuestionById(id); })
+        .filter(function (q) { return q && q.problemType === type; });
+      if (!queue.length) {
+        // Nothing to review — fall back to "all".
+        mode = "all";
+        queue = pool.slice();
+      }
+    } else {
+      queue = pool.slice();
+    }
+    queue = shuffle(queue);
+
+    isPracticeMode = true;
+    practiceType = type;
+    practiceMode = mode;
+    activeLesson = null;
+    selectedLevel = null;
+    selectedSessionLabel = (mode === "review" ? "Practice (review) · " : "Practice · ") + info.label;
+    selectedSessionWasFull = false;
+    sessionQueue = queue;
+
+    var preState = getPracticeState(type);
+    practiceInitialWrongs = preState.wrongIds.length;
+
+    questionIndex = 0;
+    questionsCompleted = 0;
+    firstTryCorrect = 0;
+    correctCount = 0;
+    attemptedCount = 0;
+    streak = 0;
+    sessionBestStreak = 0;
+    wrongSubmitsOnQuestion = 0;
+    levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
+    typeCorrect = {};
+
+    showScreen("screen-game");
+    renderQuestion();
+  }
+
+  function practiceStarsFor(firstTry, total) {
+    if (total <= 0) return 0;
+    var pct = Math.round((firstTry / total) * 100);
+    if (pct >= 90) return 3;
+    if (pct >= 70) return 2;
+    if (pct >= 50) return 1;
+    return 0;
+  }
+
+  function endPracticeSession(completedAll) {
+    var type = practiceType;
+    var info = typeInfo(type);
+    var total = questionsCompleted;
+    var pct = total > 0 ? Math.round((firstTryCorrect / total) * 100) : 0;
+    var stars = practiceStarsFor(firstTryCorrect, total);
+
+    // Update saved best (only for "all" runs that actually played the full pool).
+    var state = getPracticeState(type);
+    var wasFullAllRun = (practiceMode === "all") && completedAll && (total === sessionQueue.length);
+    if (wasFullAllRun) {
+      if (firstTryCorrect > state.bestRunCorrect || total > state.bestRunTotal) {
+        state.bestRunCorrect = firstTryCorrect;
+        state.bestRunTotal   = total;
+      }
+      state.runsCompleted += 1;
+    } else if (practiceMode === "review" && completedAll) {
+      state.runsCompleted += 1;
+    }
+    state.lastPlayedAt = new Date().toISOString();
+    savePracticeState(type, state);
+
+    // Refresh state after any wrongs add/remove that happened during the run.
+    state = getPracticeState(type);
+
+    // Populate summary DOM
+    document.getElementById("practice-sum-emoji").textContent = info.emoji;
+    document.getElementById("practice-sum-title").textContent =
+      stars >= 3 ? "Amazing! 🎉" : stars >= 1 ? "Great practice!" : "Nice try — keep going!";
+    document.getElementById("practice-sum-sub").textContent =
+      info.label + (practiceMode === "review" ? " · reviewing missed questions" : "");
+    document.getElementById("practice-sum-stars").innerHTML = makeStarRow(stars)
+      .replace(/⭐/g, '<span style="color:#f6b73c">⭐</span>');
+    document.getElementById("practice-sum-answered").textContent = String(total);
+    document.getElementById("practice-sum-firsttry").textContent = String(firstTryCorrect);
+    document.getElementById("practice-sum-accuracy").textContent = pct + "%";
+    document.getElementById("practice-sum-streak").textContent = String(sessionBestStreak);
+    document.getElementById("practice-sum-best").textContent =
+      state.bestRunTotal > 0 ? state.bestRunCorrect + " / " + state.bestRunTotal : "—";
+
+    // Wrongs-remaining line.
+    var wrongsLine = document.getElementById("practice-sum-wrongs");
+    var wrongsAfter = state.wrongIds.length;
+    wrongsLine.className = "practice-summary__wrongs-line";
+    if (wrongsAfter === 0 && practiceInitialWrongs > 0) {
+      wrongsLine.classList.add("cleared");
+      wrongsLine.textContent = "🧹 All clear — no questions left to retry in this type!";
+    } else if (wrongsAfter === 0) {
+      wrongsLine.textContent = "No questions waiting to retry — great work!";
+    } else {
+      wrongsLine.textContent = wrongsAfter + " question" + (wrongsAfter === 1 ? "" : "s") +
+        " saved to review next time.";
+    }
+
+    // Reward stickers (sent to hub if embedded). Stable IDs so the hub dedupes.
+    var rewardsEl = document.getElementById("practice-sum-rewards");
+    var msgs = [];
+    var bridge = (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded()) ? window.KLS.bridge : null;
+    if (bridge) bridge.played();
+
+    if (wasFullAllRun) {
+      var slug = slugifyType(type);
+      var firstCompletionId = "wpa-practice-completed-" + slug;
+      if (!practiceHasSticker(firstCompletionId)) {
+        msgs.push("🎯 First time practicing <strong>" + escapeHtml(info.label) + "</strong>!");
+        markPracticeSticker(firstCompletionId);
+        if (bridge) bridge.sticker(firstCompletionId);
+      }
+      if (firstTryCorrect === total && total > 0) {
+        var perfectId = "wpa-practice-perfect-" + slug;
+        msgs.push("💯 Perfect run — every question correct on the first try!");
+        markPracticeSticker(perfectId);
+        if (bridge) bridge.sticker(perfectId);
+      }
+    }
+    if (practiceInitialWrongs > 0 && wrongsAfter === 0) {
+      var clearedId = "wpa-practice-cleared-" + slugifyType(type);
+      msgs.push("🧹 Cleared every saved wrong question for this type!");
+      markPracticeSticker(clearedId);
+      if (bridge) bridge.sticker(clearedId);
+    }
+
+    if (msgs.length) {
+      rewardsEl.style.display = "block";
+      rewardsEl.innerHTML = msgs.map(function (m) { return "<p>" + m + "</p>"; }).join("");
+      if (bridge && bridge.celebrate) bridge.celebrate();
+    } else {
+      rewardsEl.style.display = "none";
+      rewardsEl.innerHTML = "";
+    }
+
+    showScreen("screen-practice-summary");
+  }
+
+  /** Track locally which practice stickers have already been awarded (so summary
+   *  text only celebrates each one once). The hub also dedupes by id. */
+  function practiceHasSticker(id) {
+    try {
+      var p = loadPersisted();
+      var s = (p.practice && p.practice.__stickers) || [];
+      return s.indexOf(id) !== -1;
+    } catch (e) { return false; }
+  }
+  function markPracticeSticker(id) {
+    try {
+      var p = loadPersisted();
+      if (!p.practice || typeof p.practice !== "object") p.practice = {};
+      if (!Array.isArray(p.practice.__stickers)) p.practice.__stickers = [];
+      if (p.practice.__stickers.indexOf(id) === -1) {
+        p.practice.__stickers.push(id);
+        localStorage.setItem(storageKey(), JSON.stringify(p));
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  /** Reset all practice-mode globals so we don't leak into Adventure runs. */
+  function leavePracticeMode() {
+    isPracticeMode = false;
+    practiceType = null;
+    practiceMode = null;
+    practiceInitialWrongs = 0;
+  }
+
   /** @type {Lesson|null} The lesson currently in progress. */
   let activeLesson = null;
 
@@ -2674,13 +3317,14 @@
       var p = loadPersisted();
       p.lastLevel = lesson.level;
       p.lastPlayed = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      localStorage.setItem(storageKey(), JSON.stringify(p));
     } catch (e) { /* ignore */ }
   }
 
   function endSession(completedAll) {
     clearAdvanceTimer();
     hideCongratsOverlay();
+    if (isPracticeMode) { endPracticeSession(completedAll); return; }
     const acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : 0;
     document.getElementById("sum-attempted").textContent = String(questionsCompleted);
     document.getElementById("sum-correct").textContent = String(firstTryCorrect);
@@ -2817,8 +3461,17 @@
 
   // Welcome
   document.getElementById("btn-start-welcome").addEventListener("click", function () {
+    leavePracticeMode();
     renderJourneyMap();
     showScreen("screen-map");
+  });
+  document.getElementById("btn-practice-welcome").addEventListener("click", function () {
+    leavePracticeMode();
+    renderPracticePicker();
+    showScreen("screen-practice-picker");
+  });
+  document.getElementById("btn-practice-home").addEventListener("click", function () {
+    showScreen("screen-welcome");
   });
   document.getElementById("btn-map-home").addEventListener("click", function () {
     showScreen("screen-welcome");
@@ -2892,10 +3545,56 @@
     activeLesson = null;
     showScreen("screen-welcome");
   });
-  document.getElementById("btn-reset-progress").addEventListener("click", function () {
-    if (!window.confirm("Reset your saved best streak and recent-question history? Your mute setting will stay.")) return;
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
-    window.alert("Progress reset. Have fun!");
+  /** Wipe this profile's WPA data: local journey/practice state, in-memory
+   *  session vars, and the hub's per-game record (stars/stickers/last-played). */
+  function resetMyProgress() {
+    if (!window.confirm(
+      "Start from the very beginning?\n\n" +
+      "This will erase your stars, journey progress, saved wrong questions, " +
+      "and personal best for this profile. Your sound setting stays.\n\n" +
+      "This only affects YOU — other profiles are not changed."
+    )) return;
+    try { localStorage.removeItem(storageKey()); } catch (e) { /* ignore */ }
+    // Reset in-memory state so the journey map and side panel re-render fresh
+    // without needing a page reload.
+    activeLesson = null;
+    leavePracticeMode();
+    selectedLevel = null;
+    selectedSessionLabel = "";
+    sessionQueue = [];
+    questionIndex = 0;
+    questionsCompleted = 0;
+    firstTryCorrect = 0;
+    correctCount = 0;
+    attemptedCount = 0;
+    streak = 0;
+    sessionBestStreak = 0;
+    wrongSubmitsOnQuestion = 0;
+    levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
+    typeCorrect = {};
+    // Tell the hub to drop its own per-game record for the active profile.
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded() && window.KLS.bridge.resetProgress) {
+      window.KLS.bridge.resetProgress();
+    }
+    window.alert("All clear! You're starting fresh. 🌟");
+    showScreen("screen-welcome");
+  }
+
+  document.getElementById("btn-reset-progress").addEventListener("click", resetMyProgress);
+  document.getElementById("btn-reset-welcome").addEventListener("click", resetMyProgress);
+
+  // Practice summary
+  document.getElementById("btn-practice-again").addEventListener("click", function () {
+    if (practiceType) startPracticeRun(practiceType, practiceMode || "all");
+  });
+  document.getElementById("btn-practice-pick").addEventListener("click", function () {
+    leavePracticeMode();
+    renderPracticePicker();
+    showScreen("screen-practice-picker");
+  });
+  document.getElementById("btn-practice-summary-home").addEventListener("click", function () {
+    leavePracticeMode();
+    showScreen("screen-welcome");
   });
 })();
   </script>
