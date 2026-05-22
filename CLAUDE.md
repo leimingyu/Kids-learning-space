@@ -66,6 +66,12 @@ To make that true, **a game's own localStorage MUST be scoped by the active hub 
 
 A "Reset my progress" affordance is owed to every kid on every game that stores progress. The game wipes its own profile-scoped key AND posts `bridge.resetProgress()` so the hub also drops its per-game record (stars/stickers/levels) for the active profile. Other profiles are untouched.
 
+### Backup & Restore — the safety net for updates
+
+Before changing anything that could invalidate stored data (schema version bump, slug rename, removal of a game, breaking change to a profile-scoped key), the previous version must still be able to **Export** every profile + all progress to a JSON file, and a future version must still be able to **Import** that file. See `BACKUP_RESTORE.md` for the full spec: envelope format, REPLACE-only restore semantics, the registered-`storageBase` discovery pattern, and the versioning rule (bump `BACKUP_VERSION` only when the envelope shape changes — never when an individual game's internal schema changes).
+
+When adding or modifying a game that uses profile-scoped storage, register its `storageBase` in the `GAMES` entry in `hub.js` so the backup module can discover its keys without hard-coding them.
+
 ### Module map (shared/)
 
 - `scripts/util.js` — `qs`/`el`/`formatRelative`. Loaded first; everything attaches to `window.KLS`.

@@ -75,11 +75,6 @@
     return total;
   }
 
-  function starString(n) {
-    n = Math.max(0, Math.min(99, Number(n) | 0));
-    return n > 0 ? '★'.repeat(n) : '–';
-  }
-
   function visibleGames() {
     if (activeTopic === 'all') return GAMES;
     return GAMES.filter((g) => g.topics.includes(activeTopic));
@@ -108,7 +103,6 @@
       el('p', { class: 'tile__subtitle' }, g.subtitle),
       el('div', { class: 'tile__badges' }, badges),
       el('div', { class: 'tile__stats' },
-        el('span', { class: 'tile__stars', 'aria-label': stars + ' stars earned' }, starString(stars)),
         el('span', { class: 'tile__lastplayed' },
           last ? 'Played ' + formatRelative(last) : 'Not played yet'),
       ),

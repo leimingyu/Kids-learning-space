@@ -162,6 +162,16 @@ Netlify drop-in). History API would require a server-side `*` →
 Also dropped: `01-word_problems/word_problem/__pycache__/` (regenerates on
 demand; should be gitignored).
 
+## Backup & Restore
+
+Progress lives in `localStorage`, which is fragile (cleared site data, new
+device, breaking schema change all wipe it). A manual Export-to-JSON /
+Import-from-JSON flow on the Parent page gives parents a safety net to take
+a snapshot before app updates and restore it afterwards. Restore is
+REPLACE-only (the backup wins; the device is wiped first). The format is
+versioned independently of the hub schema and treats each game's payload as
+an opaque string. See `BACKUP_RESTORE.md` for the full design spec.
+
 ## Out of scope (this phase)
 
 - Multi-theme system (only one theme today)
@@ -169,3 +179,4 @@ demand; should be gitignored).
 - Profile editor UI
 - Wiring any existing game into the postMessage contract — each game has its
   own PRD/QA docs that must be respected before touching its internals
+- Cloud sync for backups (manual export/import file only; see `BACKUP_RESTORE.md`)

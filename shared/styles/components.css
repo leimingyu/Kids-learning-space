@@ -250,12 +250,6 @@ code {
   flex-wrap: wrap;
 }
 
-.tile__stars {
-  letter-spacing: 2px;
-  color: var(--kls-accent);
-  font-size: var(--kls-fs-lg);
-}
-
 .tile__lastplayed {
   color: var(--kls-muted);
   font-size: var(--kls-fs-xs);
