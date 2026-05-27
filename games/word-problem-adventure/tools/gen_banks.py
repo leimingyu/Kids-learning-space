@@ -123,7 +123,7 @@ def gen_easy() -> list[str]:
             txt = f"A baker set out {a} plain bagels and {b} raisin bagels. How many bagels are on the tray?"
             pt = "Part–Part–Whole"
         if i % 3 == 1:
-            txt = f"The relay team passed the baton {a} times in practice, then {b} more times in the demo. How many passes in all?"
+            txt = f"The relay team passed the baton {a} times in practice, then {b} times in the demo. How many passes in all?"
             pt = "Join"
         ans = a + b
         add(

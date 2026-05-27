@@ -164,6 +164,41 @@ Stored at `localStorage["kls.progress.v1"]`:
 Per-game internal storage (e.g. `cosmicMathQuest_v1`, `cosmicMathQuest_wrongs_v1`)
 is left untouched — the hub keeps its own summary layer.
 
+## Saving / loading accounts
+
+The hub has **Save all account info** and **Load all account info** buttons
+below the game tiles. "Save" writes a single JSON file with every profile and
+all per-game progress; "Load" restores from that file (REPLACE-only — type
+`REPLACE` to confirm). See [BACKUP_RESTORE.md](BACKUP_RESTORE.md) for the
+full spec.
+
+### Where the save file lands
+
+Browsers don't let a static `file://` page choose its own save folder — that's
+a security boundary. Two ways to control where backups end up:
+
+1. **Run via local server, then a Save As dialog appears** (Chrome/Edge only):
+   ```bash
+   python3 -m http.server 8000
+   # → http://localhost:8000
+   ```
+   Over `localhost`, Chrome/Edge open a native Save As dialog when you click
+   Save. Navigate to this project folder and the JSON lands right next to
+   `index.html`. Safari and Firefox still use their default Downloads folder.
+
+2. **Change the browser's default download folder to this project folder.**
+   Works in any browser, `file://` or `http://`, and applies to every save.
+   - **Chrome / Edge:** Settings → Downloads → Location → pick this folder.
+     Optionally toggle "Ask where to save each file before downloading" so
+     you can confirm per-file.
+   - **Safari:** Settings → General → File download location → pick this
+     folder.
+   - **Firefox:** Settings → General → Files and Applications → Downloads →
+     choose this folder, or pick "Always ask you where to save files."
+
+If neither is set up, backups land in the browser's regular Downloads folder
+and you can move them yourself.
+
 ## Accessibility
 
 - Tiles, filter chips, and chrome buttons are real `<a>` / `<button>` elements

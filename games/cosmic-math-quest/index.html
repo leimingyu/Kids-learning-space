@@ -997,6 +997,11 @@
           <button type="button" class="btn btn-ghost btn-small" id="btn-progress">⭐ Stars &amp; Badges</button>
           <button type="button" class="btn btn-ghost btn-small" id="btn-how">❓ How to play</button>
         </div>
+        <p style="text-align:center;margin-top:14px;font-size:0.9rem;color:#636e72;">
+          <button type="button" id="btn-reset-cmq" style="background:none;border:none;color:#636e72;cursor:pointer;text-decoration:underline;font:inherit;font-size:0.9rem;">
+            🧹 Reset my progress (this profile only)
+          </button>
+        </p>
       </div>
     </section>
 
@@ -1183,8 +1188,34 @@
   const POINTS_CORRECT = 10;
   const STREAK_BONUS_EVERY = 3;
   const STREAK_BONUS_POINTS = 5;
-  const STORAGE_KEY = 'cosmicMathQuest_v1';
-  const WRONG_ANSWERS_STORAGE_KEY = 'cosmicMathQuest_wrongs_v1';
+  // Storage is scoped per hub-profile so each kid has their own progress.
+  // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
+  // bare base keys so opening this game directly from file:// keeps working.
+  // We deliberately do NOT auto-migrate un-scoped legacy data into any
+  // profile (per project rules: it would give the first profile to open the
+  // game an unfair head start with someone else's progress).
+  const STORAGE_KEY_BASE = 'cosmicMathQuest_v1';
+  const WRONGS_KEY_BASE = 'cosmicMathQuest_wrongs_v1';
+
+  function isInIframe() {
+    try { return !!(window.parent && window.parent !== window); }
+    catch (e) { return true; }
+  }
+
+  /** Return the localStorage key for this game's primary progress, or null
+   *  when embedded-but-no-profile-yet (caller should fall back to defaults). */
+  function storageKey() {
+    if (!isInIframe()) return STORAGE_KEY_BASE;
+    var bridge = (window.KLS && window.KLS.bridge) || null;
+    var pid = bridge && bridge.getProfileId ? bridge.getProfileId() : null;
+    return pid ? STORAGE_KEY_BASE + '__' + pid : null;
+  }
+  function wrongsKey() {
+    if (!isInIframe()) return WRONGS_KEY_BASE;
+    var bridge = (window.KLS && window.KLS.bridge) || null;
+    var pid = bridge && bridge.getProfileId ? bridge.getProfileId() : null;
+    return pid ? WRONGS_KEY_BASE + '__' + pid : null;
+  }
   /** Smart practice sessions: target length (cap only; no padding). */
   const PRACTICE_ROUND_MIN = 5;
   const PRACTICE_ROUND_MAX = 10;
@@ -1308,8 +1339,10 @@
   }
 
   function loadProgress() {
+    const key = storageKey();
+    if (!key) return defaultProgress();  // embedded, profile not known yet
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(key);
       if (!raw) return defaultProgress();
       const d = JSON.parse(raw);
       return ensureProgressShape(d);
@@ -1319,8 +1352,10 @@
   }
 
   function saveProgress(data) {
+    const key = storageKey();
+    if (!key) return;  // embedded, profile not known yet — skip (avoid auto-migration)
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(key, JSON.stringify(data));
     } catch (e) { /* ignore */ }
   }
 
@@ -1439,8 +1474,10 @@
   }
 
   function loadWrongAnswerHistory() {
+    const key = wrongsKey();
+    if (!key) return defaultWrongAnswerStore();
     try {
-      var raw = localStorage.getItem(WRONG_ANSWERS_STORAGE_KEY);
+      var raw = localStorage.getItem(key);
       if (!raw) return defaultWrongAnswerStore();
       var d = JSON.parse(raw);
       return {
@@ -1456,8 +1493,10 @@
   }
 
   function saveWrongAnswerHistory() {
+    const key = wrongsKey();
+    if (!key) return;
     try {
-      localStorage.setItem(WRONG_ANSWERS_STORAGE_KEY, JSON.stringify(wrongAnswerStore));
+      localStorage.setItem(key, JSON.stringify(wrongAnswerStore));
     } catch (e) { /* ignore */ }
   }
 
@@ -4395,6 +4434,50 @@
     resetLatestPracticeStateOnLaunch();
     updatePracticeButtons();
   })();
+
+  // ── Hub profile-scope integration ─────────────────────────────────────────
+  // The bridge script loads AFTER this IIFE, so we can't call onProfileReady
+  // from in here. Instead we expose two functions to window for the inline
+  // bridge-wiring block below to invoke once the bridge is available.
+
+  /** Re-read state from the (now-correct) profile-scoped key and refresh UI. */
+  function reloadStateForActiveProfile() {
+    progress = loadProgress();
+    wrongAnswerStore = loadWrongAnswerHistory();
+    resetLatestPracticeStateOnLaunch();
+    updatePracticeButtons();
+  }
+
+  /** Wipe THIS profile's CMQ data (both scoped keys). Tell the hub to drop
+   *  its per-game record too. Other profiles are untouched. */
+  function resetMyProgress() {
+    if (!window.confirm(
+      'Reset Cosmic Math Quest progress for this profile?\n\n' +
+      'This will erase your stars, badges, mastered facts, and saved review ' +
+      "list — for YOU only. Other profiles are not changed."
+    )) return;
+    try {
+      var k1 = storageKey(); if (k1) localStorage.removeItem(k1);
+      var k2 = wrongsKey();  if (k2) localStorage.removeItem(k2);
+    } catch (e) { /* ignore */ }
+    progress = defaultProgress();
+    wrongAnswerStore = defaultWrongAnswerStore();
+    GameState.lastRoundWrongBuffer = [];
+    GameState.reviewQueue = [];
+    updatePracticeButtons();
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded() && window.KLS.bridge.resetProgress) {
+      window.KLS.bridge.resetProgress();
+    }
+    window.alert("All clear! Starting fresh. 🌟");
+    showScreen('menu');
+  }
+
+  // Wire the in-game Reset button (rendered in the menu screen).
+  var resetBtn = document.getElementById('btn-reset-cmq');
+  if (resetBtn) resetBtn.addEventListener('click', resetMyProgress);
+
+  // Expose to the post-bridge inline script.
+  window.__cmq_onProfileReady = reloadStateForActiveProfile;
 })();
 
 </script>
@@ -4402,12 +4485,18 @@
 
   <script src="../../shared/scripts/game-bridge.js"></script>
   <script>
-    // KLS hub wiring: post a "played" event when the Results screen appears.
+    // KLS hub wiring.
     if (window.KLS && window.KLS.bridge) {
+      // Post a "played" event when the Results screen appears.
       window.KLS.bridge.onVisible('#screen-results.active', function () {
         window.KLS.bridge.played();
         window.KLS.bridge.celebrate();
       });
+      // When the hub announces an active profile, reload state from the
+      // profile-scoped key so each kid sees only their own progress.
+      if (window.KLS.bridge.onProfileReady && window.__cmq_onProfileReady) {
+        window.KLS.bridge.onProfileReady(window.__cmq_onProfileReady);
+      }
     }
   </script>
 </body>

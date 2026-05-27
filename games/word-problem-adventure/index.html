@@ -899,6 +899,203 @@
     .practice-summary__wrongs-line.cleared {
       color: #155724; font-weight: 700;
     }
+
+    /* ── Daily Challenge ───────────────────────────────────────────── */
+    .daily-card { padding: 22px; }
+    .daily-stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .daily-stat {
+      text-align: center;
+      padding: 14px;
+      background: #f7f9fc;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+    }
+    .daily-stat__label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+    }
+    .daily-stat__value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #2d3748;
+      line-height: 1.1;
+      margin-top: 4px;
+    }
+    .daily-streak-flame { font-size: 1.6rem; }
+    .daily-stat__sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .daily-trophies {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .daily-trophy {
+      text-align: center;
+      padding: 12px;
+      border-radius: 14px;
+      border: 2px solid #e2e8f0;
+      background: #fafbfc;
+      transition: transform 0.2s ease;
+    }
+    .daily-trophy[data-state="earned"] {
+      background: linear-gradient(165deg, #fff9e6 0%, #ffeaa7 100%);
+      border-color: #f6b73c;
+      box-shadow: 0 4px 12px rgba(246, 183, 60, 0.25);
+    }
+    .daily-trophy[data-state="locked"] .daily-trophy__icon { filter: grayscale(1); opacity: 0.45; }
+    .daily-trophy__icon { font-size: 2.4rem; line-height: 1; }
+    .daily-trophy__name { font-weight: 800; margin-top: 4px; color: #2d3748; }
+    .daily-trophy__hint { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+    .daily-trophy__earned-on { font-size: 0.8rem; color: #155724; font-weight: 700; margin-top: 4px; }
+    .daily-week-row {
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f7f9fc;
+      border-radius: 14px;
+    }
+    .daily-week-row__label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .daily-week-row__dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .daily-day-dot {
+      width: 40px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .daily-day-dot__label { font-weight: 700; }
+    .daily-day-dot__mark {
+      width: 28px;
+      height: 28px;
+      margin: 4px auto 0;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .daily-day-dot--passed .daily-day-dot__mark {
+      background: #28a745;
+    }
+    .daily-day-dot--passed .daily-day-dot__mark::before { content: "✓"; }
+    .daily-day-dot--tried .daily-day-dot__mark {
+      background: #fdcb6e;
+    }
+    .daily-day-dot--tried .daily-day-dot__mark::before { content: "·"; }
+    .daily-day-dot--today { color: #2d3748; font-weight: 800; }
+    .daily-day-dot--today .daily-day-dot__mark { box-shadow: 0 0 0 3px #74b9ff; }
+    .daily-rules {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .daily-status {
+      text-align: center;
+      margin: 6px 0 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+    .daily-status--done {
+      background: linear-gradient(165deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border: 2px solid #28a745;
+    }
+    .daily-status--tried {
+      background: #fff3cd;
+      color: #856404;
+      border: 2px solid #ffeeba;
+    }
+    .daily-status:empty { display: none; padding: 0; margin: 0; border: 0; }
+    .hidden { display: none !important; }
+
+    .daily-summary-card { padding: 22px; }
+    .daily-sum-result {
+      text-align: center;
+      padding: 18px;
+      background: #f7f9fc;
+      border-radius: 16px;
+      margin-bottom: 14px;
+    }
+    .daily-sum-score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #2d3748;
+    }
+    .daily-sum-accuracy {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .daily-sum-banner {
+      text-align: center;
+      padding: 16px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+    .daily-sum-banner--pass {
+      background: linear-gradient(165deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border: 3px solid #28a745;
+    }
+    .daily-sum-banner--fail {
+      background: #fff3cd;
+      color: #856404;
+      border: 3px solid #ffeeba;
+    }
+    .daily-sum-banner--practice {
+      background: #e7f1ff;
+      color: #1d4e89;
+      border: 3px solid #bcd5f0;
+    }
+    .daily-sum-streak {
+      text-align: center;
+      font-size: 1.05rem;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+    .daily-sum-streak:empty { display: none; }
+    .daily-sum-trophy {
+      text-align: center;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(165deg, #fff9e6 0%, #ffeaa7 100%);
+      border: 3px solid #f6b73c;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #7a5c00;
+      margin-bottom: 12px;
+    }
+    .daily-sum-trophy:empty { display: none; padding: 0; margin: 0; border: 0; }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -937,6 +1134,7 @@
       </p>
       <div class="btn-row">
         <button type="button" class="btn btn-primary"   id="btn-start-welcome">🗺️ Adventure</button>
+        <button type="button" class="btn btn-secondary" id="btn-daily-welcome">📅 Daily Challenge</button>
         <button type="button" class="btn btn-secondary" id="btn-practice-welcome">🎯 Practice by Type</button>
         <button type="button" class="btn btn-muted"     id="btn-end-welcome">End Game</button>
       </div>
@@ -973,6 +1171,75 @@
     <div class="card end-msg">Keep Playing and Keep Learning! 🌟</div>
     <div class="btn-row">
       <button type="button" class="btn btn-secondary" id="btn-back-from-end">Back to Welcome</button>
+    </div>
+  </div>
+
+  <!-- Daily Challenge intro -->
+  <div id="screen-daily" class="screen">
+    <h1>📅 Daily Challenge</h1>
+    <p class="subtitle" id="daily-date-line">Today</p>
+    <div class="card daily-card">
+      <div class="daily-stats-row">
+        <div class="daily-stat">
+          <div class="daily-stat__label">Current streak</div>
+          <div class="daily-stat__value"><span id="daily-streak-count">0</span> <span class="daily-streak-flame" aria-hidden="true">🔥</span></div>
+          <div class="daily-stat__sub" id="daily-streak-sub">Start a streak today!</div>
+        </div>
+        <div class="daily-stat">
+          <div class="daily-stat__label">Best streak</div>
+          <div class="daily-stat__value"><span id="daily-best-streak">0</span></div>
+          <div class="daily-stat__sub">days in a row</div>
+        </div>
+      </div>
+
+      <div class="daily-trophies" id="daily-trophies">
+        <div class="daily-trophy" id="daily-trophy-silver" data-state="locked" aria-label="Silver trophy">
+          <div class="daily-trophy__icon">🥈</div>
+          <div class="daily-trophy__name">Silver Trophy</div>
+          <div class="daily-trophy__hint">7-day streak</div>
+        </div>
+        <div class="daily-trophy" id="daily-trophy-gold" data-state="locked" aria-label="Gold trophy">
+          <div class="daily-trophy__icon">🥇</div>
+          <div class="daily-trophy__name">Gold Trophy</div>
+          <div class="daily-trophy__hint">70-day streak (10 weeks)</div>
+        </div>
+      </div>
+
+      <div class="daily-week-row" aria-label="Last 7 days">
+        <div class="daily-week-row__label">Last 7 days</div>
+        <div class="daily-week-row__dots" id="daily-week-dots"></div>
+      </div>
+
+      <p class="daily-rules" id="daily-rules">
+        20 mixed questions (easy, medium, hard). Get at least <strong>70%</strong> right to
+        keep your streak going.
+      </p>
+
+      <div class="daily-status" id="daily-status"></div>
+
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary"   id="btn-daily-start">Start today&rsquo;s challenge</button>
+        <button type="button" class="btn btn-secondary hidden" id="btn-daily-practice">Practice again (just for fun)</button>
+        <button type="button" class="btn btn-muted"     id="btn-daily-home">Back to Welcome</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Challenge summary -->
+  <div id="screen-daily-summary" class="screen">
+    <h1 id="daily-sum-title">Daily Challenge complete!</h1>
+    <div class="card daily-summary-card">
+      <div class="daily-sum-result">
+        <div class="daily-sum-score"><span id="daily-sum-correct">0</span> / 20 correct</div>
+        <div class="daily-sum-accuracy">Accuracy: <strong id="daily-sum-accuracy">0%</strong></div>
+      </div>
+      <div class="daily-sum-banner" id="daily-sum-banner" role="status"></div>
+      <div class="daily-sum-streak" id="daily-sum-streak-line"></div>
+      <div class="daily-sum-trophy" id="daily-sum-trophy"></div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary"   id="btn-daily-sum-home">Back to Daily Challenge</button>
+        <button type="button" class="btn btn-secondary" id="btn-daily-sum-welcome">Back to Welcome</button>
+      </div>
     </div>
   </div>
 
@@ -1198,40 +1465,40 @@
     { id: "e033", text: "A tray at the aquarium has 8 hermit crabs and 6 snails. How many small creatures are on the tray?", answer: 14, band: 1, problemType: "Part–Part–Whole", visual: "🦀8+6", hintKeywords: ["in all", "now"], hint: "Add the two parts of the story to find the total.", explain: "🦀 8 + 6 = **14**." },
     { id: "e034", text: "7 scooters waited at the curb. 7 scooters rolled up. How many scooters are at the curb now?", answer: 14, band: 1, problemType: "Join", visual: "🛴7+7", hintKeywords: ["now", "together"], hint: "Add the two parts of the story to find the total.", explain: "🛴 7 + 7 = **14**." },
     { id: "e035", text: "A baker set out 9 plain bagels and 8 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 8 = **17**." },
-    { id: "e036", text: "The relay team passed the baton 8 times in practice, then 9 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️8+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 9 = **17**." },
+    { id: "e036", text: "The relay team passed the baton 8 times in practice, then 9 times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️8+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 9 = **17**." },
     { id: "e037", text: "The museum cart has 10 fossil cards and 7 shell cards. How many cards are on the cart?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 7 = **17**." },
     { id: "e038", text: "A baker set out 7 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 10 = **17**." },
-    { id: "e039", text: "The relay team passed the baton 11 times in practice, then 6 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️11+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 6 = **17**." },
+    { id: "e039", text: "The relay team passed the baton 11 times in practice, then 6 times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️11+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 6 = **17**." },
     { id: "e040", text: "6 students sat in the front row. 11 students sat in the back row. How many students sat in those two rows?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 11 = **17**." },
     { id: "e041", text: "A baker set out 12 plain bagels and 5 raisin bagels. How many bagels are on the tray?", answer: 17, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 5 = **17**." },
-    { id: "e042", text: "The relay team passed the baton 5 times in practice, then 12 more times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️5+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 12 = **17**." },
+    { id: "e042", text: "The relay team passed the baton 5 times in practice, then 12 times in the demo. How many passes in all?", answer: 17, band: 2, problemType: "Join", visual: "🏛️5+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 12 = **17**." },
     { id: "e043", text: "The museum cart has 10 fossil cards and 8 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 8 = **18**." },
     { id: "e044", text: "A baker set out 8 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️8+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 10 = **18**." },
-    { id: "e045", text: "The relay team passed the baton 9 times in practice, then 9 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️9+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 9 = **18**." },
+    { id: "e045", text: "The relay team passed the baton 9 times in practice, then 9 times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️9+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 9 = **18**." },
     { id: "e046", text: "11 students sat in the front row. 7 students sat in the back row. How many students sat in those two rows?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️11+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 7 = **18**." },
     { id: "e047", text: "A baker set out 7 plain bagels and 11 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 11 = **18**." },
-    { id: "e048", text: "The relay team passed the baton 12 times in practice, then 6 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️12+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 6 = **18**." },
+    { id: "e048", text: "The relay team passed the baton 12 times in practice, then 6 times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️12+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 6 = **18**." },
     { id: "e049", text: "The museum cart has 6 fossil cards and 12 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 12 = **18**." },
     { id: "e050", text: "A baker set out 13 plain bagels and 5 raisin bagels. How many bagels are on the tray?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️13+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 13 + 5 = **18**." },
-    { id: "e051", text: "The relay team passed the baton 5 times in practice, then 13 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️5+13", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 13 = **18**." },
+    { id: "e051", text: "The relay team passed the baton 5 times in practice, then 13 times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️5+13", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 13 = **18**." },
     { id: "e052", text: "10 students sat in the front row. 9 students sat in the back row. How many students sat in those two rows?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 9 = **19**." },
     { id: "e053", text: "A baker set out 9 plain bagels and 10 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 10 = **19**." },
-    { id: "e054", text: "The relay team passed the baton 11 times in practice, then 8 more times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️11+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 8 = **19**." },
+    { id: "e054", text: "The relay team passed the baton 11 times in practice, then 8 times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️11+8", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 8 = **19**." },
     { id: "e055", text: "The museum cart has 8 fossil cards and 11 shell cards. How many cards are on the cart?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️8+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 8 + 11 = **19**." },
     { id: "e056", text: "A baker set out 12 plain bagels and 7 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 7 = **19**." },
-    { id: "e057", text: "The relay team passed the baton 7 times in practice, then 12 more times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️7+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 12 = **19**." },
+    { id: "e057", text: "The relay team passed the baton 7 times in practice, then 12 times in the demo. How many passes in all?", answer: 19, band: 2, problemType: "Join", visual: "🏛️7+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 12 = **19**." },
     { id: "e058", text: "13 students sat in the front row. 6 students sat in the back row. How many students sat in those two rows?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️13+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 13 + 6 = **19**." },
     { id: "e059", text: "A baker set out 6 plain bagels and 13 raisin bagels. How many bagels are on the tray?", answer: 19, band: 2, problemType: "Part–Part–Whole", visual: "🏛️6+13", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 13 = **19**." },
-    { id: "e060", text: "The relay team passed the baton 14 times in practice, then 4 more times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️14+4", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 14 + 4 = **18**." },
+    { id: "e060", text: "The relay team passed the baton 14 times in practice, then 4 times in the demo. How many passes in all?", answer: 18, band: 2, problemType: "Join", visual: "🏛️14+4", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 14 + 4 = **18**." },
     { id: "e061", text: "The museum cart has 4 fossil cards and 14 shell cards. How many cards are on the cart?", answer: 18, band: 2, problemType: "Part–Part–Whole", visual: "🏛️4+14", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 14 = **18**." },
     { id: "e062", text: "A baker set out 10 plain bagels and 6 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️10+6", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 10 + 6 = **16**." },
-    { id: "e063", text: "The relay team passed the baton 6 times in practice, then 10 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️6+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 10 = **16**." },
+    { id: "e063", text: "The relay team passed the baton 6 times in practice, then 10 times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️6+10", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 6 + 10 = **16**." },
     { id: "e064", text: "9 students sat in the front row. 7 students sat in the back row. How many students sat in those two rows?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️9+7", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 9 + 7 = **16**." },
     { id: "e065", text: "A baker set out 7 plain bagels and 9 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️7+9", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 7 + 9 = **16**." },
-    { id: "e066", text: "The relay team passed the baton 11 times in practice, then 5 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️11+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 5 = **16**." },
+    { id: "e066", text: "The relay team passed the baton 11 times in practice, then 5 times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️11+5", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 11 + 5 = **16**." },
     { id: "e067", text: "The museum cart has 5 fossil cards and 11 shell cards. How many cards are on the cart?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️5+11", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 5 + 11 = **16**." },
     { id: "e068", text: "A baker set out 12 plain bagels and 4 raisin bagels. How many bagels are on the tray?", answer: 16, band: 2, problemType: "Part–Part–Whole", visual: "🏛️12+4", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 12 + 4 = **16**." },
-    { id: "e069", text: "The relay team passed the baton 4 times in practice, then 12 more times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️4+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 12 = **16**." },
+    { id: "e069", text: "The relay team passed the baton 4 times in practice, then 12 times in the demo. How many passes in all?", answer: 16, band: 2, problemType: "Join", visual: "🏛️4+12", hintKeywords: ["how many", "in all", "rows"], hint: "Combine both groups from the story.", explain: "🏛️ 4 + 12 = **16**." },
     { id: "e070", text: "Liam had 18 trading cards. He traded away 9 cards at the swap. How many cards does Liam have now?", answer: 9, band: 3, problemType: "Separate", visual: "📦18−9", hintKeywords: ["left", "still", "now"], hint: "Start with the bigger number and subtract what was taken away.", explain: "📦 18 − 9 = **9**." },
     { id: "e071", text: "There were 19 paper boats in the tub. 8 boats soaked through and sank. How many boats are still floating?", answer: 11, band: 3, problemType: "Separate", visual: "📦19−8", hintKeywords: ["left", "still", "now"], hint: "Start with the bigger number and subtract what was taken away.", explain: "📦 19 − 8 = **11**." },
     { id: "e072", text: "A ribbon was 20 inches long. 7 inches were cut off for a bow. How many inches of ribbon are left?", answer: 13, band: 3, problemType: "Separate", visual: "📦20−7", hintKeywords: ["left", "still", "now"], hint: "Start with the bigger number and subtract what was taken away.", explain: "📦 20 − 7 = **13**." },
@@ -2681,6 +2948,9 @@
       endSession(true);
       return;
     }
+    // Daily Challenge mixes levels — let each question carry its own level so
+    // the badge, picture button, and visual hints behave per-question.
+    if (isDailyChallenge && q.sessionLevel) selectedLevel = q.sessionLevel;
     recordShownQuestionId(q);
     wrongSubmitsOnQuestion = 0;
     pictureVisible = false;
@@ -3321,10 +3591,334 @@
     } catch (e) { /* ignore */ }
   }
 
+  // ── Daily Challenge ───────────────────────────────────────────────────────
+  // 20 mixed questions (7 easy + 7 medium + 6 hard). One graded attempt per day.
+  // First attempt of the day is recorded in history; subsequent same-day attempts
+  // are "practice" and do not change the streak. Pass = ≥70% correct.
+  // Silver trophy at 7-day streak, Gold trophy at 70-day streak.
+  // Persisted under the existing wordProblemAdventure_v1__<profile> blob, so
+  // backup / restore / reset-progress already cover it.
+  var DAILY_TOTAL = 20;
+  var DAILY_PASS_PCT = 70;
+  var DAILY_SILVER_DAYS = 7;
+  var DAILY_GOLD_DAYS = 70;
+  var DAILY_QUOTA = { easy: 7, medium: 7, hard: 6 };
+  var DAILY_DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  var isDailyChallenge = false;
+  var dailyPracticeOnly = false;
+
+  function todayLocalISO() {
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+  function shiftDateISO(iso, dayDelta) {
+    var parts = iso.split("-");
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    d.setDate(d.getDate() + dayDelta);
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+  function isoToWeekday(iso) {
+    var parts = iso.split("-");
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return d.getDay();
+  }
+  function prettyDate(iso) {
+    var parts = iso.split("-");
+    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    try {
+      return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function loadDailyState() {
+    var p = loadPersisted();
+    var dc = p.dailyChallenge;
+    if (!dc || typeof dc !== "object") dc = {};
+    if (!dc.history || typeof dc.history !== "object") dc.history = {};
+    if (!dc.trophies || typeof dc.trophies !== "object") dc.trophies = { silver: null, gold: null };
+    if (typeof dc.bestStreak !== "number") dc.bestStreak = 0;
+    return dc;
+  }
+  function saveDailyState(dc) {
+    try {
+      var p = loadPersisted();
+      p.dailyChallenge = dc;
+      localStorage.setItem(storageKey(), JSON.stringify(p));
+    } catch (e) { /* ignore */ }
+  }
+
+  /** Walk back from `fromIso` while consecutive days are passed. */
+  function streakEndingAt(history, fromIso) {
+    var n = 0;
+    var cursor = fromIso;
+    while (history[cursor] && history[cursor].passed) {
+      n += 1;
+      cursor = shiftDateISO(cursor, -1);
+    }
+    return n;
+  }
+  function currentStreak(dc) {
+    var today = todayLocalISO();
+    var todayEntry = dc.history[today];
+    if (todayEntry && todayEntry.passed) return streakEndingAt(dc.history, today);
+    if (todayEntry && !todayEntry.passed) return 0;
+    // No attempt yet today — yesterday's streak is still alive.
+    return streakEndingAt(dc.history, shiftDateISO(today, -1));
+  }
+
+  /** Pick 20 mixed questions, prefer those not in recentQuestionIds. */
+  function buildDailyChallengeQueue() {
+    var p = loadPersisted();
+    var recent = p.recentQuestionIds || {};
+    var recentSet = new Set(
+      [].concat(recent.easy || [], recent.medium || [], recent.hard || [])
+    );
+    function pickFrom(pool, n, level) {
+      var fresh = pool.filter(function (q) { return q.id && !recentSet.has(q.id); });
+      var src = fresh.length >= n ? fresh : pool;
+      var picks = shuffle(src).slice(0, n);
+      return picks.map(function (q) {
+        // Shallow clone so we can tag sessionLevel without mutating the bank.
+        var clone = {};
+        for (var k in q) if (Object.prototype.hasOwnProperty.call(q, k)) clone[k] = q[k];
+        clone.sessionLevel = level;
+        return clone;
+      });
+    }
+    var picks = []
+      .concat(pickFrom(getQuestionsForLevel("easy"), DAILY_QUOTA.easy, "easy"))
+      .concat(pickFrom(getQuestionsForLevel("medium"), DAILY_QUOTA.medium, "medium"))
+      .concat(pickFrom(getQuestionsForLevel("hard"), DAILY_QUOTA.hard, "hard"));
+    return shuffle(picks);
+  }
+
+  function leaveDailyMode() {
+    isDailyChallenge = false;
+    dailyPracticeOnly = false;
+  }
+
+  function startDailyChallenge(practiceOnly) {
+    var queue = buildDailyChallengeQueue();
+    if (queue.length < DAILY_TOTAL) {
+      window.alert("Not enough questions to build today's challenge.");
+      return;
+    }
+    leavePracticeMode();
+    isDailyChallenge = true;
+    dailyPracticeOnly = !!practiceOnly;
+    activeLesson = null;
+    selectedLevel = null;
+    selectedSessionLabel = practiceOnly ? "Daily Challenge (practice)" : "Daily Challenge";
+    selectedSessionWasFull = false;
+    sessionQueue = queue;
+    questionIndex = 0;
+    questionsCompleted = 0;
+    firstTryCorrect = 0;
+    correctCount = 0;
+    attemptedCount = 0;
+    streak = 0;
+    sessionBestStreak = 0;
+    wrongSubmitsOnQuestion = 0;
+    levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
+    typeCorrect = {};
+    showScreen("screen-game");
+    renderQuestion();
+  }
+
+  function trophyUnlockNow(dc, currStreak) {
+    // Returns "silver" or "gold" if THIS run unlocked one (first time only).
+    var unlocked = null;
+    if (!dc.trophies.silver && currStreak >= DAILY_SILVER_DAYS) {
+      dc.trophies.silver = { earnedAt: new Date().toISOString() };
+      unlocked = "silver";
+    }
+    if (!dc.trophies.gold && currStreak >= DAILY_GOLD_DAYS) {
+      dc.trophies.gold = { earnedAt: new Date().toISOString() };
+      // Gold overrides silver in the summary banner if both unlock together.
+      unlocked = "gold";
+    }
+    return unlocked;
+  }
+
+  function endDailyChallengeSession(completedAll) {
+    var total = questionsCompleted;
+    var correct = correctCount;
+    var pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    var finishedAll = completedAll && total === DAILY_TOTAL;
+    var passed = finishedAll && pct >= DAILY_PASS_PCT;
+
+    var dc = loadDailyState();
+    var today = todayLocalISO();
+    var alreadyRecorded = !!dc.history[today];
+
+    var trophyJustEarned = null;
+    var newStreak = 0;
+
+    // Only the first attempt of the day writes to history / updates streak.
+    if (!dailyPracticeOnly && !alreadyRecorded && finishedAll) {
+      dc.history[today] = {
+        correct: correct,
+        total: total,
+        accuracy: pct,
+        passed: passed,
+        completedAt: new Date().toISOString(),
+      };
+      newStreak = currentStreak(dc);
+      if (newStreak > dc.bestStreak) dc.bestStreak = newStreak;
+      if (passed) trophyJustEarned = trophyUnlockNow(dc, newStreak);
+      saveDailyState(dc);
+    } else {
+      newStreak = currentStreak(dc);
+    }
+
+    // Populate summary DOM
+    document.getElementById("daily-sum-correct").textContent = String(correct);
+    document.getElementById("daily-sum-accuracy").textContent = pct + "%";
+    var title = document.getElementById("daily-sum-title");
+    var banner = document.getElementById("daily-sum-banner");
+    var streakLine = document.getElementById("daily-sum-streak-line");
+    var trophyEl = document.getElementById("daily-sum-trophy");
+
+    banner.className = "daily-sum-banner";
+    trophyEl.innerHTML = "";
+
+    if (dailyPracticeOnly) {
+      title.textContent = "Nice practice run!";
+      banner.classList.add("daily-sum-banner--practice");
+      banner.innerHTML = "🎯 Practice run — your streak for today is unchanged.";
+      streakLine.textContent = "Current streak: " + newStreak + " day" + (newStreak === 1 ? "" : "s") + ".";
+    } else if (!finishedAll) {
+      title.textContent = "Come back to finish!";
+      banner.classList.add("daily-sum-banner--fail");
+      banner.innerHTML = "You exited before finishing all 20. Your daily attempt isn't locked in yet — come back any time today to complete it.";
+      streakLine.textContent = "Current streak: " + newStreak + " day" + (newStreak === 1 ? "" : "s") + ".";
+    } else if (alreadyRecorded) {
+      // Shouldn't normally happen (we route to practice when today is already done),
+      // but handle gracefully if reached.
+      title.textContent = "Already done today!";
+      banner.classList.add("daily-sum-banner--practice");
+      banner.innerHTML = "Today's challenge was already recorded earlier. This run was practice only.";
+      streakLine.textContent = "Current streak: " + newStreak + " day" + (newStreak === 1 ? "" : "s") + ".";
+    } else if (passed) {
+      title.textContent = "Challenge passed! 🎉";
+      banner.classList.add("daily-sum-banner--pass");
+      banner.innerHTML = "You got " + pct + "% — that beats the 70% mark.";
+      streakLine.innerHTML = "Streak now <strong>" + newStreak + "</strong> day" + (newStreak === 1 ? "" : "s") + " 🔥";
+      if (trophyJustEarned === "silver") {
+        trophyEl.innerHTML = "🥈 New trophy unlocked: <strong>Silver</strong> — 7-day streak!";
+      } else if (trophyJustEarned === "gold") {
+        trophyEl.innerHTML = "🥇 New trophy unlocked: <strong>Gold</strong> — 70-day streak!";
+      }
+      // Reward via hub
+      var bridgeP = (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded()) ? window.KLS.bridge : null;
+      if (bridgeP) {
+        bridgeP.played();
+        if (trophyJustEarned === "silver") bridgeP.sticker("wpa-daily-silver");
+        if (trophyJustEarned === "gold") bridgeP.sticker("wpa-daily-gold");
+        if (bridgeP.celebrate) bridgeP.celebrate();
+      }
+    } else {
+      title.textContent = "Good effort!";
+      banner.classList.add("daily-sum-banner--fail");
+      banner.innerHTML = "You got " + pct + "% — need at least 70% to keep the streak going. Try again tomorrow!";
+      streakLine.textContent = "Current streak: " + newStreak + " day" + (newStreak === 1 ? "" : "s") + ".";
+      var bridgeF = (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded()) ? window.KLS.bridge : null;
+      if (bridgeF) bridgeF.played();
+    }
+
+    showScreen("screen-daily-summary");
+  }
+
+  function renderDailyIntro() {
+    var dc = loadDailyState();
+    var today = todayLocalISO();
+    var curr = currentStreak(dc);
+    var todayEntry = dc.history[today];
+
+    document.getElementById("daily-date-line").textContent = prettyDate(today);
+    document.getElementById("daily-streak-count").textContent = String(curr);
+    document.getElementById("daily-best-streak").textContent = String(dc.bestStreak || 0);
+
+    var streakSub = document.getElementById("daily-streak-sub");
+    if (curr === 0) streakSub.textContent = "Pass today to start a streak!";
+    else if (curr === 1) streakSub.textContent = "1 day strong — keep it up!";
+    else streakSub.textContent = curr + " days in a row 🔥";
+
+    // Trophies
+    var silver = document.getElementById("daily-trophy-silver");
+    var gold = document.getElementById("daily-trophy-gold");
+    function trophyMarkup(node, earnedAt, label) {
+      // Drop any prior "earned on" suffix.
+      var prev = node.querySelector(".daily-trophy__earned-on");
+      if (prev) prev.remove();
+      if (earnedAt) {
+        node.setAttribute("data-state", "earned");
+        var span = document.createElement("div");
+        span.className = "daily-trophy__earned-on";
+        try { span.textContent = "Earned " + new Date(earnedAt).toLocaleDateString(); }
+        catch (e) { span.textContent = "Earned"; }
+        node.appendChild(span);
+      } else {
+        node.setAttribute("data-state", "locked");
+      }
+    }
+    trophyMarkup(silver, dc.trophies.silver && dc.trophies.silver.earnedAt);
+    trophyMarkup(gold, dc.trophies.gold && dc.trophies.gold.earnedAt);
+
+    // Last 7 days
+    var dots = document.getElementById("daily-week-dots");
+    dots.innerHTML = "";
+    for (var i = 6; i >= 0; i--) {
+      var iso = shiftDateISO(today, -i);
+      var wd = isoToWeekday(iso);
+      var entry = dc.history[iso];
+      var dot = document.createElement("div");
+      dot.className = "daily-day-dot";
+      if (i === 0) dot.classList.add("daily-day-dot--today");
+      if (entry && entry.passed) dot.classList.add("daily-day-dot--passed");
+      else if (entry) dot.classList.add("daily-day-dot--tried");
+      dot.innerHTML =
+        '<div class="daily-day-dot__label">' + DAILY_DAY_LABELS[wd] + '</div>' +
+        '<div class="daily-day-dot__mark"></div>';
+      dots.appendChild(dot);
+    }
+
+    // Status & button states
+    var statusEl = document.getElementById("daily-status");
+    var startBtn = document.getElementById("btn-daily-start");
+    var practiceBtn = document.getElementById("btn-daily-practice");
+    statusEl.className = "daily-status";
+    statusEl.innerHTML = "";
+    if (todayEntry && todayEntry.passed) {
+      statusEl.classList.add("daily-status--done");
+      statusEl.innerHTML = "✅ Today's challenge done — " + todayEntry.correct + "/" + todayEntry.total + " (" + todayEntry.accuracy + "%). Come back tomorrow!";
+      startBtn.classList.add("hidden");
+      practiceBtn.classList.remove("hidden");
+    } else if (todayEntry && !todayEntry.passed) {
+      statusEl.classList.add("daily-status--tried");
+      statusEl.innerHTML = "Today's attempt: " + todayEntry.correct + "/" + todayEntry.total + " (" + todayEntry.accuracy + "%). The streak is broken — but you can still practice today!";
+      startBtn.classList.add("hidden");
+      practiceBtn.classList.remove("hidden");
+    } else {
+      startBtn.classList.remove("hidden");
+      practiceBtn.classList.add("hidden");
+    }
+  }
+
   function endSession(completedAll) {
     clearAdvanceTimer();
     hideCongratsOverlay();
     if (isPracticeMode) { endPracticeSession(completedAll); return; }
+    if (isDailyChallenge) { endDailyChallengeSession(completedAll); return; }
     const acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : 0;
     document.getElementById("sum-attempted").textContent = String(questionsCompleted);
     document.getElementById("sum-correct").textContent = String(firstTryCorrect);
@@ -3462,13 +4056,39 @@
   // Welcome
   document.getElementById("btn-start-welcome").addEventListener("click", function () {
     leavePracticeMode();
+    leaveDailyMode();
     renderJourneyMap();
     showScreen("screen-map");
   });
+  document.getElementById("btn-daily-welcome").addEventListener("click", function () {
+    leavePracticeMode();
+    leaveDailyMode();
+    renderDailyIntro();
+    showScreen("screen-daily");
+  });
   document.getElementById("btn-practice-welcome").addEventListener("click", function () {
     leavePracticeMode();
+    leaveDailyMode();
     renderPracticePicker();
     showScreen("screen-practice-picker");
+  });
+  document.getElementById("btn-daily-home").addEventListener("click", function () {
+    showScreen("screen-welcome");
+  });
+  document.getElementById("btn-daily-start").addEventListener("click", function () {
+    startDailyChallenge(false);
+  });
+  document.getElementById("btn-daily-practice").addEventListener("click", function () {
+    startDailyChallenge(true);
+  });
+  document.getElementById("btn-daily-sum-home").addEventListener("click", function () {
+    leaveDailyMode();
+    renderDailyIntro();
+    showScreen("screen-daily");
+  });
+  document.getElementById("btn-daily-sum-welcome").addEventListener("click", function () {
+    leaveDailyMode();
+    showScreen("screen-welcome");
   });
   document.getElementById("btn-practice-home").addEventListener("click", function () {
     showScreen("screen-welcome");
@@ -3559,6 +4179,7 @@
     // without needing a page reload.
     activeLesson = null;
     leavePracticeMode();
+    leaveDailyMode();
     selectedLevel = null;
     selectedSessionLabel = "";
     sessionQueue = [];

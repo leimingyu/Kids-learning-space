@@ -344,18 +344,6 @@
     return (n / 1024 / 1024).toFixed(2) + ' MB';
   }
 
-  function downloadJSON(filename, obj) {
-    const text = JSON.stringify(obj, null, 2);
-    const blob = new Blob([text], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.append(a);
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 0);
-  }
-
   function renderParent() {
     const root = qs('#hub-root');
     const stage = qs('#stage-root');
@@ -398,15 +386,6 @@
         el('td', {}, String(Object.keys(p.games || {}).length)),
         el('td', {}, '⭐ ' + stars + ' · 🏆 ' + stickers),
         el('td', {}, p.lastActiveAt ? new Date(p.lastActiveAt).toLocaleDateString() : '—'),
-        el('td', {},
-          el('button', {
-            type: 'button',
-            class: 'btn-tiny',
-            onclick: function () {
-              downloadJSON('kls-profile-' + sanitize(p.displayName) + '.json', progress.exportProfile(p.id));
-            },
-          }, 'Export'),
-        ),
       );
     });
 
@@ -421,7 +400,6 @@
                 el('th', {}, 'Games tried'),
                 el('th', {}, 'Earned'),
                 el('th', {}, 'Last active'),
-                el('th', {}, ''),
               )
             ),
             el('tbody', {}, profileRows),
@@ -430,44 +408,59 @@
     );
     root.append(summary);
 
-    // Export / Import card
-    const importInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
-    importInput.addEventListener('change', function (ev) {
+    // Backup / Restore card — uses window.KLS.backup (see BACKUP_RESTORE.md).
+    const backup = window.KLS && window.KLS.backup;
+
+    const restoreInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
+    restoreInput.addEventListener('change', function (ev) {
       const file = ev.target.files && ev.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function () {
-        try {
-          const blob = JSON.parse(reader.result);
-          const result = progress.importJSON(blob, 'merge');
-          alert('Imported ' + result.imported + ' profile(s). Skipped ' + result.skipped + '.');
-          renderParent();
-        } catch (e) {
-          alert('Import failed: ' + (e && e.message ? e.message : e));
-        }
-      };
-      reader.readAsText(file);
       ev.target.value = '';
+      if (!file || !backup) return;
+      const typed = window.prompt(
+        "Restoring will REPLACE all profiles and progress on this device with the backup file's contents. " +
+        "Profiles on this device that aren't in the backup will be deleted.\n\n" +
+        'Type REPLACE to continue:'
+      );
+      if (typed !== 'REPLACE') {
+        alert('Restore cancelled. Nothing was changed.');
+        return;
+      }
+      backup.importFromFile(file).catch(function (e) {
+        alert('Restore failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
+      });
     });
 
+    const lastExport = backup ? backup.getLastExportedAt() : null;
+    const lastExportLabel = lastExport
+      ? 'Last backed up: ' + new Date(lastExport).toLocaleString()
+      : 'No backup made yet on this device.';
+
     const eximCard = el('div', { class: 'card parent-page__card' },
-      el('h2', { class: 'parent-page__section' }, 'Export / Import'),
-      el('p', {}, 'Export saves a JSON file you can store, email, or move to another device.'),
+      el('h2', { class: 'parent-page__section' }, 'Backup & Restore'),
+      el('p', {}, 'Back up every profile and all game progress to a single JSON file. ' +
+        'Save it somewhere safe (Files, email to yourself, cloud drive) — it is the ' +
+        'only way to recover this data if the browser clears its storage.'),
+      el('p', { class: 'parent-page__note' }, lastExportLabel),
       el('div', { class: 'btn-row' },
         el('button', {
           type: 'button',
           class: 'btn btn-primary',
           onclick: function () {
-            downloadJSON('kls-all-profiles.json', progress.exportAll());
+            if (!backup) { alert('Backup module not loaded.'); return; }
+            backup.exportToFile().then(function (ok) {
+              if (ok) setTimeout(renderParent, 400); // refresh "Last backed up" line
+            }).catch(function (e) {
+              alert('Save failed: ' + (e && e.message ? e.message : e));
+            });
           },
-        }, 'Export all profiles'),
+        }, '💾 Back up everything'),
         el('button', {
           type: 'button',
           class: 'btn btn-secondary',
-          onclick: function () { importInput.click(); },
-        }, 'Import from file…'),
+          onclick: function () { restoreInput.click(); },
+        }, '📥 Restore from backup…'),
       ),
-      importInput,
+      restoreInput,
     );
     root.append(eximCard);
 
@@ -492,10 +485,6 @@
     root.append(el('div', { class: 'btn-row' },
       el('button', { type: 'button', class: 'btn btn-muted', onclick: function () { location.hash = ''; } }, 'Back to hub'),
     ));
-  }
-
-  function sanitize(s) {
-    return String(s || 'profile').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 32);
   }
 
   window.KLS = window.KLS || {};

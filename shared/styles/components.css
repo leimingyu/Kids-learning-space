@@ -597,6 +597,42 @@ code {
   font-size: var(--kls-fs-lg);
 }
 
+.hub__nudge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kls-space-3);
+  padding: var(--kls-space-3) var(--kls-space-4);
+  margin: 0 auto var(--kls-space-5);
+  max-width: 720px;
+  background: var(--kls-surface-2);
+  border: 2px dashed var(--kls-border);
+  border-radius: var(--kls-radius-lg);
+  color: var(--kls-ink);
+}
+.hub__nudge-icon { font-size: var(--kls-fs-xl); line-height: 1; }
+.hub__nudge-text { flex: 1 1 220px; font-size: var(--kls-fs-sm); }
+.hub__nudge .btn-tiny { white-space: nowrap; }
+
+.hub__account-actions {
+  margin: var(--kls-space-6) auto var(--kls-space-3);
+  text-align: center;
+}
+.hub__account-actions-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--kls-space-3);
+  justify-content: center;
+}
+.hub__account-actions-note {
+  margin-top: var(--kls-space-2);
+  font-size: var(--kls-fs-sm);
+  color: var(--kls-muted);
+}
+.hub__account-actions-secondary {
+  margin-top: var(--kls-space-2);
+}
+
 /* ============================================================
    Page transitions (hub ↔ game)
    ============================================================ */

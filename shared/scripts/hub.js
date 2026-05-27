@@ -13,6 +13,7 @@
       topics: ['word-problems'],
       tag: 'Word Problems',
       tagClass: 'tile__tag--reading',
+      storageBase: 'wordProblemAdventure_v1',
     },
     {
       slug: 'cosmic-math-quest',
@@ -22,6 +23,7 @@
       topics: ['mul-div'],
       tag: 'Mult & Div',
       tagClass: 'tile__tag--math',
+      storageBase: ['cosmicMathQuest_v1', 'cosmicMathQuest_wrongs_v1'],
     },
     {
       slug: 'lets-learn-fractions',
@@ -53,6 +55,10 @@
 
   const SLUGS = new Set(GAMES.map((g) => g.slug));
   chrome.registerSlugs([...SLUGS]);
+
+  // Expose for backup.js (discovers per-game profile-scoped keys via storageBase).
+  window.KLS = window.KLS || {};
+  window.KLS.GAMES = GAMES;
 
   let activeTopic = 'all';
 
@@ -152,6 +158,64 @@
     node.classList.add('kls-page-enter');
   }
 
+  /** Should the "back up your data" nudge be shown right now? */
+  function shouldNudgeBackup() {
+    // Only nudge if the user has progress worth losing.
+    const snap = progress.get();
+    if (!snap.profile) return false;
+    if (snap.totals.stars === 0 && snap.totals.stickers === 0) return false;
+
+    // Respect dismissal (1 day) and last-export age (>= 7 days = stale).
+    const NUDGE_DISMISS_KEY = 'kls.backup.nudgeDismissedAt';
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    const STALE_AFTER = 7 * ONE_DAY;
+    try {
+      const dismissed = localStorage.getItem(NUDGE_DISMISS_KEY);
+      if (dismissed && Date.now() - new Date(dismissed).getTime() < ONE_DAY) return false;
+    } catch (e) { /* ignore */ }
+    const backup = window.KLS && window.KLS.backup;
+    if (!backup) return false;
+    const last = backup.getLastExportedAt();
+    if (!last) return true; // never backed up + has progress → nudge
+    return Date.now() - new Date(last).getTime() > STALE_AFTER;
+  }
+
+  function dismissNudgeForToday() {
+    try { localStorage.setItem('kls.backup.nudgeDismissedAt', new Date().toISOString()); } catch (e) { /* ignore */ }
+  }
+
+  function renderBackupNudge(parent) {
+    if (!shouldNudgeBackup()) return;
+    const backup = window.KLS && window.KLS.backup;
+    const last = backup ? backup.getLastExportedAt() : null;
+    const msg = last
+      ? "It's been a while since you last backed up. Save a fresh copy so progress can't be lost."
+      : 'Your kids’ progress lives only in this browser. Save a backup file so it can’t be lost.';
+    const banner = el('div', { class: 'hub__nudge', role: 'note' },
+      el('span', { class: 'hub__nudge-icon', 'aria-hidden': 'true' }, '💾'),
+      el('span', { class: 'hub__nudge-text' }, msg),
+      el('button', {
+        type: 'button',
+        class: 'btn btn-primary btn-tiny',
+        onclick: function () {
+          if (!backup) { alert('Backup module not loaded.'); return; }
+          backup.exportToFile().then(function (ok) {
+            if (ok) banner.remove();
+          }).catch(function (e) {
+            alert('Save failed: ' + (e && e.message ? e.message : e));
+          });
+        },
+      }, 'Back up now'),
+      el('button', {
+        type: 'button',
+        class: 'btn btn-muted btn-tiny',
+        'aria-label': 'Dismiss for today',
+        onclick: function () { dismissNudgeForToday(); banner.remove(); },
+      }, 'Later'),
+    );
+    parent.prepend(banner);
+  }
+
   function renderHub() {
     chrome.unmount();
     const hub = qs('#hub-root');
@@ -178,6 +242,7 @@
       + '</header>'
       + '<div id="hub-filter" class="hub__filter" role="group" aria-label="Filter games by topic"></div>'
       + '<div id="hub-tiles" class="hub__tiles"></div>'
+      + '<div id="hub-account-actions" class="hub__account-actions"></div>'
       + '<p class="hub__parent-link"><a href="#/parent">Parent / Data Page</a></p>';
 
     qs('.hub__profile-avatar', hub).textContent = profile ? profile.avatar : '🦊';
@@ -186,8 +251,87 @@
       location.hash = '#/profiles';
     });
 
+    renderBackupNudge(hub);
     renderFilter();
     renderTiles();
+    renderAccountActions();
+  }
+
+  /** Save / Load all account info buttons, rendered below the tiles. */
+  function renderAccountActions() {
+    const slot = qs('#hub-account-actions');
+    if (!slot) return;
+    slot.innerHTML = '';
+    const backup = window.KLS && window.KLS.backup;
+
+    const loadInput = el('input', {
+      type: 'file', accept: 'application/json', style: 'display:none',
+    });
+    loadInput.addEventListener('change', function (ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file || !backup) return;
+      const typed = window.prompt(
+        "Loading will REPLACE all accounts and progress on this device with the file's contents. " +
+        "Accounts on this device that aren't in the file will be deleted.\n\n" +
+        'Type REPLACE to continue:'
+      );
+      if (typed !== 'REPLACE') {
+        alert('Load cancelled. Nothing was changed.');
+        return;
+      }
+      backup.importFromFile(file).catch(function (e) {
+        alert('Load failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
+      });
+    });
+
+    const lastExport = backup ? backup.getLastExportedAt() : null;
+    const note = lastExport
+      ? 'Last saved: ' + new Date(lastExport).toLocaleString()
+      : 'No saved file yet on this device.';
+
+    // The "Choose backup folder" button is only useful in browsers that
+    // support the directory picker (Chrome/Edge over http/https). Hide it
+    // elsewhere — Safari/Firefox/file:// users get the regular Save As flow.
+    const folderButton = (backup && backup.supportsDirectoryPicker())
+      ? el('button', {
+          type: 'button',
+          class: 'btn btn-muted btn-tiny',
+          title: 'Make the Save dialog default to your project folder',
+          onclick: function () {
+            backup.pickBackupFolder().then(function (dh) {
+              if (dh) alert('Backup folder set. The Save dialog will default to it next time.');
+            }).catch(function (e) {
+              alert('Could not set backup folder: ' + (e && e.message ? e.message : e));
+            });
+          },
+        }, '📁 Choose backup folder')
+      : null;
+
+    slot.append(
+      el('div', { class: 'hub__account-actions-row' },
+        el('button', {
+          type: 'button',
+          class: 'btn btn-secondary',
+          onclick: function () {
+            if (!backup) { alert('Backup module not loaded.'); return; }
+            backup.exportToFile().then(function (ok) {
+              if (ok) renderAccountActions(); // refresh "Last saved" line
+            }).catch(function (e) {
+              alert('Save failed: ' + (e && e.message ? e.message : e));
+            });
+          },
+        }, '💾 Save all account info'),
+        el('button', {
+          type: 'button',
+          class: 'btn btn-secondary',
+          onclick: function () { loadInput.click(); },
+        }, '📥 Load all account info…'),
+        loadInput,
+      ),
+      el('p', { class: 'hub__account-actions-note' }, note),
+      folderButton ? el('p', { class: 'hub__account-actions-secondary' }, folderButton) : null,
+    );
   }
 
   function renderGame(slug) {

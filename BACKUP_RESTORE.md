@@ -159,30 +159,40 @@ Wipe-and-write only begins after all validation has passed.
 - Every bump adds a one-way migration in `BACKUP_MIGRATIONS` from the
   previous version. Never remove an older migration.
 
-## Implementation plan (when we build this)
+## Implementation (shipped)
 
-New files:
+Implemented files:
 
-- `shared/scripts/backup.js` — exports `window.KLS.backup` with:
-  - `exportToFile()` → builds the envelope, triggers a Blob download.
-  - `importFromFile(file)` → returns a Promise; resolves after reload
-    completes (i.e. the caller never sees the resolution).
-  - `BACKUP_VERSION` constant and `BACKUP_MIGRATIONS` table.
+- `shared/scripts/backup.js` — `window.KLS.backup` with:
+  - `exportToFile()` → builds the envelope, triggers a Blob download, stores
+    `kls.backup.lastExportedAt`.
+  - `importFromFile(file)` → returns a Promise; on success the page reloads
+    so iframes re-read state. Validation happens before any state change.
+  - `getLastExportedAt()` for the hub nudge banner.
+  - `BACKUP_VERSION = 1`.
+- `shared/scripts/hub.js` — `GAMES` registry gained a `storageBase` field
+  (set to `'wordProblemAdventure_v1'` on WPA). The `GAMES` array is exposed
+  as `window.KLS.GAMES` for `backup.js` to discover keys. A "back up your
+  data" nudge banner renders on the hub when the active profile has earned
+  stars/stickers AND no export has been recorded in the last 7 days (or
+  ever). Dismissal is sticky for 1 day.
+- `shared/scripts/profile-ui.js` — Parent page's Backup & Restore card uses
+  `window.KLS.backup`. Restore requires typing `REPLACE` to confirm. The
+  old partial per-profile Export button was removed because it produced an
+  incomplete backup (no per-game state).
+- `index.html` — `<script src="shared/scripts/backup.js">` loads after
+  `profile-ui.js` and before `hub.js`.
 
-Modified files:
-
-- `shared/scripts/hub.js` — the `GAMES` registry gets a `storageBase` field
-  (e.g. `'wordProblemAdventure_v1'` for WPA) so `backup.js` can discover
-  which keys belong to each game without hard-coding them. Games without a
-  profile-scoped key leave it unset.
-- The Parent page renderer (currently `profileUI.renderParent` per
-  `hub.js:254`) — add Export and Import cards.
-- `index.html` — add a `<script>` tag for `backup.js` after `hub.js`.
-
-No changes needed inside any individual game: the bridge already exposes
-`getProfileId()`, and games already read their own profile-scoped keys.
+No changes were needed inside any individual game: the bridge already
+exposes `getProfileId()`, and games read their own profile-scoped keys.
 Restore writes those keys directly to `localStorage`; the game picks them
 up on its next load.
+
+Other games (Cosmic Math Quest, Let's Learn Fractions, Long Division Coach)
+are not yet profile-scoped — their state is excluded from the backup until
+they adopt `KLS.bridge.getProfileId()` and a `storageBase` is added to
+their `GAMES` entry. Adding the field is the trigger that pulls a game's
+data into future backups.
 
 ## Out of scope (intentionally)
 
