@@ -393,7 +393,9 @@
     .homeIntroChips .chip{
       font-size: 15px;
       padding: 10px 12px;
-      background: rgba(255,255,255,.82);
+      background: #fff8e7;
+      color: var(--ink);   /* dark brown — chips sit on the brown header */
+      border: 3px solid rgba(138, 90, 58, .22);
     }
 
     .rightPanel{
@@ -581,58 +583,31 @@
     .levelDot.medium{ background: rgba(255,204,51,.95); }
     .levelDot.hard{ background: rgba(255,59,59,.92); }
 
-    /* Easy mode: lightweight inline picture hint */
-    .hintInline{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top: 14px;
-    }
-    .hintBarRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .hintToggle{
-      appearance:none;
-      border: 3px solid rgba(0,0,0,.08);
-      background: rgba(255,255,255,.82);
-      border-radius: 999px;
-      padding: 10px 12px;
-      font-weight: 1100;
-      cursor:pointer;
-      box-shadow: 0 10px 0 rgba(0,0,0,.06);
-      color: rgba(0,0,0,.72);
-    }
-    .hintToggle:active{ transform: translateY(6px); box-shadow: 0 4px 0 rgba(0,0,0,.06); }
-    .hintToggle:focus{ outline:none; box-shadow: 0 10px 0 rgba(0,0,0,.06), var(--focus); }
-    .hintInlineBody{
-      display:block;
-    }
-    .hintHelperText{
-      font-weight: 950;
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .hintInlineBody .groupBarWrap{
-      margin-top: 0;
-      gap: 10px;
-    }
-    .hintInlineBody .groupLabel,
-    .hintInlineBody .groupMath{
-      display:none;
-    }
-    .hintInlineBody .groupBar{
-      gap: 12px;
-    }
-    .hintInlineBody .groupBlock{
-      min-height: 50px;
-      font-size: 20px;
+    /* Streak celebration banner — appears for ~1.6s on milestones. */
+    .streakBanner{
+      display: none;
+      margin: 10px 0 0;
+      padding: 12px 16px;
       border-radius: 16px;
+      background: linear-gradient(165deg, #fff9e6 0%, #ffd5a4 100%);
+      border: 3px solid #f6b73c;
+      box-shadow: 0 8px 0 rgba(246, 183, 60, 0.18);
+      font-weight: 1100;
+      font-size: 18px;
+      color: #7a5c00;
+      text-align: center;
+      animation: streakPop 0.45s cubic-bezier(.2,1.4,.4,1);
     }
+    .streakBanner.show{ display: block; }
+    @keyframes streakPop {
+      0%   { transform: scale(0.6) translateY(8px); opacity: 0; }
+      60%  { transform: scale(1.05) translateY(0);   opacity: 1; }
+      100% { transform: scale(1)    translateY(0);   opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .streakBanner{ animation: none; }
+    }
+
     .eqCard{
       background: rgba(255,255,255,.88);
       border: 3px solid rgba(0,0,0,.07);
@@ -725,16 +700,24 @@
        ========================= */
     #gameScreen .screenHeader{
       padding: 14px 18px 8px;
-      background: linear-gradient(135deg, rgba(47,128,255,.08), rgba(33,199,168,.08), rgba(255,204,51,.08));
+      /* Calm, light header for gameplay — warm cream tint (was an old
+         blue/teal gradient that left white header text invisible). */
+      background: linear-gradient(135deg, rgba(246,199,90,.20), rgba(201,141,82,.12), rgba(255,248,231,.45));
     }
+    /* Dark text so the light gameplay header stays readable (overrides the
+       white text the loud brown headers use on home / summary). */
     #gameScreen .screenHeader h1{
       font-size: clamp(22px, 3.4vw, 30px);
-      opacity: .95;
+      opacity: 1;
+      color: var(--ink);
+      text-shadow: none;
     }
-    #gameScreen .screenHeader p{
+    #gameScreen .screenHeader p,
+    #gameScreen .screenHeader .muted{
       font-size: 15px;
       margin-top: 6px;
       max-width: 64ch;
+      color: var(--muted);
     }
 
     .qTop{
@@ -850,13 +833,6 @@
     }
     .btn.softAction:active{ box-shadow: 0 4px 0 rgba(0,0,0,.06); }
 
-    .afterSubmitRow{
-      display:flex;
-      gap: 10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-start;
-    }
     .smallControls{
       margin-top: 10px;
       display:flex;
@@ -1336,6 +1312,291 @@
       overflow:hidden; clip: rect(0,0,0,0);
       white-space:nowrap; border:0;
     }
+    /* ═══════════════════════════════════════════════════════════════════
+       PIZZA PARLOR THEME — appended overrides.
+       Repaints palette + surfaces while leaving every existing class/id
+       intact so the game logic is untouched. Inline emoji/SVG only — no
+       new image assets (file:// safe).
+       ═══════════════════════════════════════════════════════════════════ */
+    :root{
+      --bg1:#fce8ec;            /* pink gingham base */
+      --bg2:#fff1d8;            /* warm cream */
+      --ink:#4a2e1a;            /* warm brown */
+      --muted:#8b6f5c;          /* dusty brown */
+      --card:#fff8e7;           /* notepad cream */
+      --cardSolid:#fff8e7;
+      /* Repoint old "candy" palette to pizzeria colors so existing rules
+         that reference these vars adopt the new theme automatically. */
+      --pink:#d36b7a;           /* sauce */
+      --purple:#8a5a3a;          /* crust */
+      --blue:#b87b48;            /* light crust */
+      --teal:#7fa05f;            /* basil */
+      --green:#5b8c3e;           /* deep basil */
+      --yellow:#f6c75a;          /* cheese */
+      --orange:#d28239;          /* baked dough */
+      --red:#c0392b;             /* pepperoni */
+      --crust:#c98d52;
+      --crustDark:#8a5a3a;
+      --pepperoni:#c0392b;
+      --tomato:#e07a52;
+      --basil:#5b8c3e;
+      --cheese:#f6c75a;
+      --apron:#fbf4e6;
+      --focus: 0 0 0 5px rgba(200,141,82,.30);
+    }
+
+    body{
+      background:
+        repeating-linear-gradient(0deg,  rgba(255,255,255,.55) 0 28px, transparent 28px 56px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.55) 0 28px, transparent 28px 56px),
+        linear-gradient(180deg, #fbd5dd 0%, #fce8ec 100%) !important;
+    }
+    /* Soft flour-dust replaces the candy sprinkles. */
+    .sprinkles{
+      background-image:
+        radial-gradient(circle at 14% 18%, rgba(255,255,255,.85) 0 2.5px, transparent 4px),
+        radial-gradient(circle at 76% 22%, rgba(255,255,255,.80) 0 2px, transparent 3px),
+        radial-gradient(circle at 38% 62%, rgba(255,255,255,.80) 0 2px, transparent 3px),
+        radial-gradient(circle at 86% 70%, rgba(255,255,255,.85) 0 2.5px, transparent 4px),
+        radial-gradient(circle at 22% 80%, rgba(255,255,255,.80) 0 2px, transparent 3px) !important;
+      opacity: .55 !important;
+    }
+
+    /* ── Header band: brown pizzeria sign. ─────────────────────────────── */
+    .screenHeader{
+      background: linear-gradient(180deg, #b87b48 0%, #c98d52 100%);
+      color: #fff8e7;
+      padding: 22px 18px;
+      border-radius: 24px;
+      border: 3px solid #8a5a3a;
+      box-shadow: 0 10px 0 rgba(74, 46, 26, .18), 0 18px 32px rgba(74, 46, 26, .22);
+      margin-bottom: 18px;
+    }
+    .screenHeader h1{
+      color: #fff8e7;
+      text-shadow: 0 2px 0 rgba(74,46,26,.25);
+      margin: 0 0 4px;
+    }
+    .screenHeader p,
+    .screenHeader .muted{ color: rgba(255, 248, 231, .92); }
+
+    /* ── Cards & panels: cream notepad on brown ring. ──────────────────── */
+    .card,
+    .scorePanel,
+    .playArea{
+      background: var(--card) !important;
+      border: 3px solid rgba(138, 90, 58, .18) !important;
+      box-shadow:
+        0 4px 0 rgba(138, 90, 58, .14),
+        0 16px 28px rgba(138, 90, 58, .18) !important;
+    }
+
+    /* ── Stat rows: warm parchment, brown rule. ────────────────────────── */
+    .stat{
+      background: #fff8e7 !important;
+      border: 3px solid rgba(138, 90, 58, .14) !important;
+    }
+    .stat span{ color: var(--muted) !important; }
+    .scoreTitle .star{
+      background: linear-gradient(135deg, var(--cheese), var(--crust)) !important;
+      box-shadow: inset 0 0 0 3px rgba(255, 248, 231, .65);
+    }
+    .bigScore{
+      background: linear-gradient(135deg,
+        rgba(246, 199, 90, .35),
+        rgba(201, 141, 82, .28),
+        rgba(255, 248, 231, .50)) !important;
+      border: 3px solid rgba(138, 90, 58, .20) !important;
+    }
+
+    /* ── Progress bar fill: cheese → crust → sauce. ────────────────────── */
+    .bar > div{
+      background: linear-gradient(90deg, var(--cheese), var(--crust), var(--pepperoni)) !important;
+    }
+    .levelPill{ background: var(--card) !important; border-color: rgba(138, 90, 58, .18) !important; }
+    .tinyPill{ background: var(--card) !important; border-color: rgba(138, 90, 58, .18) !important; }
+
+    /* ── Buttons: chunky kitchen palette. ──────────────────────────────── */
+    .btn{
+      box-shadow: 0 8px 0 rgba(138, 90, 58, .25) !important;
+      border-color: rgba(138, 90, 58, .25) !important;
+    }
+    .btn:active{ box-shadow: 0 3px 0 rgba(138, 90, 58, .25) !important; }
+    .btn.primary,
+    .btn.primaryAction{
+      background: linear-gradient(135deg, var(--cheese), var(--crust)) !important;
+      color: #4a2e1a !important;
+    }
+    .btn.secondary,
+    .btn.secondaryAction{
+      background: linear-gradient(135deg, #fff8e7, #f5e4cc) !important;
+      color: #4a2e1a !important;
+    }
+    .btn.softAction{
+      background: rgba(255, 248, 231, .9) !important;
+      color: #4a2e1a !important;
+    }
+    .btn.warn{ background: linear-gradient(135deg, var(--orange), var(--cheese)) !important; }
+    .btn.danger{ background: linear-gradient(135deg, var(--pepperoni), var(--orange)) !important; color:#fff8e7 !important; }
+    .btn.ghost{
+      background: rgba(255, 248, 231, .6) !important;
+      color: var(--ink) !important;
+      border-color: rgba(138, 90, 58, .18) !important;
+    }
+    .btn.play{
+      background: linear-gradient(135deg, var(--pepperoni), var(--orange), var(--cheese)) !important;
+      color: #fff8e7 !important;
+    }
+
+    /* ── Question text: bigger, warmer, slight shadow. ─────────────────── */
+    .qText{
+      color: var(--ink);
+      text-shadow: 0 1px 0 rgba(255, 248, 231, .9);
+    }
+
+    /* ── Streak banner: warmer cheese/crust palette. ───────────────────── */
+    .streakBanner{
+      background: linear-gradient(165deg, #fff5d6 0%, #f6c75a 100%) !important;
+      border: 3px solid var(--crust) !important;
+      box-shadow: 0 6px 0 rgba(138, 90, 58, .25) !important;
+      color: #4a2e1a !important;
+    }
+
+    /* ── Teaching modal: cream surface, crust border, sauce highlights. ── */
+    .modal{
+      background: var(--card) !important;
+      border: 4px solid var(--crust) !important;
+      box-shadow: 0 14px 0 rgba(138, 90, 58, .22), 0 30px 60px rgba(74, 46, 26, .28) !important;
+      color: var(--ink) !important;
+    }
+    .modalHead{
+      background: linear-gradient(180deg, var(--crust), var(--crustDark)) !important;
+      color: #fff8e7 !important;
+      border-bottom: 3px solid var(--crustDark) !important;
+    }
+    .modalHead h3{ color: #fff8e7 !important; }
+    /* Subtitle sits on the brown/green head — keep it light for contrast. */
+    .modalHead .muted{ color: rgba(255, 248, 231, .92) !important; }
+    .modal.success .modalHead{
+      background: linear-gradient(180deg, var(--basil), #436a30) !important;
+    }
+    .modal.success .modalBody{ color: var(--ink) !important; }
+    .teachCard{
+      background: #fff8e7 !important;
+      border: 3px solid rgba(138, 90, 58, .18) !important;
+    }
+
+    /* ── Chef mascot. ─────────────────────────────────────────────────── */
+    .chefBlock{
+      display: flex; flex-direction: column; align-items: center;
+      gap: 10px;
+      padding: 8px 4px 14px;
+      margin-bottom: 8px;
+    }
+    .chefSVG{
+      width: 140px; height: 150px;
+      filter: drop-shadow(0 6px 0 rgba(138, 90, 58, .18));
+    }
+    .thoughtBubble{
+      position: relative;
+      max-width: 200px;
+      padding: 10px 14px;
+      background: #fff8e7;
+      border: 3px solid var(--crust);
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 1000;
+      color: var(--ink);
+      box-shadow: 0 4px 0 rgba(138, 90, 58, .18);
+    }
+    .thoughtBubble.popNow{ animation: thoughtPop .35s var(--bounce); }
+    .thoughtBubble::after{
+      content: "";
+      position: absolute;
+      bottom: -14px;
+      left: 28px;
+      width: 22px; height: 16px;
+      background: #fff8e7;
+      border-left: 3px solid var(--crust);
+      border-bottom: 3px solid var(--crust);
+      border-radius: 0 0 0 12px;
+      transform: skewX(-12deg);
+    }
+    @keyframes thoughtPop{
+      0%   { transform: scale(.85) translateY(4px); opacity: 0; }
+      60%  { transform: scale(1.04); opacity: 1; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .thoughtBubble{ animation: none; }
+    }
+    /* Mascot only shows when there's screen room — keep mobile clean. */
+    @media (max-width: 920px){
+      .chefBlock{ display: none; }
+    }
+
+    /* ── Result chip + countdown (Approach 4: auto-advance on correct) ── */
+    .resultChip{
+      display: none;
+      margin: 12px 0;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--basil) 0%, #436a30 100%);
+      color: #fff8e7;
+      border: 3px solid var(--crustDark);
+      box-shadow: 0 6px 0 rgba(74, 46, 26, .25);
+      text-align: center;
+      font-weight: 1100;
+    }
+    .resultChip.show{ display: block; animation: streakPop .35s var(--bounce); }
+    .resultChip__eq{
+      font-size: 22px;
+      letter-spacing: .3px;
+    }
+    .resultChip__sub{
+      font-size: 13px;
+      opacity: .9;
+      margin-top: 6px;
+      font-weight: 900;
+    }
+    .resultChip__bar{
+      margin-top: 10px;
+      height: 6px;
+      background: rgba(255, 248, 231, .25);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .resultChip__bar-fill{
+      height: 100%;
+      width: 100%;
+      background: rgba(255, 248, 231, .85);
+      border-radius: 999px;
+    }
+    .resultChip.show .resultChip__bar-fill{
+      animation: countdownDrain 1500ms linear forwards;
+    }
+    @keyframes countdownDrain{
+      from { width: 100%; }
+      to   { width: 0%; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .resultChip__bar-fill{ animation: none !important; width: 100% !important; }
+      .resultChip.show{ animation: none; }
+    }
+
+    /* ── Modal footer (single "Got it — next →" action) ──────────────── */
+    .modalFooter{
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 18px 18px;
+      border-top: 2px dashed rgba(138, 90, 58, .25);
+      background: rgba(255, 248, 231, .55);
+    }
+    .modalFooter .btn{
+      min-width: 180px;
+      font-size: 18px;
+    }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1558,14 +1819,12 @@
               Split… then take.
             </div>
 
-            <div id="hintInline" class="hintInline" style="display:none;" aria-label="Picture hint">
-              <div class="hintBarRow" id="hintControls" style="display:none;">
-                <div>
-                  <button id="hintToggle" class="hintToggle" type="button">📊 Show picture</button>
-                  <div class="hintHelperText">Try it first, then tap “Show picture” if you need help.</div>
-                </div>
-              </div>
-              <div id="hintInlineBody" class="hintInlineBody"></div>
+            <div id="streakBanner" class="streakBanner" role="status" aria-live="polite"></div>
+
+            <div id="resultChip" class="resultChip" role="status" aria-live="polite">
+              <div class="resultChip__eq" id="resultChipEq"></div>
+              <div class="resultChip__sub" id="resultChipSub">Press any key to continue</div>
+              <div class="resultChip__bar" aria-hidden="true"><div class="resultChip__bar-fill" id="resultChipFill"></div></div>
             </div>
 
             <div class="answerCluster" aria-label="Answer area">
@@ -1573,10 +1832,6 @@
                 <label class="srOnly" for="answerInput">Your answer</label>
                 <input id="answerInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Your answer here" />
                 <button class="btn primaryAction" id="submitBtn">Submit</button>
-              </div>
-
-              <div class="afterSubmitRow">
-                <button class="btn secondaryAction" id="nextBtn" disabled>Next Question</button>
               </div>
             </div>
 
@@ -1587,12 +1842,37 @@
           </div>
 
           <aside class="scorePanel" aria-label="Scoreboard">
+            <div class="chefBlock" aria-hidden="true">
+              <div class="thoughtBubble" id="chefBubble">Get your math mitts on!</div>
+              <svg class="chefSVG" viewBox="0 0 120 140" role="img" aria-label="Chef Pip the fraction chef">
+                <!-- Toque (chef hat) -->
+                <ellipse cx="60" cy="22" rx="22" ry="12" fill="#fff8e7" stroke="#8a5a3a" stroke-width="2.5"/>
+                <ellipse cx="44" cy="26" rx="14" ry="11" fill="#fff8e7" stroke="#8a5a3a" stroke-width="2.5"/>
+                <ellipse cx="76" cy="26" rx="14" ry="11" fill="#fff8e7" stroke="#8a5a3a" stroke-width="2.5"/>
+                <rect x="38" y="32" width="44" height="10" rx="4" fill="#fff8e7" stroke="#8a5a3a" stroke-width="2.5"/>
+                <!-- Face -->
+                <circle cx="60" cy="56" r="18" fill="#f4d2b5" stroke="#8a5a3a" stroke-width="2.5"/>
+                <circle cx="54" cy="55" r="2" fill="#4a2e1a"/>
+                <circle cx="66" cy="55" r="2" fill="#4a2e1a"/>
+                <path d="M52 62 Q60 68 68 62" stroke="#4a2e1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                <!-- Apron / chef coat -->
+                <path d="M30 78 Q60 70 90 78 L94 124 Q60 132 26 124 Z" fill="#fff8e7" stroke="#8a5a3a" stroke-width="2.5"/>
+                <!-- Buttons -->
+                <circle cx="60" cy="92"  r="2.2" fill="#8a5a3a"/>
+                <circle cx="60" cy="104" r="2.2" fill="#8a5a3a"/>
+                <circle cx="60" cy="116" r="2.2" fill="#8a5a3a"/>
+                <!-- Neckerchief -->
+                <path d="M48 78 L60 86 L72 78 L66 84 L60 90 L54 84 Z" fill="#c0392b"/>
+              </svg>
+            </div>
             <div class="scoreTitle">
               <div class="star" aria-hidden="true">⭐</div>
               <span>Progress Board</span>
             </div>
 
             <div class="stat"><span>Correct</span><div id="statCorrect">0</div></div>
+            <div class="stat"><span>🔥 Streak</span><div id="statStreak">0</div></div>
+            <div class="stat hideInGame"><span>Best streak</span><div id="statBestStreak">0</div></div>
             <div class="stat hideInGame"><span>Total Answered</span><div id="statAnswered">0</div></div>
             <div class="stat hideInGame"><span>Wrong</span><div id="statWrong">0</div></div>
             <div class="stat hideInGame"><span>Accuracy</span><div id="statAccuracy">0%</div></div>
@@ -1676,10 +1956,12 @@
           <h3 id="modalTitle">Nice try!</h3>
           <div class="muted" id="modalSubtitle" style="margin-top:4px; font-weight:900;">Let’s solve it together.</div>
         </div>
-        <button class="closeBtn" id="modalClose" aria-label="Close">✕</button>
       </div>
       <div class="modalBody" id="modalBody">
         <!-- Filled by JS -->
+      </div>
+      <div class="modalFooter">
+        <button class="btn primaryAction" id="modalNextBtn" type="button">Got it — next →</button>
       </div>
     </div>
   </div>
@@ -1969,7 +2251,9 @@
     const questionText = document.getElementById("questionText");
     const answerInput = document.getElementById("answerInput");
     const submitBtn = document.getElementById("submitBtn");
-    const nextBtn = document.getElementById("nextBtn");
+    const resultChip = document.getElementById("resultChip");
+    const resultChipEq = document.getElementById("resultChipEq");
+    const resultChipSub = document.getElementById("resultChipSub");
     const resetBtn = document.getElementById("resetBtn");
     const exitBtn = document.getElementById("exitBtn");
     const progressText = document.getElementById("progressText");
@@ -1979,6 +2263,8 @@
 
     const statAnswered = document.getElementById("statAnswered");
     const statCorrect = document.getElementById("statCorrect");
+    const statStreak = document.getElementById("statStreak");
+    const statBestStreak = document.getElementById("statBestStreak");
     const statWrong = document.getElementById("statWrong");
     const statScore = document.getElementById("statScore");
     const statAccuracy = document.getElementById("statAccuracy");
@@ -1993,7 +2279,7 @@
 
     const modalOverlay = document.getElementById("modalOverlay");
     const modal = document.getElementById("modal");
-    const modalClose = document.getElementById("modalClose");
+    const modalNextBtn = document.getElementById("modalNextBtn");
     const modalTitle = document.getElementById("modalTitle");
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalBody = document.getElementById("modalBody");
@@ -2007,7 +2293,9 @@
     let correct = 0;
     let wrong = 0;
     let locked = false; // prevents double submit
-    let easyHintVisible = false;
+    let streak = 0;        // current correct-answer streak (resets on wrong)
+    let bestStreak = 0;    // best streak this session
+    let nextCelebrateAt = 3; // next streak count that fires confetti
 
     const goodPhrases = [
       "Great job!", "Awesome!", "You got it right!", "Fantastic!", "Super star!",
@@ -2085,9 +2373,12 @@
       correct = 0;
       wrong = 0;
       locked = false;
-      easyHintVisible = false;
+      streak = 0;
+      bestStreak = 0;
+      nextCelebrateAt = 3;
 
-      nextBtn.disabled = true;
+      clearAutoAdvance();
+      hideResultChip();
       submitBtn.disabled = false;
       answerInput.value = "";
       answerInput.disabled = false;
@@ -2095,6 +2386,7 @@
       updateScoreboard();
       updateQuestionUI();
       updateTips();
+      setChefBubble("idle");
     }
 
     function updateScoreboard(){
@@ -2102,9 +2394,78 @@
       statCorrect.textContent = correct;
       statWrong.textContent = wrong;
       statScore.textContent = correct;
+      if(statStreak) statStreak.textContent = streak;
+      if(statBestStreak) statBestStreak.textContent = bestStreak;
 
       const acc = answered === 0 ? 0 : Math.round((correct / answered) * 100);
       statAccuracy.textContent = `${acc}%`;
+    }
+
+    // Streak milestone celebrations: brief inline banner + hub confetti.
+    // Schedule of next celebrate: 3, 5, 7, 9, then 12, 15, 18, then 23, 28...
+    // (driven by nextCelebrateAt = streak + small bump each time).
+    let streakBannerTimer = null;
+    function fireStreakCelebration(n){
+      const banner = document.getElementById("streakBanner");
+      if(banner){
+        let msg;
+        if(n >= 20)      msg = `🏆 ${n} pies in a row! Legendary chef!`;
+        else if(n >= 15) msg = `🌟 ${n} pies in a row! Unstoppable!`;
+        else if(n >= 10) msg = `🍕 ${n} pies in a row! Oven's on fire!`;
+        else if(n >= 5)  msg = `🔥 ${n} pies in a row! Keep baking!`;
+        else             msg = `🔥 ${n} pies in a row! Nice streak!`;
+        banner.textContent = msg;
+        banner.classList.add("show");
+        if(streakBannerTimer) clearTimeout(streakBannerTimer);
+        streakBannerTimer = setTimeout(() => {
+          banner.classList.remove("show");
+          banner.textContent = "";
+        }, 1600);
+      }
+      // Trigger hub confetti (no-op if standalone).
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.celebrate) {
+        try { window.KLS.bridge.celebrate(); } catch (e) { /* ignore */ }
+      }
+    }
+
+    // ── Chef mascot thought bubble ───────────────────────────────────────
+    // Rotates through pizza-themed encouragement on each event. Keep
+    // copy short — bubble has a fixed max-width.
+    const CHEF_BUBBLES_IDLE = [
+      "Get your math mitts on!",
+      "Order up! Read it slow.",
+      "Slice it up!",
+      "What's the recipe?",
+    ];
+    const CHEF_BUBBLES_CORRECT = [
+      "Hot pie, ready! 🍕",
+      "Cheesy good!",
+      "Mmm, perfecto!",
+      "Order served!",
+      "You nailed it!",
+    ];
+    const CHEF_BUBBLES_WRONG = [
+      "Oops — try another slice.",
+      "Let's re-roll the dough.",
+      "No worries, taste-test again.",
+      "Mistakes help us bake better.",
+    ];
+    const CHEF_BUBBLES_STREAK = [
+      "On fire! Don't stop!",
+      "The oven is HOT! 🔥",
+      "You're a fraction chef!",
+      "Keep slicing!",
+    ];
+    function setChefBubble(mood){
+      const b = document.getElementById("chefBubble");
+      if(!b) return;
+      let pool = CHEF_BUBBLES_IDLE;
+      if(mood === "correct") pool = CHEF_BUBBLES_CORRECT;
+      else if(mood === "wrong")  pool = CHEF_BUBBLES_WRONG;
+      else if(mood === "streak") pool = CHEF_BUBBLES_STREAK;
+      b.textContent = pool[Math.floor(Math.random() * pool.length)];
+      // Re-trigger the pop animation by toggling class.
+      b.classList.remove("popNow"); void b.offsetWidth; b.classList.add("popNow");
     }
 
     function updateProgress(){
@@ -2123,37 +2484,10 @@
         `<strong>Step 1:</strong> Split ${q.ofN} into ${q.d} equal groups.<br/>` +
         `<strong>Step 2:</strong> Take ${q.n} group(s).`;
 
-      updateEasyHint(q);
       updateProgress();
 
       // Focus input for easy play
       setTimeout(()=> answerInput.focus(), 50);
-    }
-
-    function updateEasyHint(q){
-      const hint = document.getElementById("hintInline");
-      const body = document.getElementById("hintInlineBody");
-      const toggle = document.getElementById("hintToggle");
-      const controls = document.getElementById("hintControls");
-      if(!hint || !body) return;
-      // Easy only: hint hidden by default, toggleable, auto-show on wrong.
-      if(!q || currentLevel !== "easy"){
-        hint.style.display = "none";
-        if(controls) controls.style.display = "none";
-        body.innerHTML = "";
-        return;
-      }
-      hint.style.display = "block";
-      if(controls) controls.style.display = "flex";
-      if(toggle){
-        toggle.style.display = "inline-flex";
-        toggle.textContent = easyHintVisible ? "Hide picture" : "📊 Show picture";
-      }
-      body.innerHTML = "";
-      if(easyHintVisible){
-        // Only the bar model. No extra text inside.
-        body.appendChild(buildGroupBarModel(q.ofN, q.d, q.n));
-      }
     }
 
     function parseKidNumber(s){
@@ -2282,24 +2616,27 @@
         modal.classList.toggle("success", variant === "success");
       }
       modalOverlay.classList.add("show");
-      modalClose.focus();
+      // Focus the Got it — next button so Enter / Space advances immediately.
+      setTimeout(()=> modalNextBtn.focus(), 30);
     }
 
-    function closeModal(){
+    /** Close modal AND advance to the next question — the only modal exit
+     *  path (was two separate steps before: close X, then click Next). */
+    function closeModalAndAdvance(){
       modalOverlay.classList.remove("show");
-      // Return focus to next button if enabled, otherwise input
-      setTimeout(()=>{
-        if(!nextBtn.disabled) nextBtn.focus();
-        else answerInput.focus();
-      }, 50);
+      nextQuestion();
     }
 
-    modalClose.addEventListener("click", closeModal);
+    modalNextBtn.addEventListener("click", closeModalAndAdvance);
     modalOverlay.addEventListener("click", (e)=>{
-      if(e.target === modalOverlay) closeModal();
+      // Click outside the modal card = also advance, matching the "any-key"
+      // pattern on the correct path.
+      if(e.target === modalOverlay) closeModalAndAdvance();
     });
     document.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape" && modalOverlay.classList.contains("show")) closeModal();
+      if(e.key === "Escape" && modalOverlay.classList.contains("show")){
+        closeModalAndAdvance();
+      }
     });
 
     function showCorrectFeedback(q, kidAns){
@@ -2437,16 +2774,24 @@
       answered++;
       if(isCorrect){
         correct++;
+        streak++;
+        if(streak > bestStreak) bestStreak = streak;
         beep("good");
-        showCorrectFeedback(q, kidAns);
+        if(streak === nextCelebrateAt){
+          fireStreakCelebration(streak);
+          nextCelebrateAt = streak + (streak >= 10 ? 5 : streak >= 5 ? 3 : 2);
+          setChefBubble("streak");
+        } else {
+          setChefBubble("correct");
+        }
+        // No modal on correct — inline chip + auto-advance.
+        showResultChip(q);
       } else {
         wrong++;
+        streak = 0;
+        nextCelebrateAt = 3;
         beep("bad");
-        // Easy mode: auto-show picture hint after a wrong answer.
-        if(currentLevel === "easy"){
-          easyHintVisible = true;
-          updateEasyHint(q);
-        }
+        setChefBubble("wrong");
         showWrongFeedback(q, kidAns);
       }
 
@@ -2454,16 +2799,75 @@
       updateProgress();
       updateTips();
 
-      // Lock current question until Next is clicked
+      // Lock the question while the chip is showing / modal is open.
       submitBtn.disabled = true;
       answerInput.disabled = true;
-      nextBtn.disabled = false;
 
       locked = false;
     }
 
+    // ── Correct-answer chip + cancellable auto-advance ──────────────────
+    // Schedule: show chip + 1500ms timer. Pressing any key (Enter, space,
+    // arrow, etc) OR clicking inside the play area advances immediately.
+    let autoAdvanceTimer = null;
+    let autoAdvanceHandler = null;
+    function showResultChip(q){
+      resultChipEq.textContent = `✓ ${q.n}/${q.d} of ${q.ofN} = ${q.ans}`;
+      resultChipSub.textContent = "Next in 1.5s — press any key to continue";
+      // Re-trigger animations by toggling .show off then on.
+      resultChip.classList.remove("show");
+      void resultChip.offsetWidth;
+      resultChip.classList.add("show");
+
+      // Schedule auto-advance.
+      clearAutoAdvance();
+      autoAdvanceTimer = setTimeout(() => {
+        autoAdvanceTimer = null;
+        advanceFromChip();
+      }, 1500);
+
+      // Any-key / any-click in the play area cancels the wait and advances.
+      autoAdvanceHandler = function (ev) {
+        // Ignore modifier-only keypresses and keys that shouldn't advance.
+        if(ev.type === "keydown" && (ev.key === "Shift" || ev.key === "Control" || ev.key === "Alt" || ev.key === "Meta")) return;
+        // Ignore clicks on the chrome buttons (Reset/Exit) so the kid
+        // doesn't accidentally double-fire actions.
+        if(ev.type === "click"){
+          const t = ev.target;
+          if(t && t.closest && t.closest("button")) return;
+        }
+        advanceFromChip();
+      };
+      // Defer registration so the keystroke that triggered submit (Enter)
+      // doesn't immediately also fire advance.
+      setTimeout(() => {
+        document.addEventListener("keydown", autoAdvanceHandler);
+        document.addEventListener("click",   autoAdvanceHandler);
+      }, 60);
+    }
+    function clearAutoAdvance(){
+      if(autoAdvanceTimer){ clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+      if(autoAdvanceHandler){
+        document.removeEventListener("keydown", autoAdvanceHandler);
+        document.removeEventListener("click",   autoAdvanceHandler);
+        autoAdvanceHandler = null;
+      }
+    }
+    function advanceFromChip(){
+      clearAutoAdvance();
+      hideResultChip();
+      nextQuestion();
+    }
+    function hideResultChip(){
+      resultChip.classList.remove("show");
+      resultChipEq.textContent = "";
+    }
+
     function nextQuestion(){
-      if(nextBtn.disabled) return;
+      // Drop any pending auto-advance + hide chip; this fn may be called
+      // from the chip path, the modal path, or the Enter keyboard fallback.
+      clearAutoAdvance();
+      hideResultChip();
 
       idx++;
       if(idx >= sessionSize){
@@ -2473,7 +2877,6 @@
       }
 
       // Reset controls for next question
-      nextBtn.disabled = true;
       submitBtn.disabled = false;
       answerInput.disabled = false;
       answerInput.value = "";
@@ -2483,6 +2886,9 @@
     }
 
     function showSummary(){
+      // Cancel any pending auto-advance so a late timer can't fire after exit.
+      clearAutoAdvance();
+      hideResultChip();
       // Fill summary stats
       const acc = answered === 0 ? 0 : Math.round((correct / answered) * 100);
       sumAnswered.textContent = answered;
@@ -2528,7 +2934,6 @@
     });
 
     submitBtn.addEventListener("click", submitAnswer);
-    nextBtn.addEventListener("click", nextQuestion);
     resetBtn.addEventListener("click", resetGame);
     exitBtn.addEventListener("click", exitGame);
 
@@ -2542,21 +2947,13 @@
       showScreen("home");
     });
 
-    // Easy mode: show/hide picture hint
-    const hintToggle = document.getElementById("hintToggle");
-    if(hintToggle){
-      hintToggle.addEventListener("click", ()=>{
-        easyHintVisible = !easyHintVisible;
-        updateEasyHint(sessionQuestions[idx]);
-      });
-    }
-
-    // Enter key submits; after submit, Enter moves to next.
+    // Enter key submits while the input is active. After submit, the
+    // global autoAdvanceHandler (chip path) or modalNextBtn focus (modal
+    // path) takes over — no extra plumbing needed here.
     answerInput.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter"){
+      if(e.key === "Enter" && !submitBtn.disabled){
         e.preventDefault();
-        if(!submitBtn.disabled) submitAnswer();
-        else if(!nextBtn.disabled) nextQuestion();
+        submitAnswer();
       }
     });
 
