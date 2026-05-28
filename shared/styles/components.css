@@ -686,7 +686,8 @@ code {
 .hub__parent-link a { color: var(--kls-muted); text-decoration: underline; }
 
 /* ============================================================
-   Chrome bar: Save & Quit button + saved pill
+   Chrome bar: Save button (saves, stays in game) + saved pill.
+   "← Hub" saves then leaves; this button is the stay-and-save checkpoint.
    ============================================================ */
 .chrome__save {
   display: inline-flex;

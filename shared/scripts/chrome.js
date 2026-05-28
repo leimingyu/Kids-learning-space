@@ -22,17 +22,18 @@
     const backBtn = el('button', {
       class: 'chrome__back',
       type: 'button',
-      'aria-label': 'Back to hub',
-      onclick: () => { location.hash = ''; },
+      'aria-label': 'Save and return to hub',
+      title: 'Saves first, then returns to the game menu',
+      onclick: saveAndLeave,
     }, '← Hub');
 
     const saveBtn = el('button', {
       class: 'chrome__save',
       type: 'button',
-      'aria-label': 'Save and return to hub',
-      title: 'Save & Quit',
-      onclick: saveAndQuit,
-    }, '💾 Save & Quit');
+      'aria-label': 'Save my progress and keep playing',
+      title: 'Save your progress (keep playing)',
+      onclick: saveNow,
+    }, '💾 Save');
 
     const profileBtn = profile
       ? el('button', {
@@ -56,8 +57,17 @@
     root.append(bar);
   }
 
+  /** Save the game's state WITHOUT leaving — a manual checkpoint that keeps
+   *  the kid in the game. The game's `saveState` reply is persisted by the
+   *  main message listener; we flash the pill right away so the tap always
+   *  gives feedback (stars/score are auto-saved on every event regardless). */
+  function saveNow() {
+    postToFrame('requestState');
+    flashSaved();
+  }
+
   /** Ask the game for its current state, then return to hub when it replies (or after a small timeout). */
-  function saveAndQuit() {
+  function saveAndLeave() {
     const expected = expectedSlugFromIframe();
     if (!expected) { location.hash = ''; return; }
     let returned = false;

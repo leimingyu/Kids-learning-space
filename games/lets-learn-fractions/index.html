@@ -259,15 +259,6 @@
     }
 
     /* Home visuals */
-    .homeGrid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 16px;
-      align-items: start;
-    }
-    @media (max-width: 920px){
-      .homeGrid{ grid-template-columns: 1fr; }
-    }
 
     .card{
       background: rgba(255,255,255,.78);
@@ -398,170 +389,12 @@
       border: 3px solid rgba(138, 90, 58, .22);
     }
 
-    .rightPanel{
-      display:flex;
-      flex-direction:column;
-      gap: 12px;
-      position: sticky;
-      top: 12px;
-    }
-    @media (max-width: 920px){
-      .rightPanel{ position: relative; top: auto; }
-    }
-    .startHero{
-      padding: 14px;
-      background: linear-gradient(135deg, rgba(35,197,94,.18), rgba(255,204,51,.18), rgba(47,128,255,.10));
-      border: 3px solid rgba(0,0,0,.07);
-      border-radius: 22px;
-      box-shadow: var(--shadow2);
-    }
-    .startLine{
-      margin-top: 10px;
-      font-weight: 1100;
-      color: rgba(0,0,0,.70);
-      display:flex;
-      align-items:center;
-      gap:8px;
-      justify-content:center;
-      text-align:center;
-    }
-
-    .selectPlayful{
-      width:100%;
-      padding:14px 16px;
-      border-radius: 18px;
-      border:3px solid rgba(0,0,0,.10);
-      font-size: 18px;
-      font-weight: 1100;
-      background: rgba(255,255,255,.95);
-      box-shadow: inset 0 8px 18px rgba(0,0,0,.06);
-      transition: transform .12s ease, box-shadow .2s ease;
-    }
-    .selectPlayful:focus{ outline:none; box-shadow: inset 0 8px 18px rgba(0,0,0,.06), var(--focus); }
-    @media (hover:hover){
-      .selectPlayful:hover{ transform: translateY(-1px); }
-    }
-
     .equivVisual{
       display:grid;
       grid-template-columns: 1fr auto 1fr;
       align-items:center;
       gap:10px;
       margin-top:10px;
-    }
-
-    /* Difficulty selector */
-    .levelGroup{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top:10px;
-    }
-    .levelOption{
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
-      gap: 14px;
-      padding: 14px 14px;
-      border-radius: 22px;
-      border: 3px solid rgba(0,0,0,.08);
-      background: rgba(255,255,255,.92);
-      cursor:pointer;
-      user-select:none;
-      transition: transform .14s var(--bounce), box-shadow .2s ease, border-color .2s ease, background .2s ease;
-      min-height: 86px;
-      position:relative;
-      overflow:hidden;
-    }
-    @media (hover:hover){
-      .levelOption:hover{ transform: translateY(-2px); box-shadow: 0 14px 26px rgba(0,0,0,.12); }
-    }
-    .levelLeft{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-    }
-    .levelBig{
-      font-weight: 1200;
-      font-size: 20px;
-      color: rgba(0,0,0,.78);
-      letter-spacing:.8px;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .levelTitle{
-      font-weight: 1100;
-      font-size: 14px;
-      color: rgba(0,0,0,.70);
-    }
-    .levelSub{
-      font-weight: 950;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .levelOption input{ position:absolute; opacity:0; pointer-events:none; }
-
-    /* Color coding */
-    .levelOption.easy{
-      background: rgba(35,197,94,.10);
-      border-color: rgba(35,197,94,.18);
-    }
-    .levelOption.medium{
-      background: rgba(255,204,51,.12);
-      border-color: rgba(255,204,51,.22);
-    }
-    .levelOption.hard{
-      background: rgba(255,59,59,.10);
-      border-color: rgba(255,59,59,.18);
-    }
-
-    /* Selected states (full card highlight) */
-    .levelOption.selected{
-      transform: translateY(-2px) scale(1.02);
-      border-width: 4px;
-      box-shadow: 0 18px 34px rgba(0,0,0,.14);
-    }
-    .levelOption.easy.selected{
-      background: linear-gradient(135deg, rgba(35,197,94,.28), rgba(35,197,94,.12));
-      border-color: rgba(35,197,94,.45);
-      box-shadow: 0 18px 34px rgba(0,0,0,.14), 0 0 0 7px rgba(35,197,94,.12);
-    }
-    .levelOption.medium.selected{
-      background: linear-gradient(135deg, rgba(255,204,51,.30), rgba(255,204,51,.14));
-      border-color: rgba(255,204,51,.55);
-      box-shadow: 0 18px 34px rgba(0,0,0,.14), 0 0 0 7px rgba(255,204,51,.14);
-    }
-    .levelOption.hard.selected{
-      background: linear-gradient(135deg, rgba(255,59,59,.26), rgba(255,59,59,.12));
-      border-color: rgba(255,59,59,.45);
-      box-shadow: 0 18px 34px rgba(0,0,0,.14), 0 0 0 7px rgba(255,59,59,.12);
-    }
-
-    /* Subtle card shine */
-    .levelOption::before{
-      content:"";
-      position:absolute;
-      inset:-40px -60px auto auto;
-      width: 180px;
-      height: 180px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), transparent 60%);
-      opacity:.55;
-      transform: rotate(15deg);
-      pointer-events:none;
-    }
-
-    .levelSelectedText{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 18px;
-      border: 3px solid rgba(0,0,0,.08);
-      background: rgba(255,255,255,.86);
-      font-weight: 1100;
-      color: rgba(0,0,0,.70);
-      text-align:center;
     }
 
     /* Gameplay: show selected level */
@@ -811,6 +644,9 @@
       flex-wrap:wrap;
       align-items:center;
     }
+    /* The `hidden` attribute must win over the display:flex above, or the
+       typed-answer box leaks onto tap (A/B) questions. */
+    .answerMainRow[hidden]{ display:none; }
     #gameScreen input[type="text"]{
       font-size: 24px;
       border-radius: 20px;
@@ -1597,6 +1433,242 @@
       min-width: 180px;
       font-size: 18px;
     }
+
+    /* ── Oven heat meter (adaptive difficulty) ───────────────────────────
+       Rides on the manual level. Heat 0–4 lights up 1–5 segments; rising
+       feels like a reward. Replaces the old generic "mini hint" pill. */
+    .ovenMeter{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 3px solid rgba(138, 90, 58, .18);
+      font-weight: 1100;
+      color: var(--ink);
+      white-space:nowrap;
+    }
+    .ovenMeter .ovenIcon{ font-size: 18px; line-height:1; }
+    .ovenSegs{ display:inline-flex; gap:5px; }
+    .ovenSegs i{
+      width: 12px; height: 16px;
+      border-radius: 4px;
+      background: rgba(138, 90, 58, .18);
+      border: 2px solid rgba(138, 90, 58, .14);
+      transition: background .25s ease, transform .25s var(--bounce);
+    }
+    /* Lit segments warm up cheese → crust → pepperoni as heat climbs. */
+    .ovenSegs i.lit1{ background: var(--cheese); border-color: var(--crust); }
+    .ovenSegs i.lit2{ background: var(--crust); border-color: var(--crustDark); }
+    .ovenSegs i.lit3{ background: var(--orange); border-color: var(--crustDark); }
+    .ovenSegs i.lit4{ background: var(--pepperoni); border-color: var(--crustDark); }
+    .ovenLabel{ font-size: 14px; color: var(--ink); }
+    .ovenMeter.heatUp{ animation: ovenPulse .5s var(--bounce); }
+    @keyframes ovenPulse{
+      0%{ transform: scale(1); }
+      45%{ transform: scale(1.08); box-shadow: 0 0 0 6px rgba(192,57,43,.16); }
+      100%{ transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .ovenMeter.heatUp{ animation: none; }
+      .ovenSegs i{ transition: none; }
+    }
+
+    /* ── Question visual (pies for Spot / Compare) ───────────────────────── */
+    .qVisual{
+      display:none;
+      margin: 14px 0 4px;
+      gap: 18px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .qVisual.show{ display:flex; }
+    .qVisualItem{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 8px;
+    }
+    .qVisualItem .qVisualLabel{
+      font-weight: 1100;
+      color: var(--ink);
+      font-size: 18px;
+    }
+    .qVisual .pie{ width: 120px; height: 120px; }
+
+    /* ── Tap-to-answer choice buttons (Spot / Compare) ───────────────────── */
+    .choiceRow{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .choiceRow[hidden]{ display:none; }
+    .choiceBtn{
+      appearance:none;
+      flex: 1 1 130px;
+      min-height: 72px;
+      padding: 14px 18px;
+      border-radius: 22px;
+      border: 3px solid rgba(138, 90, 58, .25);
+      background: linear-gradient(135deg, #fff8e7, #f5e4cc);
+      color: var(--ink);
+      font-weight: 1200;
+      font-size: 30px;
+      letter-spacing: .5px;
+      cursor: pointer;
+      box-shadow: 0 8px 0 rgba(138, 90, 58, .22);
+      transform: translateY(0);
+      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+    }
+    .choiceBtn:active{ transform: translateY(6px); box-shadow: 0 3px 0 rgba(138, 90, 58, .22); }
+    .choiceBtn:focus{ outline:none; box-shadow: 0 8px 0 rgba(138, 90, 58, .22), var(--focus); }
+    @media (hover:hover){
+      .choiceBtn:hover{ filter: brightness(1.03); transform: translateY(-2px); }
+    }
+    .choiceBtn:disabled{ cursor: default; }
+    .choiceBtn.isRight{
+      background: linear-gradient(135deg, var(--basil), #436a30) !important;
+      color: #fff8e7 !important;
+      border-color: var(--crustDark) !important;
+    }
+    .choiceBtn.isWrong{
+      background: linear-gradient(135deg, var(--pepperoni), #a02a1e) !important;
+      color: #fff8e7 !important;
+      border-color: var(--crustDark) !important;
+      opacity: .9;
+    }
+    .choiceBtn.dim{ opacity: .5; }
+    /* Compare buttons hold a mini pie + the fraction. */
+    .choiceBtn .miniPieWrap{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+
+    /* ── Home "How to play" expander (simpler first glance) ──────────────── */
+    details.howToPlay > summary{ list-style: none; cursor: pointer; }
+    details.howToPlay > summary::-webkit-details-marker{ display:none; }
+    .howToSummary{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 1100;
+      color: var(--ink);
+    }
+    .howToBadge{
+      width:34px; height:34px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--cheese), var(--crust));
+      display:grid; place-items:center;
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.55);
+      flex: 0 0 auto;
+    }
+    .howToChevron{ margin-left:auto; transition: transform .2s ease; }
+    details.howToPlay[open] .howToChevron{ transform: rotate(180deg); }
+
+    /* ── New single-column home (Oven Dial start) ───────────────────────── */
+    .homeStart{
+      max-width: 560px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .homeStart .howToPlay{ margin: 0; }
+
+    /* Oven picker — three "start heat" choices that mirror the in-game meter. */
+    .ovenPicker{
+      background: var(--card);
+      border: 3px solid rgba(138, 90, 58, .18);
+      border-radius: var(--radius2);
+      box-shadow: 0 4px 0 rgba(138,90,58,.14), 0 16px 28px rgba(138,90,58,.18);
+      padding: 16px;
+    }
+    .ovenPickerTitle{
+      font-size: 20px;
+      font-weight: 1200;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    .ovenStops{ display: flex; flex-direction: column; gap: 12px; }
+    .ovenStop{
+      appearance: none;
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
+      column-gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 3px solid rgba(138, 90, 58, .18);
+      background: #fff8e7;
+      transition: transform .12s var(--bounce), box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .ovenStopFlames{ grid-row: 1 / span 2; font-size: 30px; line-height: 1; }
+    .ovenStopName{ font-weight: 1200; font-size: 20px; color: var(--ink); letter-spacing: .4px; }
+    .ovenStopSub{ font-weight: 950; font-size: 14px; color: var(--muted); }
+    @media (hover:hover){
+      .ovenStop:hover{ transform: translateY(-2px); box-shadow: 0 12px 22px rgba(138,90,58,.18); }
+    }
+    .ovenStop:focus-visible{ outline: none; box-shadow: var(--focus); }
+    /* Tinted by heat so the choice previews the temperature. */
+    .ovenStop.warm{ background: linear-gradient(135deg, rgba(246,199,90,.16), #fff8e7); }
+    .ovenStop.hot{ background: linear-gradient(135deg, rgba(210,130,57,.16), #fff8e7); }
+    .ovenStop.blazing{ background: linear-gradient(135deg, rgba(192,57,43,.14), #fff8e7); }
+    .ovenStop.selected{
+      transform: translateY(-1px) scale(1.01);
+      border-width: 4px;
+    }
+    .ovenStop.warm.selected{ border-color: var(--cheese); box-shadow: 0 0 0 6px rgba(246,199,90,.18); }
+    .ovenStop.hot.selected{ border-color: var(--orange); box-shadow: 0 0 0 6px rgba(210,130,57,.18); }
+    .ovenStop.blazing.selected{ border-color: var(--pepperoni); box-shadow: 0 0 0 6px rgba(192,57,43,.16); }
+    .ovenPickerHint{
+      margin-top: 12px;
+      text-align: center;
+      font-weight: 1000;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Length chips */
+    .lengthPicker{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .lengthLabel{ font-weight: 1100; color: var(--ink); font-size: 17px; }
+    .lengthChips{ display: inline-flex; gap: 10px; }
+    .lenChip{
+      appearance: none;
+      cursor: pointer;
+      min-width: 60px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 3px solid rgba(138, 90, 58, .18);
+      background: #fff8e7;
+      color: var(--ink);
+      font-weight: 1200;
+      font-size: 20px;
+      box-shadow: 0 6px 0 rgba(138, 90, 58, .16);
+      transition: transform .1s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+    }
+    .lenChip:active{ transform: translateY(4px); box-shadow: 0 2px 0 rgba(138,90,58,.16); }
+    .lenChip:focus-visible{ outline: none; box-shadow: 0 6px 0 rgba(138,90,58,.16), var(--focus); }
+    @media (hover:hover){ .lenChip:hover{ transform: translateY(-2px); } }
+    .lenChip.selected{
+      background: linear-gradient(135deg, var(--cheese), var(--crust));
+      border-color: var(--crustDark);
+      color: #4a2e1a;
+    }
+
+    /* Start button spans the column; "take a break" stays quiet. */
+    .homeStart #startBtn{ width: 100%; }
+    .homeFootRow{ display: flex; justify-content: center; }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1648,9 +1720,54 @@
       </div>
 
       <div class="content">
-        <div class="homeGrid">
-          <div class="card">
-            <div class="miniTitle">
+        <div class="homeStart">
+
+          <!-- Oven dial: where the heat STARTS (matches the in-game meter) -->
+          <div class="ovenPicker" aria-label="Starting difficulty">
+            <div class="ovenPickerTitle">🔥 Start the oven at…</div>
+            <div class="ovenStops" role="radiogroup" aria-label="Starting heat">
+              <button type="button" class="ovenStop warm selected" data-oven="warm" role="radio" aria-checked="true">
+                <span class="ovenStopFlames" aria-hidden="true">🔥</span>
+                <span class="ovenStopName">Warm</span>
+                <span class="ovenStopSub">Small numbers + lots of help</span>
+              </button>
+              <button type="button" class="ovenStop hot" data-oven="hot" role="radio" aria-checked="false">
+                <span class="ovenStopFlames" aria-hidden="true">🔥🔥</span>
+                <span class="ovenStopName">Hot</span>
+                <span class="ovenStopSub">Bigger numbers</span>
+              </button>
+              <button type="button" class="ovenStop blazing" data-oven="blazing" role="radio" aria-checked="false">
+                <span class="ovenStopFlames" aria-hidden="true">🔥🔥🔥</span>
+                <span class="ovenStopName">Blazing</span>
+                <span class="ovenStopSub">Up to 100 — you got this!</span>
+              </button>
+            </div>
+            <div class="ovenPickerHint">It heats up as you answer right! 🔥</div>
+          </div>
+
+          <!-- Length -->
+          <div class="lengthPicker">
+            <span class="lengthLabel">How many questions?</span>
+            <div class="lengthChips" role="radiogroup" aria-label="Number of questions">
+              <button type="button" class="lenChip" data-len="10" role="radio" aria-checked="false">10</button>
+              <button type="button" class="lenChip selected" data-len="20" role="radio" aria-checked="true">20</button>
+              <button type="button" class="lenChip" data-len="50" role="radio" aria-checked="false">50</button>
+            </div>
+          </div>
+
+          <!-- Start -->
+          <button class="btn mega play" id="startBtn" aria-label="Start Cooking">
+            ▶️ Start Cooking!
+          </button>
+
+          <!-- How to play (collapsed by default — keeps the screen simple) -->
+          <details class="card howToPlay">
+            <summary class="howToSummary">
+              <span class="howToBadge" aria-hidden="true">👀</span>
+              <span>How to play — tap to peek</span>
+              <span class="howToChevron" aria-hidden="true">▾</span>
+            </summary>
+            <div class="miniTitle" style="margin-top:14px;">
               <div class="badge" aria-hidden="true">🍕</div>
               <span>Pick a picture — see the fraction!</span>
             </div>
@@ -1680,86 +1797,13 @@
             <div class="howWorks" id="howWorks">
               <!-- Filled by JS -->
             </div>
+          </details>
+
+          <!-- Take a break (low emphasis) -->
+          <div class="homeFootRow">
+            <button class="btn ghost small" id="endBtn">😴 Take a break</button>
           </div>
 
-          <div class="rightPanel" aria-label="Start area">
-            <div class="startHero">
-              <button class="btn mega play" id="startBtn" aria-label="Start Game">
-                ▶️ Start Game
-              </button>
-              <div class="startLine">
-                <span aria-hidden="true">✨</span>
-                <span>Let’s play and learn fractions!</span>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="miniTitle">
-                <div class="badge" aria-hidden="true">📏</div>
-                <span>Choose your game</span>
-              </div>
-              <p style="margin-top:0;">Pick a length that feels good.</p>
-              <div class="answerRow" style="margin-top:10px;">
-                <label class="srOnly" for="sessionSize">Session size</label>
-                <select id="sessionSize" class="selectPlayful">
-                  <option value="10">10 questions — Quick Game</option>
-                  <option value="20" selected>20 questions — Normal Game</option>
-                  <option value="50">50 questions — Challenge Mode</option>
-                </select>
-              </div>
-              <p class="muted" style="margin-top:10px;">
-                Tip: You can always hit <strong>Reset</strong> inside the game.
-              </p>
-            </div>
-
-            <div class="card">
-              <div class="miniTitle">
-                <div class="badge" aria-hidden="true">🎚️</div>
-                <span>Choose a level</span>
-              </div>
-              <p style="margin-top:0;">Pick what feels right today.</p>
-              <div class="levelGroup" role="radiogroup" aria-label="Difficulty level">
-                <label class="levelOption easy selected" data-level="easy">
-                  <input type="radio" name="level" value="easy" checked />
-                  <div class="levelLeft">
-                    <div class="levelBig">🟢 EASY</div>
-                    <div class="levelTitle">Learn with pictures</div>
-                    <div class="levelSub">Small numbers + hints</div>
-                  </div>
-                </label>
-                <label class="levelOption medium" data-level="medium">
-                  <input type="radio" name="level" value="medium" />
-                  <div class="levelLeft">
-                    <div class="levelBig">🟡 MEDIUM</div>
-                    <div class="levelTitle">Practice your skills</div>
-                    <div class="levelSub">Bigger numbers + fewer hints</div>
-                  </div>
-                </label>
-                <label class="levelOption hard" data-level="hard">
-                  <input type="radio" name="level" value="hard" />
-                  <div class="levelLeft">
-                    <div class="levelBig">🔴 HARD</div>
-                    <div class="levelTitle">Challenge yourself</div>
-                    <div class="levelSub">Up to 100 + minimal help</div>
-                  </div>
-                </label>
-              </div>
-              <div id="levelSelectedText" class="levelSelectedText">You selected: Easy 😊</div>
-            </div>
-
-            <div class="card">
-              <div class="miniTitle">
-                <div class="badge" aria-hidden="true">💡</div>
-                <span>One tiny tip</span>
-              </div>
-              <p style="margin-top:0;">
-                To find <strong>1/3 of 9</strong>, split 9 into 3 equal groups… then take 1 group.
-              </p>
-              <div class="btnRow" style="margin-top:12px;">
-                <button class="btn ghost" id="endBtn">😴 Take a Break</button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -1807,9 +1851,12 @@
                 <span id="levelDot" class="levelDot easy" aria-hidden="true"></span>
                 <span id="levelText">Level: Easy</span>
               </div>
-              <div class="tinyPill" title="A friendly reminder">
-                <span aria-hidden="true">💡</span>
-                <span id="miniHint">Split into equal parts</span>
+              <div id="ovenMeter" class="ovenMeter" title="The oven heats up as you answer correctly — faster = hotter!" aria-label="Oven heat">
+                <span class="ovenIcon" aria-hidden="true">🔥</span>
+                <span class="ovenSegs" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i><i></i>
+                </span>
+                <span id="ovenLabel" class="ovenLabel">Warm</span>
               </div>
             </div>
 
@@ -1818,6 +1865,8 @@
             <div class="helper" id="questionSubtext">
               Split… then take.
             </div>
+
+            <div id="qVisual" class="qVisual" aria-hidden="true"></div>
 
             <div id="streakBanner" class="streakBanner" role="status" aria-live="polite"></div>
 
@@ -1828,11 +1877,12 @@
             </div>
 
             <div class="answerCluster" aria-label="Answer area">
-              <div class="answerMainRow">
+              <div class="answerMainRow" id="numberAnswerRow">
                 <label class="srOnly" for="answerInput">Your answer</label>
                 <input id="answerInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Your answer here" />
                 <button class="btn primaryAction" id="submitBtn">Submit</button>
               </div>
+              <div class="choiceRow" id="choiceRow" hidden aria-label="Tap your answer"></div>
             </div>
 
             <div class="smallControls" aria-label="Small controls">
@@ -2155,86 +2205,23 @@
       return pie;
     }
 
-    // --------------------------
-    // Question Bank (100)
-    // - Always whole-number answers
-    // - Beginner-friendly
-    // --------------------------
-    function makeQuestion(n, d, ofN){
-      // precondition: ofN divisible by d
-      const ans = (ofN / d) * n;
-      return {
-        n, d, ofN, ans,
-        text: `${n}/${d} of ${ofN} = ?`
-      };
-    }
-
-    // --------------------------
-    // Difficulty + Question Bank
-    // --------------------------
+    // ==========================================================
+    // Question generation + adaptive "oven heat" difficulty
+    // ----------------------------------------------------------
+    // The manual level (easy/med/hard) picks the BAND (number sizes,
+    // denominators). Inside the band an oven-heat meter (0..4) rises on
+    // correct answers — answering fast counts double — and drops one
+    // notch on a miss. Higher heat = bigger numbers + more of the
+    // trickier task types. Questions are generated on demand, not from a
+    // pre-built static bank, so difficulty can shift mid-session.
+    // ==========================================================
     let currentLevel = "easy"; // easy | medium | hard
-
-    function buildQuestionBank(level){
-      // Build a pool by rule, then shuffle and take 100.
-      const pool = [];
-      const seen = new Set();
-
-      function addQ(n,d,ofN){
-        if(ofN % d !== 0) return;
-        if(n <= 0 || d <= 1) return;
-        if(n >= d) return; // keep as proper fraction for kids
-        const ans = (ofN/d)*n;
-        if(!Number.isInteger(ans)) return;
-        const key = `${n}/${d} of ${ofN}`;
-        if(seen.has(key)) return;
-        seen.add(key);
-        pool.push(makeQuestion(n,d,ofN));
-      }
-
-      function addRange(fracs, maxOf){
-        for(const f of fracs){
-          for(let ofN = f.d; ofN <= maxOf; ofN++){
-            addQ(f.n, f.d, ofN);
-          }
-        }
-      }
-
-      if(level === "easy"){
-        // fractions: 1/2, 1/3, 1/4, 2/4 ; numbers <= 20
-        addRange([{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:2,d:4}], 20);
-      } else if(level === "medium"){
-        // up to denominator 6, numerator up to 3; numbers <= 50
-        const fracs = [];
-        for(let d=2; d<=6; d++){
-          for(let n=1; n<=Math.min(3,d-1); n++){
-            fracs.push({n,d});
-          }
-        }
-        addRange(fracs, 50);
-      } else {
-        // hard: up to denominator 8, numerator up to 5; numbers <= 100
-        const fracs = [];
-        for(let d=2; d<=8; d++){
-          for(let n=1; n<=Math.min(5,d-1); n++){
-            fracs.push({n,d});
-          }
-        }
-        addRange(fracs, 100);
-      }
-
-      // Ensure we have enough variety (should be plenty); top up by widening maxOf slightly if needed.
-      if(pool.length < 100){
-        const bump = (level === "easy") ? 30 : (level === "medium") ? 70 : 120;
-        const fracs = (level === "easy")
-          ? [{n:1,d:2},{n:1,d:3},{n:1,d:4},{n:2,d:4}]
-          : (level === "medium")
-            ? (()=>{ const a=[]; for(let d=2; d<=6; d++) for(let n=1; n<=Math.min(3,d-1); n++) a.push({n,d}); return a; })()
-            : (()=>{ const a=[]; for(let d=2; d<=8; d++) for(let n=1; n<=Math.min(5,d-1); n++) a.push({n,d}); return a; })();
-        addRange(fracs, bump);
-      }
-
-      return shuffle(pool).slice(0, 100);
-    }
+    let heat = 0;              // 0..4 oven heat
+    let heatProgress = 0;      // counts toward next heat-up (3 = +1 heat)
+    const HEAT_MAX = 4;
+    const HEAT_STEP = 3;       // progress needed to heat up one notch
+    const FAST_MS = 6000;      // answering within this counts double toward heat
+    const OVEN_LABELS = ["Warm", "Hot", "Sizzling", "Blazing", "Inferno"];
 
     function shuffle(arr){
       const a = arr.slice();
@@ -2243,6 +2230,147 @@
         [a[i],a[j]] = [a[j],a[i]];
       }
       return a;
+    }
+    function randInt(lo, hi){ return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+    function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+    // Band parameters scale with heat (t = 0..1 across the heat range).
+    function bandParams(level, h){
+      const t = h / HEAT_MAX;
+      if(level === "medium"){
+        return {
+          denoms: [2,3,4,5,6].slice(0, 3 + Math.round(2 * t)), // 3..5 denoms
+          maxNum: 2 + (h >= 2 ? 1 : 0),                        // 2..3
+          ofNcap: Math.round(30 + 30 * t),                     // 30..60
+        };
+      }
+      if(level === "hard"){
+        return {
+          denoms: [2,3,4,5,6,7,8].slice(0, 4 + Math.round(3 * t)), // 4..7 denoms
+          maxNum: 3 + Math.round(2 * t),                          // 3..5
+          ofNcap: Math.round(60 + 40 * t),                        // 60..100
+        };
+      }
+      // easy
+      return {
+        denoms: [2,3,4],
+        maxNum: 1 + (h >= 3 ? 1 : 0),   // mostly 1; allow 2 (e.g. 2/4) when hot
+        ofNcap: Math.round(12 + 12 * t), // 12..24
+      };
+    }
+
+    // Question-type mix by heat. Gentle types dominate when cool; the
+    // trickier Compare/Equivalent show up more as the oven heats.
+    const TYPE_WEIGHTS = {
+      0: { ofN:50, spot:35, compare:10, equiv:5  },
+      1: { ofN:42, spot:30, compare:16, equiv:12 },
+      2: { ofN:35, spot:25, compare:22, equiv:18 },
+      3: { ofN:30, spot:23, compare:24, equiv:23 },
+      4: { ofN:27, spot:20, compare:28, equiv:25 },
+    };
+    function pickType(h){
+      const w = TYPE_WEIGHTS[clamp(h,0,HEAT_MAX)] || TYPE_WEIGHTS[0];
+      const total = w.ofN + w.spot + w.compare + w.equiv;
+      let r = Math.random() * total;
+      if((r -= w.ofN) < 0) return "ofN";
+      if((r -= w.spot) < 0) return "spot";
+      if((r -= w.compare) < 0) return "compare";
+      return "equiv";
+    }
+
+    // ── Type builders. Each returns a self-describing question object with
+    //    a stable `key` (used to avoid back-to-back repeats). ─────────────
+    function buildOfN(p){
+      const d = pick(p.denoms);
+      const n = randInt(1, Math.min(p.maxNum, d - 1));
+      const maxMult = Math.max(2, Math.floor(p.ofNcap / d));
+      const mult = randInt(2, maxMult);      // at least 2 groups → less trivial
+      const ofN = mult * d;
+      const ans = mult * n;
+      return { type:"ofN", n, d, ofN, ans,
+               key:`ofN ${n}/${d} of ${ofN}`, text:`${n}/${d} of ${ofN} = ?` };
+    }
+    function buildEquiv(p){
+      const d = pick(p.denoms);
+      const n = randInt(1, Math.min(p.maxNum, d - 1));
+      const k = randInt(2, 3);
+      const d2 = d * k, ans = n * k;
+      return { type:"equiv", n, d, k, d2, ans,
+               key:`equiv ${n}/${d}=?/${d2}`, text:`${n}/${d} = ?/${d2}` };
+    }
+    function buildSpot(p){
+      const d = pick(p.denoms);
+      const n = randInt(1, d - 1);
+      const choices = [{ n, d }];
+      let guard = 0;
+      while(choices.length < 4 && guard++ < 60){
+        let dn = d, nn = n;
+        if(Math.random() < 0.5){
+          nn = clamp(n + (Math.random() < 0.5 ? -1 : 1) * randInt(1, 2), 1, d - 1);
+        } else {
+          dn = pick(p.denoms); nn = randInt(1, dn - 1);
+        }
+        if(dn < 2) continue;
+        if(nn * d === n * dn) continue;                                  // equal value → skip
+        if(choices.some(o => o.n === nn && o.d === dn)) continue;        // duplicate → skip
+        choices.push({ n: nn, d: dn });
+      }
+      shuffleInPlace(choices);
+      const correctIndex = choices.findIndex(o => o.n === n && o.d === d);
+      return { type:"spot", n, d, choices, correctIndex,
+               key:`spot ${n}/${d}`, text:`What fraction is shaded?` };
+    }
+    function buildCompare(p){
+      let a, b, guard = 0;
+      do{
+        const d1 = pick(p.denoms), n1 = randInt(1, d1 - 1);
+        const d2 = pick(p.denoms), n2 = randInt(1, d2 - 1);
+        a = { n:n1, d:d1 }; b = { n:n2, d:d2 };
+        guard++;
+      } while(a.n * b.d === b.n * a.d && guard < 60); // avoid equal-value pairs
+      const aBigger = a.n * b.d > b.n * a.d;
+      return { type:"compare", a, b, biggerSide: aBigger ? "a" : "b",
+               key:`cmp ${a.n}/${a.d}|${b.n}/${b.d}`, text:`Which is bigger?` };
+    }
+    function shuffleInPlace(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i],arr[j]] = [arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    const recentKeys = []; // small FIFO to dodge immediate repeats
+    function generateQuestion(){
+      const p = bandParams(currentLevel, heat);
+      let q, guard = 0;
+      do{
+        const t = pickType(heat);
+        q = (t === "ofN") ? buildOfN(p)
+          : (t === "equiv") ? buildEquiv(p)
+          : (t === "spot") ? buildSpot(p)
+          : buildCompare(p);
+        guard++;
+      } while(recentKeys.includes(q.key) && guard < 14);
+      recentKeys.push(q.key);
+      if(recentKeys.length > 8) recentKeys.shift();
+      return q;
+    }
+
+    // ── Oven heat transitions. ───────────────────────────────────────────
+    function bumpHeat(fast){
+      heatProgress += fast ? 2 : 1;
+      if(heatProgress >= HEAT_STEP && heat < HEAT_MAX){
+        heat++;
+        heatProgress = 0;
+        flashOvenHeatUp();
+      } else if(heat >= HEAT_MAX){
+        heatProgress = 0;
+      }
+    }
+    function coolHeat(){
+      heatProgress = 0;
+      if(heat > 0) heat--;
     }
 
     // --------------------------
@@ -2259,7 +2387,12 @@
     const progressText = document.getElementById("progressText");
     const progressPct = document.getElementById("progressPct");
     const progressBar = document.getElementById("progressBar");
-    const miniHint = document.getElementById("miniHint");
+    const qVisual = document.getElementById("qVisual");
+    const choiceRow = document.getElementById("choiceRow");
+    const numberAnswerRow = document.getElementById("numberAnswerRow");
+    const ovenMeter = document.getElementById("ovenMeter");
+    const ovenLabel = document.getElementById("ovenLabel");
+    const ovenSegs = ovenMeter ? ovenMeter.querySelectorAll(".ovenSegs i") : [];
 
     const statAnswered = document.getElementById("statAnswered");
     const statCorrect = document.getElementById("statCorrect");
@@ -2284,9 +2417,9 @@
     const modalSubtitle = document.getElementById("modalSubtitle");
     const modalBody = document.getElementById("modalBody");
 
-    let bank = buildQuestionBank(currentLevel); // 100 (level-based)
-    let sessionQuestions = [];
     let sessionSize = 20;
+    let currentQ = null;   // the active question (generated on demand)
+    let qStartTime = 0;    // timestamp when the current question was shown
 
     let idx = 0;
     let answered = 0;
@@ -2325,26 +2458,37 @@
     function updateTips(){
       document.getElementById("tipText").textContent = tipsTop[tipIdx % tipsTop.length];
       tipIdx++;
-      sideTip.textContent = sideTips[sideTipIdx % sideTips.length];
+      if(sideTip) sideTip.textContent = sideTips[sideTipIdx % sideTips.length];
       sideTipIdx++;
-      miniHint.textContent = hints[Math.floor(Math.random()*hints.length)];
     }
+
+    // Home picks: length chips + oven-heat dial.
+    let selectedLen = 20;
+    let selectedOven = "warm";
+    let startHeat = 0;
+    // Each oven stop sets BOTH the band (number sizes) and the starting
+    // heat, so the in-game meter literally begins at the chosen label and
+    // can climb from there. Labels match OVEN_LABELS exactly.
+    const OVEN_START = {
+      warm:    { level: "easy",   heat: 0 },
+      hot:     { level: "medium", heat: 1 },
+      blazing: { level: "hard",   heat: 3 },
+    };
 
     function setSessionSizeFromHome(){
-      const sel = document.getElementById("sessionSize");
-      sessionSize = Math.max(10, Math.min(50, parseInt(sel.value, 10) || 20));
+      sessionSize = Math.max(10, Math.min(50, parseInt(selectedLen, 10) || 20));
     }
 
-    function setLevelFromHome(){
-      const checked = document.querySelector('input[name="level"]:checked');
-      currentLevel = checked ? checked.value : "easy";
+    function setStartFromHome(){
+      const cfg = OVEN_START[selectedOven] || OVEN_START.warm;
+      currentLevel = cfg.level;
+      startHeat = cfg.heat;
       updateLevelUI();
     }
 
     function updateLevelUI(){
       const levelText = document.getElementById("levelText");
       const levelDot = document.getElementById("levelDot");
-      const levelSelectedText = document.getElementById("levelSelectedText");
       const map = {
         easy:  { label: "Level: Easy", cls: "easy" },
         medium:{ label: "Level: Medium", cls: "medium" },
@@ -2356,18 +2500,9 @@
         levelDot.classList.remove("easy","medium","hard");
         levelDot.classList.add(m.cls);
       }
-      if(levelSelectedText){
-        const pretty = currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1);
-        levelSelectedText.textContent = `You selected: ${pretty} 😊`;
-      }
     }
 
     function startNewSession(){
-      // Create a session list by shuffling the full bank and taking sessionSize.
-      // This avoids repeats during the session.
-      bank = buildQuestionBank(currentLevel); // fresh shuffle for level
-      sessionQuestions = bank.slice(0, sessionSize);
-
       idx = 0;
       answered = 0;
       correct = 0;
@@ -2376,6 +2511,9 @@
       streak = 0;
       bestStreak = 0;
       nextCelebrateAt = 3;
+      heat = startHeat;
+      heatProgress = 0;
+      recentKeys.length = 0;
 
       clearAutoAdvance();
       hideResultChip();
@@ -2383,10 +2521,28 @@
       answerInput.value = "";
       answerInput.disabled = false;
 
+      currentQ = generateQuestion();
       updateScoreboard();
+      updateHeatUI(false);
       updateQuestionUI();
       updateTips();
       setChefBubble("idle");
+    }
+
+    // Light up 1..heat+1 oven segments and set the temperature label.
+    function updateHeatUI(animate){
+      for(let i=0;i<ovenSegs.length;i++){
+        const seg = ovenSegs[i];
+        seg.classList.remove("lit1","lit2","lit3","lit4");
+        if(i <= heat) seg.classList.add("lit" + clamp(heat,1,4));
+      }
+      if(ovenLabel) ovenLabel.textContent = OVEN_LABELS[clamp(heat,0,HEAT_MAX)];
+    }
+    function flashOvenHeatUp(){
+      if(!ovenMeter) return;
+      ovenMeter.classList.remove("heatUp");
+      void ovenMeter.offsetWidth;
+      ovenMeter.classList.add("heatUp");
     }
 
     function updateScoreboard(){
@@ -2476,18 +2632,85 @@
       progressBar.style.width = `${pct}%`;
     }
 
+    // Show the number-input row OR the tap-choice row depending on type.
+    function setAnswerMode(mode){ // "number" | "choice"
+      const useChoice = (mode === "choice");
+      if(numberAnswerRow) numberAnswerRow.hidden = useChoice;
+      if(choiceRow) choiceRow.hidden = !useChoice;
+    }
+
+    function renderQVisual(nodes){
+      qVisual.innerHTML = "";
+      if(!nodes || !nodes.length){ qVisual.classList.remove("show"); return; }
+      for(const node of nodes) qVisual.appendChild(node);
+      qVisual.classList.add("show");
+    }
+
+    function visualItem(label, pieNode){
+      const item = document.createElement("div");
+      item.className = "qVisualItem";
+      item.appendChild(pieNode);
+      if(label){
+        const l = document.createElement("div");
+        l.className = "qVisualLabel";
+        l.textContent = label;
+        item.appendChild(l);
+      }
+      return item;
+    }
+
+    // Render the tap-choice buttons. `labelFor(choice)` → button text.
+    function renderChoices(choices, labelFor){
+      choiceRow.innerHTML = "";
+      choices.forEach((c, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "choiceBtn";
+        btn.dataset.index = String(i);
+        btn.textContent = labelFor(c, i);
+        btn.addEventListener("click", () => chooseAnswer(i));
+        choiceRow.appendChild(btn);
+      });
+    }
+
     function updateQuestionUI(){
-      const q = sessionQuestions[idx];
+      const q = currentQ;
+      const subtext = document.getElementById("questionSubtext");
       questionText.textContent = q ? q.text : "All done!";
-      // Short, kid-friendly steps (less text density)
-      document.getElementById("questionSubtext").innerHTML =
-        `<strong>Step 1:</strong> Split ${q.ofN} into ${q.d} equal groups.<br/>` +
-        `<strong>Step 2:</strong> Take ${q.n} group(s).`;
+      renderQVisual(null);
+
+      if(!q){ updateProgress(); return; }
+
+      if(q.type === "ofN"){
+        setAnswerMode("number");
+        subtext.innerHTML =
+          `<strong>Step 1:</strong> Split ${q.ofN} into ${q.d} equal groups.<br/>` +
+          `<strong>Step 2:</strong> Take ${q.n} group(s).`;
+      } else if(q.type === "equiv"){
+        setAnswerMode("number");
+        subtext.innerHTML =
+          `Make the <strong>same</strong> fraction with a bottom number of <strong>${q.d2}</strong>. ` +
+          `What is the missing top number?`;
+      } else if(q.type === "spot"){
+        setAnswerMode("choice");
+        subtext.innerHTML = `Count the shaded slices, then count <strong>all</strong> the slices.`;
+        renderQVisual([ visualItem("", buildPieVisual(q.n, q.d)) ]);
+        renderChoices(q.choices, (c) => `${c.n}/${c.d}`);
+      } else if(q.type === "compare"){
+        setAnswerMode("choice");
+        subtext.innerHTML = `Tap the fraction that fills <strong>more</strong> of the pizza.`;
+        renderQVisual([
+          visualItem("A", buildPieVisual(q.a.n, q.a.d)),
+          visualItem("B", buildPieVisual(q.b.n, q.b.d)),
+        ]);
+        renderChoices([q.a, q.b], (c, i) => `${i === 0 ? "A" : "B"}:  ${c.n}/${c.d}`);
+      }
 
       updateProgress();
-
-      // Focus input for easy play
-      setTimeout(()=> answerInput.focus(), 50);
+      qStartTime = performance.now();
+      if(q.type === "ofN" || q.type === "equiv"){
+        setTimeout(()=> answerInput.focus(), 50);
+      }
     }
 
     function parseKidNumber(s){
@@ -2670,7 +2893,37 @@
       openModal(title, "You got it!", wrap, "success");
     }
 
+    // Two pies side by side (used by equiv + compare teaching).
+    function buildTwoPies(f1, label1, f2, label2, captionText){
+      const wrap = document.createElement("div");
+      wrap.className = "diagramWrap";
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.gap = "18px";
+      row.style.alignItems = "flex-end";
+      row.style.flexWrap = "wrap";
+      row.appendChild(visualItem(label1, buildPieVisual(f1.n, f1.d)));
+      row.appendChild(visualItem(label2, buildPieVisual(f2.n, f2.d)));
+      wrap.appendChild(row);
+      if(captionText){
+        const cap = document.createElement("div");
+        cap.className = "muted";
+        cap.style.fontWeight = "950";
+        cap.style.marginTop = "10px";
+        cap.innerHTML = captionText;
+        wrap.appendChild(cap);
+      }
+      return wrap;
+    }
+
     function showWrongFeedback(q, kidAns){
+      if(q.type === "equiv")   return showWrongEquiv(q, kidAns);
+      if(q.type === "spot")    return showWrongSpot(q, kidAns);
+      if(q.type === "compare") return showWrongCompare(q, kidAns);
+      return showWrongOfN(q, kidAns);
+    }
+
+    function showWrongOfN(q, kidAns){
       const title = pick(tryPhrases);
       const subtitle =
         (currentLevel === "hard")
@@ -2752,6 +3005,121 @@
       openModal(title, subtitle, wrap);
     }
 
+    function showWrongEquiv(q, kidAns){
+      const title = pick(tryPhrases);
+      const reason = (kidAns === null)
+        ? `You typed something that isn’t a whole number. The missing top number is <strong>${q.ans}</strong>.`
+        : `You typed <strong>${kidAns}</strong>, but the missing top number is <strong>${q.ans}</strong>.`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "teachGrid";
+
+      const left = document.createElement("div");
+      left.className = "teachCard";
+      left.innerHTML = `
+        <h4>🌟 Equivalent fractions</h4>
+        <p>${reason}</p>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><div>The bottom went from <strong>${q.d}</strong> to <strong>${q.d2}</strong> — that’s <strong>×${q.k}</strong>.</div></div>
+          <div class="step"><div class="num">2</div><div>Do the <strong>same</strong> to the top: <strong>${q.n} × ${q.k} = ${q.ans}</strong>.</div></div>
+        </div>
+        <div style="margin-top:10px; font-weight:1100; font-size:18px;">
+          ✅ So <strong>${q.n}/${q.d} = ${q.ans}/${q.d2}</strong>
+        </div>`;
+
+      const right = document.createElement("div");
+      right.className = "teachCard";
+      const top = document.createElement("div");
+      top.innerHTML = `<h4>📸 Same amount</h4><p>Both pizzas show the <strong>same</strong> shaded amount — just cut into different numbers of slices.</p>`;
+      right.appendChild(top);
+      right.appendChild(buildTwoPies(
+        { n:q.n, d:q.d }, `${q.n}/${q.d}`,
+        { n:q.ans, d:q.d2 }, `${q.ans}/${q.d2}`,
+        `Same shaded area = <strong>same fraction</strong>!`
+      ));
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      openModal(title, "Let’s make the same fraction.", wrap);
+    }
+
+    function showWrongSpot(q, kidAns){
+      const title = pick(tryPhrases);
+      const reason = kidAns
+        ? `You picked <strong>${kidAns}</strong>, but the picture shows <strong>${q.n}/${q.d}</strong>.`
+        : `The picture shows <strong>${q.n}/${q.d}</strong>.`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "teachGrid";
+
+      const left = document.createElement("div");
+      left.className = "teachCard";
+      left.innerHTML = `
+        <h4>🌟 Reading the picture</h4>
+        <p>${reason}</p>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><div>Count the shaded slices: <strong>${q.n}</strong>. That’s the <strong>top</strong> number.</div></div>
+          <div class="step"><div class="num">2</div><div>Count <strong>all</strong> the slices: <strong>${q.d}</strong>. That’s the <strong>bottom</strong> number.</div></div>
+        </div>
+        <div style="margin-top:10px; font-weight:1100; font-size:18px;">
+          ✅ So this is <strong>${q.n}/${q.d}</strong>
+        </div>`;
+
+      const right = document.createElement("div");
+      right.className = "teachCard";
+      const top = document.createElement("div");
+      top.innerHTML = `<h4>📸 The pizza</h4>`;
+      const diag = document.createElement("div");
+      diag.className = "diagramWrap";
+      diag.appendChild(visualItem(`${q.n} shaded of ${q.d}`, buildPieVisual(q.n, q.d)));
+      right.appendChild(top);
+      right.appendChild(diag);
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      openModal(title, "Let’s read the picture together.", wrap);
+    }
+
+    function showWrongCompare(q, kidAns){
+      const title = pick(tryPhrases);
+      const big = (q.biggerSide === "a") ? q.a : q.b;
+      const small = (q.biggerSide === "a") ? q.b : q.a;
+      const reason = kidAns
+        ? `You picked <strong>${kidAns}</strong>, but <strong>${big.n}/${big.d}</strong> is bigger.`
+        : `<strong>${big.n}/${big.d}</strong> is bigger.`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "teachGrid";
+
+      const left = document.createElement("div");
+      left.className = "teachCard";
+      left.innerHTML = `
+        <h4>🌟 Comparing fractions</h4>
+        <p>${reason}</p>
+        <div class="steps">
+          <div class="step"><div class="num">1</div><div>Imagine two <strong>same-size</strong> pizzas.</div></div>
+          <div class="step"><div class="num">2</div><div>The one with <strong>more</strong> shaded is bigger — a bigger bottom number means <strong>smaller</strong> slices!</div></div>
+        </div>
+        <div style="margin-top:10px; font-weight:1100; font-size:18px;">
+          ✅ <strong>${big.n}/${big.d} &gt; ${small.n}/${small.d}</strong>
+        </div>`;
+
+      const right = document.createElement("div");
+      right.className = "teachCard";
+      const top = document.createElement("div");
+      top.innerHTML = `<h4>📸 Look who fills more</h4>`;
+      right.appendChild(top);
+      right.appendChild(buildTwoPies(
+        { n:q.a.n, d:q.a.d }, `A: ${q.a.n}/${q.a.d}`,
+        { n:q.b.n, d:q.b.d }, `B: ${q.b.n}/${q.b.d}`,
+        `<strong>${big.n}/${big.d}</strong> fills more of the pizza.`
+      ));
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      openModal(title, "Let’s compare with pictures.", wrap);
+    }
+
     function gcd(a,b){
       a=Math.abs(a); b=Math.abs(b);
       while(b){ const t=b; b=a%b; a=t; }
@@ -2761,22 +3129,23 @@
     // --------------------------
     // Game actions
     // --------------------------
-    function submitAnswer(){
-      if(locked) return;
-      const q = sessionQuestions[idx];
-      if(!q) return;
+    // Disable every answer affordance while a chip/modal is showing.
+    function lockAnswerInputs(){
+      submitBtn.disabled = true;
+      answerInput.disabled = true;
+      if(choiceRow) choiceRow.querySelectorAll("button").forEach(b => b.disabled = true);
+    }
 
-      locked = true;
-
-      const kidAns = parseKidNumber(answerInput.value);
-      const isCorrect = (kidAns !== null && kidAns === q.ans);
-
+    // Shared scoring path for both the typed and tapped answer flows.
+    function registerAnswer(isCorrect, q, kidAnsDisplay){
       answered++;
+      const fast = (performance.now() - qStartTime) < FAST_MS;
       if(isCorrect){
         correct++;
         streak++;
         if(streak > bestStreak) bestStreak = streak;
         beep("good");
+        bumpHeat(fast);
         if(streak === nextCelebrateAt){
           fireStreakCelebration(streak);
           nextCelebrateAt = streak + (streak >= 10 ? 5 : streak >= 5 ? 3 : 2);
@@ -2791,18 +3160,56 @@
         streak = 0;
         nextCelebrateAt = 3;
         beep("bad");
+        coolHeat();
         setChefBubble("wrong");
-        showWrongFeedback(q, kidAns);
+        showWrongFeedback(q, kidAnsDisplay);
       }
 
       updateScoreboard();
       updateProgress();
+      updateHeatUI(true);
       updateTips();
+      lockAnswerInputs();
+    }
 
-      // Lock the question while the chip is showing / modal is open.
-      submitBtn.disabled = true;
-      answerInput.disabled = true;
+    // Typed answers (Fraction-of-N and Equivalent fill-in).
+    function submitAnswer(){
+      if(locked) return;
+      const q = currentQ;
+      if(!q || (q.type !== "ofN" && q.type !== "equiv")) return;
 
+      locked = true;
+      const kidAns = parseKidNumber(answerInput.value);
+      const isCorrect = (kidAns !== null && kidAns === q.ans);
+      registerAnswer(isCorrect, q, kidAns);
+      locked = false;
+    }
+
+    // Tapped answers (Spot the fraction and Compare).
+    function chooseAnswer(i){
+      if(locked) return;
+      const q = currentQ;
+      if(!q || (q.type !== "spot" && q.type !== "compare")) return;
+
+      locked = true;
+      let correctIndex, picked;
+      if(q.type === "spot"){
+        correctIndex = q.correctIndex;
+        picked = q.choices[i];
+      } else { // compare
+        correctIndex = (q.biggerSide === "a") ? 0 : 1;
+        picked = (i === 0) ? q.a : q.b;
+      }
+      const isCorrect = (i === correctIndex);
+
+      // Paint the choices: right one green, the tapped wrong one red, dim rest.
+      choiceRow.querySelectorAll("button").forEach((b, bi) => {
+        if(bi === correctIndex) b.classList.add("isRight");
+        else if(bi === i) b.classList.add("isWrong");
+        else b.classList.add("dim");
+      });
+
+      registerAnswer(isCorrect, q, `${picked.n}/${picked.d}`);
       locked = false;
     }
 
@@ -2811,8 +3218,18 @@
     // arrow, etc) OR clicking inside the play area advances immediately.
     let autoAdvanceTimer = null;
     let autoAdvanceHandler = null;
+    function resultChipText(q){
+      if(q.type === "equiv") return `✓ ${q.n}/${q.d} = ${q.ans}/${q.d2}`;
+      if(q.type === "spot")  return `✓ It’s ${q.n}/${q.d}`;
+      if(q.type === "compare"){
+        const big = (q.biggerSide === "a") ? q.a : q.b;
+        const small = (q.biggerSide === "a") ? q.b : q.a;
+        return `✓ ${big.n}/${big.d} is bigger than ${small.n}/${small.d}`;
+      }
+      return `✓ ${q.n}/${q.d} of ${q.ofN} = ${q.ans}`;
+    }
     function showResultChip(q){
-      resultChipEq.textContent = `✓ ${q.n}/${q.d} of ${q.ofN} = ${q.ans}`;
+      resultChipEq.textContent = resultChipText(q);
       resultChipSub.textContent = "Next in 1.5s — press any key to continue";
       // Re-trigger animations by toggling .show off then on.
       resultChip.classList.remove("show");
@@ -2881,6 +3298,7 @@
       answerInput.disabled = false;
       answerInput.value = "";
 
+      currentQ = generateQuestion();
       updateQuestionUI();
       updateTips();
     }
@@ -2920,7 +3338,7 @@
     // --------------------------
     document.getElementById("startBtn").addEventListener("click", ()=>{
       setSessionSizeFromHome();
-      setLevelFromHome();
+      setStartFromHome();
       startNewSession();
       showScreen("game");
     });
@@ -2990,14 +3408,25 @@
     setSoundUI();
     updateTips();
 
-    // Home: level selector visuals
-    document.querySelectorAll(".levelOption").forEach((opt)=>{
-      opt.addEventListener("click", ()=>{
-        document.querySelectorAll(".levelOption").forEach(o=>o.classList.remove("selected"));
-        opt.classList.add("selected");
-        const radio = opt.querySelector('input[type="radio"]');
-        if(radio) radio.checked = true;
-        setLevelFromHome();
+    // Home: oven-heat dial (starting difficulty).
+    const ovenStops = document.querySelectorAll(".ovenStop");
+    ovenStops.forEach((stop)=>{
+      stop.addEventListener("click", ()=>{
+        ovenStops.forEach(o=>{ o.classList.remove("selected"); o.setAttribute("aria-checked","false"); });
+        stop.classList.add("selected");
+        stop.setAttribute("aria-checked","true");
+        selectedOven = stop.dataset.oven || "warm";
+      });
+    });
+
+    // Home: length chips.
+    const lenChips = document.querySelectorAll(".lenChip");
+    lenChips.forEach((chip)=>{
+      chip.addEventListener("click", ()=>{
+        lenChips.forEach(c=>{ c.classList.remove("selected"); c.setAttribute("aria-checked","false"); });
+        chip.classList.add("selected");
+        chip.setAttribute("aria-checked","true");
+        selectedLen = parseInt(chip.dataset.len, 10) || 20;
       });
     });
 
