@@ -191,19 +191,7 @@
 
           <p id="stepPrompt" class="stepPrompt">Choose a mode and start a problem.</p>
 
-          <div class="inputRow">
-            <label class="inputLabel" for="answerInput">Your answer</label>
-            <input
-              id="answerInput"
-              class="input"
-              inputmode="numeric"
-              autocomplete="off"
-              pattern="[0-9]*"
-              placeholder="Type a number"
-              aria-describedby="inputHelp"
-            />
-            <div id="inputHelp" class="inputHelp">Type your answer, then press <strong>Enter</strong> or click <strong>Check</strong>.</div>
-          </div>
+          <p id="inputHelp" class="inputHelp">Type into the <strong>highlighted cell</strong> on the board — press <strong>Enter</strong> to check, or <strong>Backspace</strong> to erase.</p>
 
           <div class="controls">
             <button id="checkBtn" class="btn btn--primary" type="button">Check</button>
@@ -320,6 +308,41 @@
             <ol class="timesTable__list" id="timesTableList"></ol>
           </div>
         </aside>
+      </div>
+
+      <!-- ====================== COMPLETION OVERLAY (Practice mode) ====================== -->
+      <div
+        id="completionOverlay"
+        class="completionOverlay"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="completionTitle"
+      >
+        <div class="completionOverlay__backdrop" data-completion-dismiss="1"></div>
+        <div class="completionConfetti" aria-hidden="true"></div>
+        <div class="completionCard" role="document">
+          <button
+            id="completionDismissBtn"
+            class="completionCard__close"
+            type="button"
+            aria-label="Close"
+            data-completion-dismiss="1"
+          >✕</button>
+          <div class="completionCard__emoji" aria-hidden="true">🎉</div>
+          <h2 id="completionTitle" class="completionCard__title">You did it!</h2>
+          <p class="completionCard__answer" id="completionAnswer">—</p>
+          <div class="completionCard__stars" id="completionStars" aria-label="Stars earned">
+            <span class="completionStar">★</span>
+            <span class="completionStar">★</span>
+            <span class="completionStar">★</span>
+          </div>
+          <p class="completionCard__why" id="completionWhy">—</p>
+          <div class="completionCard__actions">
+            <button id="completionAgainBtn" class="btn btn--primary" type="button">Play another →</button>
+            <button id="completionHarderBtn" class="btn btn--secondary" type="button">Try a harder one →</button>
+          </div>
+        </div>
       </div>
     </main>
 

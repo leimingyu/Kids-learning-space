@@ -484,6 +484,225 @@ body {
   .digit--next.is-bringDownSource { animation: none; }
   .workCell--ghostTarget { animation: none; }
 }
+
+/* ===== Solution 2: roaming-cursor active cell =====
+   One cell at a time is "active" — pulses with a cyan outline and shows a
+   blinking caret after the typed draft. The kid types directly into it.
+   ================================================== */
+
+.workCell--active,
+.slot--editing {
+  border: 2px solid rgba(110, 231, 255, 0.75);
+  background: rgba(110, 231, 255, 0.14);
+  color: var(--text);
+  position: relative;
+  animation: activeCellPulse 1.4s ease-in-out infinite;
+}
+.workCell--active::after,
+.slot--editing::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  background: var(--accent);
+  vertical-align: middle;
+  animation: caretBlink 1s steps(2) infinite;
+}
+@keyframes activeCellPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(110, 231, 255, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(110, 231, 255, 0);
+  }
+}
+@keyframes caretBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* The bring-down ghost target inherits its amber color, but when the kid
+   starts typing into it, the active treatment takes over (cyan + caret). */
+.workCell--ghostTarget.workCell--active {
+  border-color: rgba(110, 231, 255, 0.75);
+  background: rgba(110, 231, 255, 0.14);
+}
+
+/* Inline hint replacing the old input-box helper. */
+.inputHelp {
+  margin: 6px 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workCell--active,
+  .slot--editing {
+    animation: none;
+  }
+  .workCell--active::after,
+  .slot--editing::after {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ===== Completion overlay (Approach 2: full-screen reward) =====
+   Shown in Practice mode after a problem is solved. Game-mode missions
+   use their own summary screen and skip this overlay.
+   ============================================================= */
+
+.completionOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+.completionOverlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 18, 32, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: completionBackdropIn 280ms ease-out;
+  cursor: pointer;
+}
+.completionCard {
+  position: relative;
+  z-index: 2;
+  max-width: 460px;
+  width: min(92vw, 460px);
+  padding: 28px 32px;
+  border-radius: 24px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(110, 231, 255, 0.18), rgba(167, 243, 208, 0.12)),
+    rgba(18, 28, 51, 0.96);
+  border: 2px solid rgba(110, 231, 255, 0.40);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  animation: completionCardIn 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.completionCard__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+.completionCard__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+.completionCard__emoji {
+  font-size: 72px;
+  line-height: 1;
+  margin: 0 0 6px;
+  animation: completionEmojiBounce 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.completionCard__title {
+  margin: 0 0 10px;
+  font-size: 28px;
+  letter-spacing: 0.2px;
+}
+.completionCard__answer {
+  margin: 6px 0 14px;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.completionCard__stars {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 6px 0 4px;
+  font-size: 40px;
+  line-height: 1;
+}
+.completionStar {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.14);
+}
+.completionStar.is-earned {
+  color: var(--warning);
+  animation: completionStarDrop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55));
+}
+.completionStar.is-earned:nth-child(1) { animation-delay: 320ms; }
+.completionStar.is-earned:nth-child(2) { animation-delay: 520ms; }
+.completionStar.is-earned:nth-child(3) { animation-delay: 720ms; }
+.completionCard__why {
+  margin: 8px 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.completionCard__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Subtle confetti rain — pieces are positioned by JS via inline left + CSS vars. */
+.completionConfetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.confettiPiece {
+  position: absolute;
+  top: -24px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confettiFall var(--dur, 2.4s) linear var(--delay, 0s) forwards;
+}
+
+@keyframes completionBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes completionCardIn {
+  from { opacity: 0; transform: scale(0.7) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes completionEmojiBounce {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+@keyframes completionStarDrop {
+  from { opacity: 0; transform: translateY(-28px) scale(0.5); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg);    opacity: 1; }
+  90%  {                                            opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completionOverlay__backdrop,
+  .completionCard,
+  .completionCard__emoji,
+  .completionStar.is-earned,
+  .confettiPiece {
+    animation: none;
+  }
+  .completionStar.is-earned { opacity: 1; }
+  .confettiPiece { display: none; }
+}
 .bracket__top {
   position: absolute;
   left: 0;
@@ -1314,5 +1533,88 @@ body.kls-embedded .header { padding-top: 10px; }
   .missionStart__levelPick { grid-template-columns: 1fr; }
   .cycleRing__label { display: none; }
   .cycleRing__node { min-width: 48px; }
+}
+
+/* ===== Wide-screen 3-column layout + compact spacing =====
+   Solution 5 + Solution 1 stacked.
+
+   On screens >= 1100px we drop into a single-row 3-column layout:
+     [ Step (~220px) ] [ Board (1fr) ] [ Times-table (~200px) ]
+   so the times-table stops being stacked below and pushing things off
+   the fold. We also tighten cell sizes / paddings so even Hard problems
+   (4–5 digit dividends + many cycles) fit in one screen.
+
+   Below 1100px we keep today's 2-column stacked layout with full-size
+   cells — no behaviour change there.
+   ========================================================= */
+@media (min-width: 1100px) {
+  :root {
+    --digit-w: 28px;
+    --digit-h: 32px;
+    --digit-gap: 4px;
+  }
+
+  /* 3-column main layout. */
+  .main { max-width: 1280px; gap: 12px; padding-top: 10px; padding-bottom: 18px; }
+  .mainInteraction {
+    grid-template-columns: 220px minmax(0, 1fr) 200px;
+    gap: 12px;
+  }
+  /* Times-table moves out of the full-width row and into column 3. */
+  .card--timesTable {
+    grid-column: auto;
+  }
+
+  /* Compact card chrome. */
+  .card { padding: 10px; }
+  .card__title { font-size: 16px; margin-bottom: 6px; }
+  .stepHeader { margin-bottom: 4px; }
+  .stepPrompt { font-size: 14px; margin: 6px 0 8px; }
+  .inputHelp { margin: 4px 0 8px; font-size: 12px; }
+  .feedback { padding: 8px 10px; font-size: 13px; }
+  .controls { gap: 6px; margin-top: 8px; }
+  .controls .btn { padding: 8px 10px; font-size: 13px; min-height: 36px; }
+
+  /* Compact digit cells. */
+  .digitCell { font-size: 15px; border-radius: 8px; }
+  .workCell  { font-size: 14px; border-radius: 8px; height: calc(var(--digit-h) - 6px); }
+  .computation__rows { gap: 4px; }
+  /* Top and mid rows must use the SAME column track widths or the quotient
+     slots drift out of column-alignment with the dividend digits below. */
+  .board__topRow { grid-template-columns: 96px minmax(0, 1fr); gap: 8px; }
+  .board__midRow { grid-template-columns: 96px minmax(0, 1fr); gap: 8px; margin-top: 6px; }
+  .divisorBox { padding: 8px; }
+  .divisorBox__value { font-size: 28px; }
+
+  /* Cycle ring fits in the narrow left column. */
+  .cycleRing { padding: 6px 4px; gap: 4px; flex-wrap: nowrap; }
+  .cycleRing__node { min-width: 38px; padding: 4px 4px; }
+  .cycleRing__icon { font-size: 18px; }
+  .cycleRing__label { display: none; }
+  .cycleRing__arrow { font-size: 12px; }
+
+  /* Times-table becomes a tall narrow column on the right. */
+  .timesTable__toggle { padding: 8px 10px; font-size: 13px; }
+  .timesTable__body { padding: 0 10px 10px; }
+  .timesTable__hint { margin: 8px 0 6px; font-size: 11px; }
+  .timesTable__list { grid-template-columns: 1fr; gap: 4px; }
+  .timesTable__list li { padding: 5px 8px; font-size: 13px; }
+  .timesTable__list li strong { font-size: 14px; }
+
+  /* The big board headline pills (Divisor/Dividend/Streak/Stars) shrink. */
+  .boardHeader { gap: 6px; margin-bottom: 6px; }
+  .pill { padding: 4px 10px; font-size: 12px; }
+
+  /* Quotient/Divisor/Dividend column labels nudge tighter. */
+  .quotient__label,
+  .dividend__label,
+  .divisorBox__label,
+  .computation__label { font-size: 11px; margin-bottom: 4px; }
+
+  /* Bracket can lose a bit of inside padding too. */
+  .bracket { padding: 8px 10px 10px; }
+
+  /* The input value (no longer rendered as a separate box) was big — but the
+     compact override applies elsewhere via --digit-w/h. Nothing more here. */
 }
 

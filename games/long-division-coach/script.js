@@ -193,11 +193,13 @@
         return { expectedValue: -1, kidMessage: "No more digits to bring down. We’re finished!", kidHint: null };
       }
       const nextDigit = e.dividendDigits[e.cursorIndex];
+      // Solution 2 + Approach 1: kid types JUST the digit being brought down,
+      // not the combined number. Engine combines internally on commit.
       return {
-        expectedValue: (e.remainder ?? 0) * 10 + nextDigit,
+        expectedValue: nextDigit,
         kidMessage: mode === "independent"
           ? `Bring down the next digit`
-          : `Bring down: bring down the next digit (${nextDigit}) to make a new number.`,
+          : `Bring down: type the next digit (${nextDigit}) to bring it down.`,
         kidHint: null,
       };
     }
@@ -334,14 +336,17 @@
         return { nextEngine: next, correct, feedback, stepCorrect };
       }
       const nextDigit = next.dividendDigits[next.cursorIndex];
-      const expected = (next.remainder ?? 0) * 10 + nextDigit;
-      if (userValue === expected) {
+      // Approach 1: kid types just the digit being brought down. We validate
+      // against that single digit, then internally compute the combined value
+      // (remainder * 10 + digit) for the broughtDown row + new currentValue.
+      if (userValue === nextDigit) {
         correct = true; stepCorrect = true;
-        const bringStr = String(userValue);
+        const combined = (next.remainder ?? 0) * 10 + nextDigit;
+        const bringStr = String(combined);
         const bringEndCol = next.cursorIndex;
         const bringStartCol = Math.max(0, bringEndCol - bringStr.length + 1);
-        next.rows.push({ type: "broughtDown", value: userValue, alignedToQuotientIndex: next.activeQuotientIndex, startCol: bringStartCol, endCol: bringEndCol, status: "success" });
-        next.currentValue = userValue;
+        next.rows.push({ type: "broughtDown", value: combined, alignedToQuotientIndex: next.activeQuotientIndex, startCol: bringStartCol, endCol: bringEndCol, status: "success" });
+        next.currentValue = combined;
         next.activeStartIndex = next.cursorIndex - String(next.remainder ?? 0).length + 1;
         next.activeEndIndex = next.cursorIndex;
         next.cursorIndex += 1;
@@ -350,7 +355,7 @@
         next.phase = "divide";
         feedback = { kind: "success", message: "Good! Now divide again with the new number." };
       } else {
-        feedback = { kind: "error", message: "Bring down the next digit from the top number (write it next to your remainder)." };
+        feedback = { kind: "error", message: `Type the next digit (${nextDigit}) from the top number to bring it down.` };
       }
       return { nextEngine: next, correct, feedback, stepCorrect };
     }
@@ -367,7 +372,7 @@
       if (e.phase === "subtract") return { kind: "neutral", message: "Subtract: current number − product." };
       if (e.phase === "bringDown") {
         const nextDigit = e.cursorIndex < e.dividendDigits.length ? e.dividendDigits[e.cursorIndex] : null;
-        return { kind: "neutral", message: nextDigit === null ? "No more digits to bring down." : `Look at the next digit: ${nextDigit}. Bring it down next.` };
+        return { kind: "neutral", message: nextDigit === null ? "No more digits to bring down." : `The next digit is ${nextDigit}. Type it to bring it down.` };
       }
       return { kind: "neutral", message: kidMessage };
     }
@@ -511,7 +516,6 @@
 
     phaseBadge: mustGetEl("phaseBadge"),
     stepPrompt: mustGetEl("stepPrompt"),
-    answerInput: /** @type {HTMLInputElement} */ (mustGetEl("answerInput")),
 
     cycleRing: mustGetEl("cycleRing"),
     examplePanel: mustGetEl("examplePanel"),
@@ -550,15 +554,27 @@
     streakCountText: mustGetEl("streakCountText"),
     freezeCountText: mustGetEl("freezeCountText"),
     calendarStrip: mustGetEl("calendarStrip"),
+
+    // Completion overlay (Practice mode reward)
+    completionOverlay: mustGetEl("completionOverlay"),
+    completionConfetti: document.querySelector(".completionConfetti"),
+    completionAnswer: mustGetEl("completionAnswer"),
+    completionStars: mustGetEl("completionStars"),
+    completionWhy: mustGetEl("completionWhy"),
+    completionAgainBtn: mustGetEl("completionAgainBtn"),
+    completionHarderBtn: mustGetEl("completionHarderBtn"),
+    completionDismissBtn: mustGetEl("completionDismissBtn"),
   };
 
   function setAppFeedback(kind, message) { app.feedback = { kind, message }; }
   function setInputValue(value) {
+    // Roaming-cursor: the "input" lives on the board's active cell. We just
+    // mutate the draft string here; render() will paint it into the right cell.
     app.inputValue = value;
-    dom.answerInput.value = value;
   }
   function focusInputSoon() {
-    window.setTimeout(() => { try { dom.answerInput.focus(); dom.answerInput.select(); } catch {} }, 0);
+    // No-op under Solution 2: there is no separate input element to focus.
+    // (Kept as a callable stub so existing call-sites don't need rewrites.)
   }
   function setSelectedSegment(selector, pressedValue, attrName) {
     document.querySelectorAll(selector).forEach((btn) => {
@@ -575,6 +591,7 @@
   // ============================================================
 
   function setTopMode(next) {
+    hideCompletionOverlay();
     topMode = next;
     dom.body.setAttribute("data-top-mode", next);
     document.querySelectorAll("[data-top-mode]").forEach((btn) => {
@@ -825,6 +842,81 @@
   }
 
   // ============================================================
+  // Completion overlay (Practice mode reward)
+  // ============================================================
+
+  const CONFETTI_COLORS = ["#6ee7ff", "#a7f3d0", "#fbbf24", "#fb7185", "#c084fc", "#ffffff"];
+
+  function generateConfetti(container, count) {
+    if (!container) return;
+    container.innerHTML = "";
+    const n = count || 32;
+    for (let i = 0; i < n; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confettiPiece";
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      piece.style.setProperty("--delay", `${(Math.random() * 0.9).toFixed(2)}s`);
+      piece.style.setProperty("--dur",   `${(1.8 + Math.random() * 1.6).toFixed(2)}s`);
+      // Random initial rotation so pieces don't all start upright.
+      piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+      container.appendChild(piece);
+    }
+  }
+
+  /** Show the celebration overlay with the kid's final answer and star score. */
+  function showCompletionOverlay(problem, engine, stars) {
+    const ans = engine.quotientDigits.filter((x) => x !== null).join("") || "0";
+    const rem = engine.remainder ?? 0;
+    dom.completionAnswer.textContent = rem === 0
+      ? `${problem.dividend} ÷ ${problem.divisor} = ${ans}`
+      : `${problem.dividend} ÷ ${problem.divisor} = ${ans} r ${rem}`;
+
+    // Light up earned stars; reset others.
+    const starEls = dom.completionStars.querySelectorAll(".completionStar");
+    starEls.forEach((el, i) => {
+      el.classList.remove("is-earned");
+      // Force reflow so the animation restarts cleanly on consecutive opens.
+      void el.offsetWidth;
+      if (i < stars) el.classList.add("is-earned");
+    });
+
+    dom.completionWhy.textContent =
+      stars === 3 ? "Perfect! No hints, no wrong tries." :
+      stars === 2 ? "Great work — just a little help needed." :
+                    "Nice job finishing it!";
+
+    // Adjust "Try harder" button per current difficulty.
+    const nextLabel =
+      app.difficulty === "easy"   ? "Try Medium →" :
+      app.difficulty === "medium" ? "Try Hard →"   :
+                                    "Another Hard →";
+    dom.completionHarderBtn.textContent = nextLabel;
+
+    generateConfetti(dom.completionConfetti, 32);
+    dom.completionOverlay.hidden = false;
+    // Move focus to the primary action for keyboard users.
+    setTimeout(() => { try { dom.completionAgainBtn.focus(); } catch {} }, 50);
+  }
+
+  function hideCompletionOverlay() {
+    dom.completionOverlay.hidden = true;
+    if (dom.completionConfetti) dom.completionConfetti.innerHTML = "";
+  }
+
+  function playAnotherFromOverlay() {
+    hideCompletionOverlay();
+    startGeneratedProblem();
+  }
+  function tryHarderFromOverlay() {
+    hideCompletionOverlay();
+    if (app.difficulty === "easy")        app.difficulty = "medium";
+    else if (app.difficulty === "medium") app.difficulty = "hard";
+    // Already at hard → just start another hard.
+    startGeneratedProblem();
+  }
+
+  // ============================================================
   // Cycle ring + zero-quotient + times-table
   // ============================================================
 
@@ -967,13 +1059,22 @@
   function renderQuotientSlots(e, done) {
     dom.quotientSlots.innerHTML = "";
     dom.quotientSlots.style.setProperty("--digit-cols", String(e.dividendDigits.length));
+    const editingThisSlot = !done && e.phase === "divide" && app.mode !== "demo";
     for (let i = 0; i < e.quotientDigits.length; i++) {
       const slot = document.createElement("div");
       slot.className = "digitCell slot";
       const v = e.quotientDigits[i];
+      const isActiveSlot = i === e.activeQuotientIndex && !done;
       if (v !== null) slot.classList.add("slot--filled");
-      if (i === e.activeQuotientIndex && !done) slot.classList.add("slot--active");
-      slot.textContent = v === null ? "" : String(v);
+      if (isActiveSlot) slot.classList.add("slot--active");
+
+      let text = v === null ? "" : String(v);
+      // Solution 2: during divide, the active slot shows the kid's draft + caret.
+      if (isActiveSlot && editingThisSlot) {
+        slot.classList.add("slot--editing");
+        text = app.inputValue || "";
+      }
+      slot.textContent = text;
       slot.title = `Quotient position ${i + 1}`;
       dom.quotientSlots.appendChild(slot);
     }
@@ -1080,10 +1181,34 @@
     path.setAttribute("marker-end", "url(#bringDownArrowHead)");
     svg.appendChild(path);
   }
+  /** Render a pending phase row showing the kid's current draft, right-aligned
+   *  to endCol. The rightmost cell carries the workCell--active class so it
+   *  pulses and shows the caret. Used for multiply / subtract phases. */
+  function renderPendingRow(cols, endCol, draft, kind) {
+    const row = makeWorkGrid(cols);
+    const digits = String(draft || "").split("");
+    const startCol = Math.max(0, endCol - Math.max(1, digits.length) + 1);
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement("div");
+      if (c >= startCol && c <= endCol) {
+        cell.className = `workCell workCell--${kind}`;
+        if (c === endCol) cell.classList.add("workCell--active");
+        cell.textContent = digits[c - startCol] ?? "";
+      } else {
+        cell.className = "workCell workCell--empty";
+        cell.textContent = "";
+      }
+      row.appendChild(cell);
+    }
+    return row;
+  }
+
   function renderWorkRows(e, done) {
     dom.workRows.innerHTML = "";
     const cols = e.dividendDigits.length;
-    if (e.rows.length === 0 && !done) {
+    const willRenderPending =
+      !done && app.mode !== "demo" && (e.phase === "multiply" || e.phase === "subtract");
+    if (e.rows.length === 0 && !done && !willRenderPending) {
       const hint = document.createElement("div");
       hint.className = "workRowHint";
       hint.textContent = "Work will appear right under the dividend digits as you go.";
@@ -1104,25 +1229,32 @@
       dom.workRows.appendChild(grid);
     }
 
-    // Ghost target slot — visual preview of where the bring-down digit lands.
-    // Place it on the SAME row as the remainder (just like paper long division),
-    // at the cursorIndex column. The remainder row's cells past its endCol are
-    // already `workCell--empty`, so we just mutate the one at cursorIndex.
-    if (!done && e.phase === "bringDown" && e.cursorIndex < e.dividendDigits.length) {
-      const lastRow = dom.workRows.lastElementChild;
-      if (lastRow) {
-        const targetCell = lastRow.children.item(e.cursorIndex);
-        if (targetCell instanceof HTMLElement) {
-          targetCell.className = "workCell workCell--ghostTarget";
-          targetCell.textContent = "?";
-          targetCell.setAttribute("data-bringdown-target", "1");
+    // Solution 2: render a "pending" row for the in-progress phase so the kid
+    // sees their draft right where it'll land — no separate input box needed.
+    if (!done && app.mode !== "demo") {
+      if (e.phase === "multiply") {
+        dom.workRows.appendChild(renderPendingRow(cols, e.activeEndIndex, app.inputValue, "product"));
+      } else if (e.phase === "subtract") {
+        dom.workRows.appendChild(renderPendingRow(cols, e.activeEndIndex, app.inputValue, "remainder"));
+      } else if (e.phase === "bringDown" && e.cursorIndex < e.dividendDigits.length) {
+        // Ghost target on the SAME row as the remainder (paper-style), at the
+        // cursorIndex column. When the kid types, the cell becomes the active
+        // editing cell and shows the draft; otherwise it shows "?".
+        const lastRow = dom.workRows.lastElementChild;
+        const draft = app.inputValue || "";
+        if (lastRow) {
+          const targetCell = lastRow.children.item(e.cursorIndex);
+          if (targetCell instanceof HTMLElement) {
+            targetCell.className = "workCell workCell--ghostTarget";
+            if (draft) targetCell.classList.add("workCell--active");
+            targetCell.textContent = draft || "?";
+            targetCell.setAttribute("data-bringdown-target", "1");
+          } else {
+            dom.workRows.appendChild(renderGhostTargetRow(cols, e.cursorIndex));
+          }
         } else {
-          // Fallback (shouldn't happen, but keep the affordance): standalone row.
           dom.workRows.appendChild(renderGhostTargetRow(cols, e.cursorIndex));
         }
-      } else {
-        // No prior rows (rare — first bring-down after a trivial subtract).
-        dom.workRows.appendChild(renderGhostTargetRow(cols, e.cursorIndex));
       }
     }
   }
@@ -1180,11 +1312,7 @@
     dom.explainBtn.disabled = done;
     dom.undoBtn.disabled = app.history.length === 0;
 
-    const bringDownNoDigits = e.phase === "bringDown" && e.cursorIndex >= e.dividendDigits.length;
-    dom.answerInput.disabled = done || app.mode === "demo" || bringDownNoDigits;
-    dom.answerInput.placeholder = app.mode === "demo"
-      ? "Watch mode (no typing needed)"
-      : bringDownNoDigits ? "No input needed" : "Type a number";
+    // Solution 2: input lives on the board cell — nothing to disable here.
 
     dom.phaseBadge.textContent = getPhaseLabel(e.phase);
     const { kidMessage, kidHint, zeroQuotient } = getStepExpectation(e, app.mode, app.difficulty);
@@ -1261,8 +1389,20 @@
           onProblemCompletedInMission();
           return;
         } else {
-          // Practice: push stars
-          pushStarsToHub(scoreProblem());
+          // Practice: push stars to the hub, then celebrate with the overlay.
+          // Brief delay so the kid sees the final answer commit before the
+          // overlay takes over the screen.
+          const earned = scoreProblem();
+          pushStarsToHub(earned);
+          const finalProblem = app.problem;
+          const finalEngine = app.engine;
+          setTimeout(() => {
+            // Guard: don't pop the overlay if the kid already moved on
+            // (e.g., clicked New problem in the meantime).
+            if (app.problem === finalProblem && app.engine === finalEngine) {
+              showCompletionOverlay(finalProblem, finalEngine, earned);
+            }
+          }, 450);
         }
       }
     } else {
@@ -1335,6 +1475,7 @@
       "This wipes your streak, calendar, and star history. Other games and other profiles are not affected."
     );
     if (!ok) return;
+    hideCompletionOverlay();
     resetProgressStorage();
     app.progress = defaultProgress();
     app.mission = null;
@@ -1394,8 +1535,23 @@
     }
   });
 
-  dom.newProblemBtn.addEventListener("click", () => startGeneratedProblem());
-  dom.startOverBtn.addEventListener("click", () => startOver());
+  dom.newProblemBtn.addEventListener("click", () => { hideCompletionOverlay(); startGeneratedProblem(); });
+  dom.startOverBtn.addEventListener("click", () => { hideCompletionOverlay(); startOver(); });
+
+  // Completion overlay actions
+  dom.completionAgainBtn.addEventListener("click", playAnotherFromOverlay);
+  dom.completionHarderBtn.addEventListener("click", tryHarderFromOverlay);
+  document.addEventListener("click", (ev) => {
+    const t = ev.target;
+    if (t instanceof HTMLElement && t.getAttribute("data-completion-dismiss") === "1") {
+      hideCompletionOverlay();
+    }
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && !dom.completionOverlay.hidden) {
+      hideCompletionOverlay();
+    }
+  });
   dom.undoBtn.addEventListener("click", () => undo());
   dom.hintBtn.addEventListener("click", () => handleHint());
   dom.explainBtn.addEventListener("click", () => handleExplain());
@@ -1403,20 +1559,21 @@
   dom.exampleBtn.addEventListener("click", () => showWorkedExample());
   dom.exampleCloseBtn.addEventListener("click", () => hideWorkedExample());
 
-  dom.checkBtn.addEventListener("click", () => {
-    const raw = dom.answerInput.value.trim();
+  function commitDraft() {
+    const raw = (app.inputValue || "").trim();
     if (app.engine && app.engine.phase === "bringDown" && app.engine.cursorIndex >= app.engine.dividendDigits.length) {
       handleCheckOrAdvance(0);
       return;
     }
     if (raw === "") {
-      setAppFeedback("neutral", "Type a number first (or use Hint to reveal).");
+      setAppFeedback("neutral", "Type a digit first (or use Hint to reveal).");
       render();
-      focusInputSoon();
       return;
     }
     handleCheckOrAdvance(Number(raw));
-  });
+  }
+
+  dom.checkBtn.addEventListener("click", commitDraft);
   dom.nextBtn.addEventListener("click", () => handleNextDemoStep());
 
   // Mission summary buttons
@@ -1426,15 +1583,36 @@
   });
   dom.missionSwitchPracticeBtn.addEventListener("click", () => setTopMode("practice"));
 
-  dom.answerInput.addEventListener("input", () => {
-    const clean = dom.answerInput.value.replace(/[^\d]/g, "");
-    if (clean !== dom.answerInput.value) dom.answerInput.value = clean;
-    app.inputValue = clean;
-  });
-  dom.answerInput.addEventListener("keydown", (ev) => {
+  // Solution 2 — document-level keydown captures input for the roaming cursor.
+  // Skip when a button is focused so Enter/Space still activates the button.
+  document.addEventListener("keydown", (ev) => {
+    if (!app.engine) return;
+    if (app.engine.phase === "done") return;
+    if (app.mode === "demo") {
+      if (ev.key === "Enter") { ev.preventDefault(); handleNextDemoStep(); }
+      return;
+    }
+    const t = ev.target;
+    const onButton = t instanceof HTMLElement && (t.tagName === "BUTTON" || t.tagName === "A");
+    if (onButton && ev.key !== "Backspace") return;
+
     if (ev.key === "Enter") {
-      if (app.mode === "demo") handleNextDemoStep();
-      else dom.checkBtn.click();
+      ev.preventDefault();
+      commitDraft();
+      return;
+    }
+    if (ev.key === "Backspace") {
+      ev.preventDefault();
+      setInputValue((app.inputValue || "").slice(0, -1));
+      render();
+      return;
+    }
+    if (/^[0-9]$/.test(ev.key)) {
+      ev.preventDefault();
+      const next = ((app.inputValue || "") + ev.key).slice(0, 6);
+      setInputValue(next);
+      render();
+      return;
     }
   });
 
@@ -1444,9 +1622,9 @@
     if (!target.classList.contains("keypad__btn")) return;
     const key = target.getAttribute("data-key");
     if (!key) return;
-    if (key === "clear") { setInputValue(""); focusInputSoon(); return; }
-    if (key === "back")  { setInputValue(app.inputValue.slice(0, -1)); focusInputSoon(); return; }
-    if (/^\d$/.test(key)) { setInputValue((app.inputValue + key).slice(0, 6)); focusInputSoon(); }
+    if (key === "clear") { setInputValue(""); render(); return; }
+    if (key === "back")  { setInputValue((app.inputValue || "").slice(0, -1)); render(); return; }
+    if (/^\d$/.test(key)) { setInputValue(((app.inputValue || "") + key).slice(0, 6)); render(); }
   });
 
   // Collapsible lesson panel
