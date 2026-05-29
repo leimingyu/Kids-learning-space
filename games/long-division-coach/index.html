@@ -19,7 +19,21 @@
         </div>
       </div>
 
-      <div class="toolbar" role="group" aria-label="Settings">
+      <!-- NEW: Top-level Practice vs Game mode toggle -->
+      <div class="topModeToggle" role="group" aria-label="Choose Practice or Game">
+        <button class="topModeToggle__btn" data-top-mode="practice" type="button" aria-pressed="true">
+          <span class="topModeToggle__icon" aria-hidden="true">🎯</span>
+          <span class="topModeToggle__label">Practice</span>
+          <span class="topModeToggle__sub">Learn step-by-step with a coach</span>
+        </button>
+        <button class="topModeToggle__btn" data-top-mode="game" type="button" aria-pressed="false">
+          <span class="topModeToggle__icon" aria-hidden="true">🎮</span>
+          <span class="topModeToggle__label">Game</span>
+          <span class="topModeToggle__sub">Today's Mission · keep your streak</span>
+        </button>
+      </div>
+
+      <div class="toolbar" id="practiceToolbar" role="group" aria-label="Settings">
         <div class="toolbar__group">
           <span class="toolbar__label">Difficulty</span>
           <div class="segmented" role="group" aria-label="Difficulty">
@@ -41,12 +55,79 @@
         <div class="toolbar__group toolbar__group--actions">
           <button id="newProblemBtn" class="btn btn--tertiary" type="button">New problem</button>
           <button id="startOverBtn" class="btn btn--tertiary" type="button">Start over</button>
+          <button id="resetProgressBtn" class="btn btn--tertiary" type="button" title="Erase streak, calendar, and stars for this profile">Reset my progress</button>
         </div>
       </div>
     </header>
 
     <main id="main" class="main">
-      <section class="card card--lessonPanel" aria-labelledby="lessonHeadingText">
+      <!-- ====================== GAME MODE PANEL ====================== -->
+      <section id="missionPanel" class="missionPanel" hidden aria-labelledby="missionPanelTitle">
+        <div class="missionPanel__streakRow">
+          <div class="streakBadge" aria-live="polite">
+            <span class="streakBadge__flame" aria-hidden="true">🔥</span>
+            <span class="streakBadge__count" id="streakCountText">0</span>
+            <span class="streakBadge__label">day streak</span>
+          </div>
+          <div class="freezeBadge" id="freezeBadge" aria-label="Streak freezes available">
+            <span aria-hidden="true">❄️</span>
+            <span id="freezeCountText">1</span>
+            <span>freeze</span>
+          </div>
+        </div>
+
+        <!-- Calendar strip: last 14 days -->
+        <div class="calendarStrip" id="calendarStrip" role="img" aria-label="Last 14 days"></div>
+
+        <!-- Mission start screen (difficulty picker) -->
+        <div id="missionStart" class="missionStart">
+          <h2 id="missionPanelTitle" class="missionPanel__title">Today's Mission</h2>
+          <p class="missionPanel__lead">3 problems: 1 warm-up + 2 main. Finish all 3 to keep your streak.</p>
+          <div class="missionStart__levelPick" role="group" aria-label="Pick a difficulty for today's mission">
+            <button class="missionLevel" data-mission-difficulty="easy" type="button">
+              <span class="missionLevel__emoji" aria-hidden="true">🌱</span>
+              <span class="missionLevel__title">Easy</span>
+              <span class="missionLevel__desc">1-digit divisor, no remainders</span>
+            </button>
+            <button class="missionLevel" data-mission-difficulty="medium" type="button">
+              <span class="missionLevel__emoji" aria-hidden="true">⭐</span>
+              <span class="missionLevel__title">Medium</span>
+              <span class="missionLevel__desc">Up to 4 digits, remainders OK</span>
+            </button>
+            <button class="missionLevel" data-mission-difficulty="hard" type="button">
+              <span class="missionLevel__emoji" aria-hidden="true">🔥</span>
+              <span class="missionLevel__title">Hard</span>
+              <span class="missionLevel__desc">2-digit divisors, big dividends</span>
+            </button>
+          </div>
+          <div id="missionAlreadyDone" class="missionAlreadyDone" hidden>
+            <p>You already finished today's mission! Want to play one more? Pick a level above for a bonus round (won't change your streak).</p>
+          </div>
+        </div>
+
+        <!-- Mission in-progress header -->
+        <div id="missionProgress" class="missionProgress" hidden>
+          <div class="missionProgress__title">
+            Problem <span id="missionProblemIndex">1</span> of <span id="missionProblemTotal">3</span>
+            <span class="missionProgress__role" id="missionProblemRole">Warm-up</span>
+          </div>
+          <div class="missionProgress__dots" id="missionDots" aria-hidden="true"></div>
+        </div>
+
+        <!-- Mission summary -->
+        <div id="missionSummary" class="missionSummary" hidden>
+          <h2 class="missionSummary__title">Mission Complete! 🎉</h2>
+          <p class="missionSummary__stars" id="missionSummaryStars">★★★</p>
+          <p class="missionSummary__text" id="missionSummaryText">Streak +1</p>
+          <div class="missionSummary__actions">
+            <button id="missionNewBtn" class="btn btn--primary" type="button">Back to Today's Mission</button>
+            <button id="missionSwitchPracticeBtn" class="btn btn--tertiary" type="button">Switch to Practice</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== PRACTICE / SHARED MAIN ====================== -->
+      <section class="card card--lessonPanel" id="lessonPanel" aria-labelledby="lessonHeadingText">
         <button
           type="button"
           id="lessonToggle"
@@ -78,8 +159,31 @@
         </div>
       </section>
 
-      <div class="mainInteraction">
+      <div class="mainInteraction" id="mainInteraction">
         <section class="card card--step" aria-labelledby="stepTitle">
+          <!-- NEW: Cycle Ring (4 phases visualized) -->
+          <div class="cycleRing" id="cycleRing" role="img" aria-label="Long division cycle">
+            <div class="cycleRing__node" data-phase="divide">
+              <span class="cycleRing__icon" aria-hidden="true">÷</span>
+              <span class="cycleRing__label">Divide</span>
+            </div>
+            <div class="cycleRing__arrow" aria-hidden="true">→</div>
+            <div class="cycleRing__node" data-phase="multiply">
+              <span class="cycleRing__icon" aria-hidden="true">×</span>
+              <span class="cycleRing__label">Multiply</span>
+            </div>
+            <div class="cycleRing__arrow" aria-hidden="true">→</div>
+            <div class="cycleRing__node" data-phase="subtract">
+              <span class="cycleRing__icon" aria-hidden="true">−</span>
+              <span class="cycleRing__label">Subtract</span>
+            </div>
+            <div class="cycleRing__arrow" aria-hidden="true">→</div>
+            <div class="cycleRing__node" data-phase="bringDown">
+              <span class="cycleRing__icon" aria-hidden="true">↓</span>
+              <span class="cycleRing__label">Bring down</span>
+            </div>
+          </div>
+
           <div class="stepHeader">
             <h2 id="stepTitle" class="card__title">Step</h2>
             <div class="phaseBadge" id="phaseBadge" aria-label="Current phase">—</div>
@@ -98,7 +202,7 @@
               placeholder="Type a number"
               aria-describedby="inputHelp"
             />
-            <div id="inputHelp" class="inputHelp">Use the keypad or your keyboard.</div>
+            <div id="inputHelp" class="inputHelp">Type your answer, then press <strong>Enter</strong> or click <strong>Check</strong>.</div>
           </div>
 
           <div class="controls">
@@ -107,9 +211,19 @@
             <button id="hintBtn" class="btn btn--secondary" type="button">Hint</button>
             <button id="explainBtn" class="btn btn--tertiary" type="button">Explain</button>
             <button id="undoBtn" class="btn btn--tertiary" type="button">Undo</button>
+            <button id="exampleBtn" class="btn btn--tertiary" type="button" hidden>Show me one like this</button>
           </div>
 
           <div id="feedback" class="feedback" role="status" aria-live="polite"></div>
+
+          <!-- NEW: Worked example panel (shown on demand) -->
+          <div id="examplePanel" class="examplePanel" hidden aria-labelledby="exampleTitle">
+            <div class="examplePanel__head">
+              <span id="exampleTitle">Worked example</span>
+              <button id="exampleCloseBtn" class="examplePanel__close" type="button" aria-label="Close example">✕</button>
+            </div>
+            <div id="exampleBody" class="examplePanel__body"></div>
+          </div>
 
           <div class="keypad" aria-label="Number keypad">
             <div class="keypad__grid">
@@ -160,6 +274,16 @@
                 <div class="bracket__top"></div>
                 <div class="bracket__side"></div>
 
+                <!-- Bring-down visual flow overlay (Practice coach feature).
+                     Always present (pointer-events:none) so its bounding rect
+                     is measurable; script.js adds/removes the path child to
+                     show/hide the arrow. -->
+                <svg
+                  id="bringDownArrow"
+                  class="bringDownArrow"
+                  aria-hidden="true"
+                ></svg>
+
                 <div class="dividend">
                   <div class="dividend__label">Dividend</div>
                   <div id="dividendDigits" class="dividend__digits digitGrid" aria-label="Dividend digits"></div>
@@ -178,6 +302,24 @@
             <p class="doneSummary__text" id="doneSummaryText">—</p>
           </div>
         </section>
+
+        <!-- NEW: Times-Table side panel (Practice mode coach) -->
+        <aside class="card card--timesTable" id="timesTablePanel" aria-labelledby="timesTableTitle">
+          <button
+            type="button"
+            id="timesTableToggle"
+            class="timesTable__toggle"
+            aria-expanded="true"
+            aria-controls="timesTableBody"
+          >
+            <span id="timesTableTitle" class="timesTable__title">Times table for <strong id="timesTableDivisor">—</strong></span>
+            <span class="timesTable__chevron" aria-hidden="true">▾</span>
+          </button>
+          <div id="timesTableBody" class="timesTable__body">
+            <p class="timesTable__hint">Pick the row whose result is closest to your current number — but not over!</p>
+            <ol class="timesTable__list" id="timesTableList"></ol>
+          </div>
+        </aside>
       </div>
     </main>
 
@@ -187,12 +329,17 @@
       </p>
     </footer>
 
-    <script src="./script.js"></script>
     <script src="../../shared/scripts/game-bridge.js"></script>
+    <script src="./script.js"></script>
     <script>
-      // KLS hub wiring: post a "played" event when the Done Summary panel appears.
+      // KLS hub wiring: announce "played" once the kid finishes any problem.
+      // (Star awards are handled inside script.js with the proper 0–3 rubric.)
       if (window.KLS && window.KLS.bridge) {
         window.KLS.bridge.onVisible('#doneSummary', function () {
+          window.KLS.bridge.played();
+          window.KLS.bridge.celebrate();
+        });
+        window.KLS.bridge.onVisible('#missionSummary', function () {
           window.KLS.bridge.played();
           window.KLS.bridge.celebrate();
         });
@@ -200,4 +347,3 @@
     </script>
   </body>
 </html>
-

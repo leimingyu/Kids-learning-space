@@ -42,6 +42,7 @@
       topics: ['long-division', 'mul-div'],
       tag: 'Long Division',
       tagClass: 'tile__tag--logic',
+      storageBase: 'longDivisionCoach_v1',
     },
   ];
 
