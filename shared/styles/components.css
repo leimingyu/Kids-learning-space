@@ -709,6 +709,28 @@ code {
 .chrome__save:active { transform: translateY(1px); }
 .chrome__save:focus-visible { outline: none; box-shadow: var(--kls-shadow-focus); }
 
+/* "🏠 Home" button — sits between Hub back-button and Save. Returns the kid
+   to the current game's own home screen without leaving the iframe. */
+.chrome__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2px solid var(--kls-border);
+  border-radius: 999px;
+  background: var(--kls-bg);
+  color: var(--kls-text);
+  font: inherit;
+  font-weight: var(--kls-fw-semibold);
+  font-size: 0.92rem;
+  cursor: pointer;
+  box-shadow: var(--kls-shadow-sm);
+  transition: transform 0.12s ease;
+}
+.chrome__home:hover  { transform: translateY(-1px); }
+.chrome__home:active { transform: translateY(1px); }
+.chrome__home:focus-visible { outline: none; box-shadow: var(--kls-shadow-focus); }
+
 .chrome__profile--btn {
   background: rgba(255,255,255,0.9);
   border: 2px solid var(--kls-border);

@@ -122,6 +122,34 @@
       background: #b2bec3;
       color: #fff;
     }
+    /* Small mid-game home button — sits at the start of the in-game top bar
+       so a kid can exit back to the welcome screen mid-session. */
+    .btn-game-home {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(0,0,0,0.10);
+      background: #fff;
+      color: #555;
+      font: inherit; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+    }
+    .btn-game-home:hover { background: #f5f7fb; }
+    .btn-game-home:active { transform: translateY(1px); box-shadow: none; }
+
+    /* Small inline count badge inside the "Practice by Type" welcome button.
+       Visible only when there's at least one unresolved tricky question. */
+    .practice-badge {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.22);
+      font-size: 0.85em;
+      font-weight: 700;
+    }
+    .practice-badge strong { color: #fff; }
 
     .btn-row {
       display: flex;
@@ -1135,7 +1163,7 @@
       <div class="btn-row">
         <button type="button" class="btn btn-primary"   id="btn-start-welcome">🗺️ Adventure</button>
         <button type="button" class="btn btn-secondary" id="btn-daily-welcome">📅 Daily Challenge</button>
-        <button type="button" class="btn btn-secondary" id="btn-practice-welcome">🎯 Practice by Type</button>
+        <button type="button" class="btn btn-secondary" id="btn-practice-welcome">🎯 Practice by Type<span id="welcome-practice-badge" class="practice-badge" hidden> (<strong id="welcome-practice-count">0</strong> tricky)</span></button>
         <button type="button" class="btn btn-muted"     id="btn-end-welcome">End Game</button>
       </div>
       <p style="text-align:center;margin-top:14px;font-size:0.9rem;color:var(--muted);">
@@ -1220,6 +1248,7 @@
       <div class="btn-row">
         <button type="button" class="btn btn-primary"   id="btn-daily-start">Start today&rsquo;s challenge</button>
         <button type="button" class="btn btn-secondary hidden" id="btn-daily-practice">Practice again (just for fun)</button>
+        <button type="button" class="btn btn-secondary" id="btn-daily-tricky" hidden>🎯 Practice tricky problems (<strong id="daily-tricky-count">0</strong>)</button>
         <button type="button" class="btn btn-muted"     id="btn-daily-home">Back to Welcome</button>
       </div>
     </div>
@@ -1237,6 +1266,7 @@
       <div class="daily-sum-streak" id="daily-sum-streak-line"></div>
       <div class="daily-sum-trophy" id="daily-sum-trophy"></div>
       <div class="btn-row">
+        <button type="button" class="btn btn-primary"   id="btn-daily-sum-tricky" hidden>🎯 Fix the tricky ones (<strong id="daily-sum-tricky-count">0</strong>)</button>
         <button type="button" class="btn btn-primary"   id="btn-daily-sum-home">Back to Daily Challenge</button>
         <button type="button" class="btn btn-secondary" id="btn-daily-sum-welcome">Back to Welcome</button>
       </div>
@@ -1246,6 +1276,13 @@
   <!-- Game -->
   <div id="screen-game" class="screen">
     <div class="top-bar-game">
+      <button
+        type="button"
+        class="btn-game-home"
+        id="btn-game-home"
+        title="Back to this game’s home (stay in the game)"
+        aria-label="Back to Welcome"
+      >🏠 Home</button>
       <div class="progress-wrap" style="flex: 1; min-width: 200px; margin-bottom: 0;">
         <div class="progress-label">
           <span>Progress</span>
@@ -1426,6 +1463,59 @@
       return STORAGE_KEY_BASE;
     }
   }
+
+  // ----- Wrongs store (cross-game mistakes-and-practice spec) -----
+  // Mirrors per-type wrongIds into a separate localStorage key so the backup
+  // module + spec compliance work. The inline `practice.wrongIds` on the main
+  // blob stays in place so the existing UI keeps reading from it; this layer
+  // is additive — every write goes to BOTH.
+  var WRONGS_KEY_BASE = "wordProblemAdventure_wrongs_v1";
+  function wrongsKey() {
+    try {
+      var pid = (window.KLS && window.KLS.bridge && window.KLS.bridge.getProfileId)
+        ? window.KLS.bridge.getProfileId() : null;
+      return pid ? WRONGS_KEY_BASE + "__" + pid : WRONGS_KEY_BASE;
+    } catch (e) {
+      return WRONGS_KEY_BASE;
+    }
+  }
+  function loadWrongsStore() {
+    try {
+      var raw = localStorage.getItem(wrongsKey());
+      if (!raw) return { byType: {} };
+      var parsed = JSON.parse(raw);
+      return { byType: (parsed && parsed.byType && typeof parsed.byType === "object") ? parsed.byType : {} };
+    } catch (e) { return { byType: {} }; }
+  }
+  function saveWrongsStore(store) {
+    try { localStorage.setItem(wrongsKey(), JSON.stringify(store)); } catch (e) { /* ignore */ }
+  }
+  function resetWrongsStore() {
+    try { localStorage.removeItem(wrongsKey()); } catch (e) { /* ignore */ }
+  }
+  /** Mirror a wrong-id into the new key, scoped by problem type. */
+  function mirrorWrongToWrongsStore(type, qid) {
+    if (!type || !qid) return;
+    var store = loadWrongsStore();
+    if (!store.byType[type]) store.byType[type] = [];
+    if (store.byType[type].indexOf(qid) === -1) {
+      store.byType[type].push(qid);
+      saveWrongsStore(store);
+    }
+    try { updatePracticeAffordances(); } catch (e) { /* defined later — boot-time safety */ }
+  }
+  function mirrorRemoveFromWrongsStore(type, qid) {
+    if (!type || !qid) return;
+    var store = loadWrongsStore();
+    if (!store.byType[type]) return;
+    var i = store.byType[type].indexOf(qid);
+    if (i !== -1) {
+      store.byType[type].splice(i, 1);
+      saveWrongsStore(store);
+    }
+    try { updatePracticeAffordances(); } catch (e) { /* defined later — boot-time safety */ }
+  }
+
   var RECENT_QUESTION_IDS_MAX = 48;
 
   /** @type {Question[]} */
@@ -2326,6 +2416,8 @@
       s.wrongIds.push(qid);
       savePracticeState(type, s);
     }
+    // Mirror to the dedicated wrongs key so backup and spec compliance work.
+    mirrorWrongToWrongsStore(type, qid);
   }
 
   function removePracticeWrong(type, qid) {
@@ -2335,6 +2427,7 @@
       s.wrongIds.splice(i, 1);
       savePracticeState(type, s);
     }
+    mirrorRemoveFromWrongsStore(type, qid);
   }
 
   function deprioritizeRecents(band, recentSet) {
@@ -2616,6 +2709,89 @@
     }
   }
 
+  /** One-time, per-profile migration: copy any inline practice.wrongIds into
+   *  the new wordProblemAdventure_wrongs_v1 key so existing kids' wrongs
+   *  aren't lost. Only runs when the new key is empty AND the inline blob
+   *  has wrongs — never silently overwrites. */
+  /** Sum unresolved wrongs across all types in the dedicated wrongs key. */
+  function countAllWrongs() {
+    try {
+      var store = loadWrongsStore();
+      var total = 0;
+      Object.keys(store.byType || {}).forEach(function (t) {
+        var arr = store.byType[t];
+        if (Array.isArray(arr)) total += arr.length;
+      });
+      return total;
+    } catch (e) { return 0; }
+  }
+
+  /** Sync the three practice-discoverability affordances:
+   *   - Welcome screen: count badge inside the "Practice by Type" button
+   *   - Daily landing screen: "Practice tricky problems (N)" button
+   *   - Daily summary screen: "Fix the tricky ones (N)" CTA (after a session)
+   *  All three hide when N === 0. Called from screen-show + after every
+   *  recordMistake / removePracticeWrong / reset. */
+  function updatePracticeAffordances() {
+    var n = countAllWrongs();
+    var welcomeBadge   = document.getElementById("welcome-practice-badge");
+    var welcomeCount   = document.getElementById("welcome-practice-count");
+    var dailyBtn       = document.getElementById("btn-daily-tricky");
+    var dailyCount     = document.getElementById("daily-tricky-count");
+    var dailySumBtn    = document.getElementById("btn-daily-sum-tricky");
+    var dailySumCount  = document.getElementById("daily-sum-tricky-count");
+    if (welcomeBadge) {
+      welcomeBadge.hidden = n === 0;
+      if (welcomeCount) welcomeCount.textContent = String(n);
+    }
+    if (dailyBtn) {
+      dailyBtn.hidden = n === 0;
+      if (dailyCount) dailyCount.textContent = String(n);
+    }
+    if (dailySumBtn) {
+      dailySumBtn.hidden = n === 0;
+      if (dailySumCount) dailySumCount.textContent = String(n);
+    }
+  }
+
+  function migrateInlineWrongsIfNeeded() {
+    try {
+      var existing = loadWrongsStore();
+      var hasNew = Object.keys(existing.byType || {}).some(function (k) {
+        return Array.isArray(existing.byType[k]) && existing.byType[k].length > 0;
+      });
+      if (hasNew) return;
+      var p = loadPersisted();
+      if (!p.practice || typeof p.practice !== "object") return;
+      var byType = {};
+      var found = 0;
+      Object.keys(p.practice).forEach(function (type) {
+        var ids = p.practice[type] && Array.isArray(p.practice[type].wrongIds) ? p.practice[type].wrongIds : [];
+        if (ids.length) { byType[type] = ids.slice(); found += ids.length; }
+      });
+      if (found > 0) saveWrongsStore({ byType: byType });
+    } catch (e) { /* ignore */ }
+  }
+  // Run the migration once per profile-binding. Standalone fires immediately;
+  // iframe defers until the hub announces the active profile so the key we
+  // write to is actually profile-scoped.
+  migrateInlineWrongsIfNeeded();
+  try { updatePracticeAffordances(); } catch (e) { /* DOM may not be ready yet */ }
+  try {
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.onProfileReady) {
+      window.KLS.bridge.onProfileReady(function () {
+        migrateInlineWrongsIfNeeded();
+        try { updatePracticeAffordances(); } catch (e) { /* ignore */ }
+      });
+    }
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.onHubMessage) {
+      window.KLS.bridge.onHubMessage("setProfile", function () {
+        migrateInlineWrongsIfNeeded();
+        try { updatePracticeAffordances(); } catch (e) { /* ignore */ }
+      });
+    }
+  } catch (e) { /* ignore */ }
+
   function savePersistedBestStreak(ever) {
     try {
       var p = loadPersisted();
@@ -2822,6 +2998,10 @@
     });
     const next = document.getElementById(id);
     if (next) next.classList.add("active");
+    // Refresh practice-discoverability widgets on screens that surface them.
+    if (id === "screen-welcome" || id === "screen-daily" || id === "screen-daily-summary") {
+      try { updatePracticeAffordances(); } catch (e) { /* defined below — safe early */ }
+    }
   }
 
   function highlightKeywords(text, keywords) {
@@ -3097,16 +3277,18 @@
         firstTryCorrect += 1;
         streak += 1;
         sessionBestStreak = Math.max(sessionBestStreak, streak);
-        // Practice mode: first-try correct clears this id from the wrong-list.
-        if (isPracticeMode && practiceType && q.id) {
-          removePracticeWrong(practiceType, q.id);
+        // First-try correct clears this id from the wrong-list (any mode).
+        var typeForRemove = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
+        if (typeForRemove && q.id) {
+          removePracticeWrong(typeForRemove, q.id);
         }
       } else {
         // Got there with help — credit completion but break the streak.
         streak = 0;
-        // Practice mode: needed hint/explanation → still counts as a wrong to retry.
-        if (isPracticeMode && practiceType && q.id) {
-          addPracticeWrong(practiceType, q.id);
+        // Needed hint/explanation → counts as a wrong to retry (any mode).
+        var typeForAdd = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
+        if (typeForAdd && q.id) {
+          addPracticeWrong(typeForAdd, q.id);
         }
       }
       var pt = q.problemType || "Other";
@@ -3124,8 +3306,10 @@
       wrongSubmitsOnQuestion = 1;
       // First wrong submit on this question — save to wrong-list right away so a
       // mid-session quit (or a kid who gives up and skips) still preserves it.
-      if (isPracticeMode && practiceType && q.id) {
-        addPracticeWrong(practiceType, q.id);
+      // Always-on (any mode), per the cross-game MISTAKES_AND_PRACTICE spec.
+      var typeForFirstWrong = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
+      if (typeForFirstWrong && q.id) {
+        addPracticeWrong(typeForFirstWrong, q.id);
       }
       showFeedbackHint(q);
     } else {
@@ -4066,12 +4250,37 @@
     renderDailyIntro();
     showScreen("screen-daily");
   });
-  document.getElementById("btn-practice-welcome").addEventListener("click", function () {
+  /** Shared navigation: leave any active mode and open the practice picker.
+   *  Used by the welcome button + the new "Practice tricky problems" entry
+   *  points on the daily landing and daily summary screens. */
+  function openPracticePicker() {
     leavePracticeMode();
     leaveDailyMode();
     renderPracticePicker();
     showScreen("screen-practice-picker");
-  });
+  }
+  document.getElementById("btn-practice-welcome").addEventListener("click", openPracticePicker);
+  document.getElementById("btn-daily-tricky").addEventListener("click", openPracticePicker);
+  document.getElementById("btn-daily-sum-tricky").addEventListener("click", openPracticePicker);
+
+  /** Return to this game's own welcome screen — cleanly tear down any active
+   *  mode and any in-progress session. Used by:
+   *   - the chrome bar's "🏠 Home" button (via kls:hub goHome message)
+   *   - the in-game top-bar "🏠 Home" button on screen-game
+   *   - any future game-internal home affordance.
+   *  Standalone-safe (doesn't depend on bridge presence). */
+  function goToGameHome() {
+    leavePracticeMode();
+    leaveDailyMode();
+    activeLesson = null;
+    showScreen("screen-welcome");
+  }
+  document.getElementById("btn-game-home").addEventListener("click", goToGameHome);
+  // Expose for the bottom inline script — game-bridge.js loads AFTER this
+  // IIFE, so we can't subscribe to onHubMessage here (window.KLS.bridge
+  // doesn't exist yet). The bottom script registers the handler after the
+  // bridge has attached. Same pattern as cosmic-math-quest's __cmq_onGoHome.
+  window.__wpa_goHome = goToGameHome;
   document.getElementById("btn-daily-home").addEventListener("click", function () {
     showScreen("screen-welcome");
   });
@@ -4175,6 +4384,8 @@
       "This only affects YOU — other profiles are not changed."
     )) return;
     try { localStorage.removeItem(storageKey()); } catch (e) { /* ignore */ }
+    resetWrongsStore();
+    try { updatePracticeAffordances(); } catch (e) { /* ignore */ }
     // Reset in-memory state so the journey map and side panel re-render fresh
     // without needing a page reload.
     activeLesson = null;
@@ -4221,5 +4432,15 @@
   </script>
 
   <script src="../../shared/scripts/game-bridge.js"></script>
+  <script>
+    // Post-bridge registrations: bridge.onHubMessage subscriptions MUST live
+    // here, not inside the main IIFE above, because that IIFE runs before
+    // game-bridge.js loads and window.KLS.bridge doesn't exist yet.
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.onHubMessage) {
+      if (window.__wpa_goHome) {
+        window.KLS.bridge.onHubMessage("goHome", window.__wpa_goHome);
+      }
+    }
+  </script>
 </body>
 </html>

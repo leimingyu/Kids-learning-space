@@ -428,6 +428,92 @@
     try { localStorage.removeItem(storageKey()); } catch {}
   }
 
+  // ----- Wrongs store (mistakes + practice replay) -----
+  // Separate localStorage key per the cross-game MISTAKES_AND_PRACTICE spec.
+  // Shape: { records: [ { questionId, questionShape, attempts, hintsUsed,
+  //                       revealUsed, correctAnswer, timestamp } ] }
+  const WRONGS_KEY_BASE = "longDivisionCoach_wrongs_v1";
+  function wrongsKey() {
+    const pid = activeProfileId();
+    return pid ? `${WRONGS_KEY_BASE}__${pid}` : WRONGS_KEY_BASE;
+  }
+  function defaultWrongs() { return { records: [] }; }
+  function loadWrongs() {
+    try {
+      const raw = localStorage.getItem(wrongsKey());
+      if (!raw) return defaultWrongs();
+      const parsed = JSON.parse(raw);
+      return { records: Array.isArray(parsed.records) ? parsed.records : [] };
+    } catch { return defaultWrongs(); }
+  }
+  function saveWrongs(w) {
+    try { localStorage.setItem(wrongsKey(), JSON.stringify(w)); } catch {}
+  }
+  function resetWrongsStorage() {
+    try { localStorage.removeItem(wrongsKey()); } catch {}
+  }
+
+  /** Push a wrong-completion record for the just-finished problem.
+   *  Practice mode only; called from handleCheckOrAdvance when the kid
+   *  reached `done` after at least one wrong attempt / hint / reveal.
+   *  De-duplicates by questionId — if the same problem was missed before,
+   *  bumps `attempts` instead of creating a duplicate. */
+  function recordMistake(problem, engineSnapshot, counters) {
+    if (!problem) return;
+    const id = `${problem.divisor}/${problem.dividend}`;
+    const existing = app.wrongs.records.find((r) => r.questionId === id);
+    if (existing) {
+      existing.attempts   += counters.attempts;
+      existing.hintsUsed  += counters.hintsUsed;
+      existing.revealUsed = existing.revealUsed || counters.revealUsed;
+      existing.timestamp  = new Date().toISOString();
+    } else {
+      app.wrongs.records.push({
+        questionId: id,
+        questionShape: {
+          dividend: problem.dividend,
+          divisor: problem.divisor,
+          difficulty: problem.difficulty,
+          expectedQuotient: problem.expectedQuotient,
+          expectedRemainder: problem.expectedRemainder,
+        },
+        attempts: counters.attempts,
+        hintsUsed: counters.hintsUsed,
+        revealUsed: counters.revealUsed,
+        correctAnswer: problem.expectedRemainder === 0
+          ? String(problem.expectedQuotient)
+          : `${problem.expectedQuotient} r ${problem.expectedRemainder}`,
+        timestamp: new Date().toISOString(),
+      });
+      // Cap the active queue — oldest fall out (per the spec's UX advice).
+      const MAX = 20;
+      if (app.wrongs.records.length > MAX) {
+        app.wrongs.records.splice(0, app.wrongs.records.length - MAX);
+      }
+    }
+    saveWrongs(app.wrongs);
+  }
+
+  /** Remove a wrong by questionId — called when the kid replays it cleanly
+   *  in practice. */
+  function resolveMistake(questionId) {
+    const i = app.wrongs.records.findIndex((r) => r.questionId === questionId);
+    if (i >= 0) {
+      app.wrongs.records.splice(i, 1);
+      saveWrongs(app.wrongs);
+    }
+  }
+
+  /** Sync the toolbar pill with the current wrong-queue length. Called from
+   *  rebindProfile, recordMistake, resolveMistake, and reset. */
+  function updatePracticePillUI() {
+    // dom may not exist yet during early boot — defer.
+    if (!dom || !dom.practicePillBtn) return;
+    const n = app.wrongs ? app.wrongs.records.length : 0;
+    dom.practicePillCount.textContent = String(n);
+    dom.practicePillBtn.hidden = n === 0;
+  }
+
   function pad2(n) { return String(n).padStart(2, "0"); }
   function todayKey() {
     const d = new Date();
@@ -481,6 +567,11 @@
     // Game Mode
     mission: null,
     progress: defaultProgress(),
+    // Mistakes-and-practice: persisted wrong records + in-memory "replay this
+    // problem" hook so the next generated problem comes from the queue.
+    wrongs: defaultWrongs(),
+    replayProblem: null,    // when non-null, startGeneratedProblem() uses it
+    replayingQuestionId: null, // tracks the questionId we're currently retrying
   };
 
   // ============================================================
@@ -536,6 +627,8 @@
     newProblemBtn: mustGetEl("newProblemBtn"),
     startOverBtn: mustGetEl("startOverBtn"),
     resetProgressBtn: mustGetEl("resetProgressBtn"),
+    practicePillBtn: mustGetEl("practicePillBtn"),
+    practicePillCount: mustGetEl("practicePillCount"),
     feedback: mustGetEl("feedback"),
 
     // Mission
@@ -1022,7 +1115,33 @@
     focusInputSoon();
   }
   function startGeneratedProblem() {
+    // Mistakes-and-practice: if a wrong record was queued via the "Practice
+    // tricky problems" pill, replay that exact problem instead of generating
+    // a fresh one. The shape carries enough to reconstruct the Problem object.
+    if (app.replayProblem) {
+      const shape = app.replayProblem;
+      app.replayingQuestionId = `${shape.divisor}/${shape.dividend}`;
+      app.replayProblem = null;
+      newProblem({
+        dividend: shape.dividend,
+        divisor: shape.divisor,
+        difficulty: shape.difficulty,
+        expectedQuotient: shape.expectedQuotient,
+        expectedRemainder: shape.expectedRemainder,
+      });
+      return;
+    }
+    app.replayingQuestionId = null;
     newProblem(generateProblem(app.difficulty));
+  }
+
+  /** Pop the oldest unresolved wrong and queue it for the next problem. */
+  function startNextPracticeReplay() {
+    if (app.wrongs.records.length === 0) return false;
+    app.replayProblem = app.wrongs.records[0].questionShape;
+    startGeneratedProblem();
+    setAppFeedback("neutral", "Tricky problem replay — you've seen this one before!");
+    return true;
   }
   function startOver() {
     if (!app.problem) return startGeneratedProblem();
@@ -1394,6 +1513,25 @@
           // overlay takes over the screen.
           const earned = scoreProblem();
           pushStarsToHub(earned);
+
+          // Mistakes-and-practice: record the wrong (if the kid struggled) or
+          // resolve it (if they were replaying a queued problem and got it
+          // clean). A 3-star clean run on a fresh problem records nothing.
+          const counters = {
+            attempts: app.attemptsThisProblem,
+            hintsUsed: app.hintsUsedThisProblem,
+            revealUsed: app.revealUsedThisProblem,
+          };
+          const struggled = counters.attempts > 0 || counters.hintsUsed > 0 || counters.revealUsed;
+          if (struggled) {
+            recordMistake(app.problem, app.engine, counters);
+          } else if (app.replayingQuestionId) {
+            // Replay completed cleanly → remove from queue.
+            resolveMistake(app.replayingQuestionId);
+          }
+          app.replayingQuestionId = null;
+          updatePracticePillUI();
+
           const finalProblem = app.problem;
           const finalEngine = app.engine;
           setTimeout(() => {
@@ -1477,9 +1615,14 @@
     if (!ok) return;
     hideCompletionOverlay();
     resetProgressStorage();
+    resetWrongsStorage();
     app.progress = defaultProgress();
+    app.wrongs = defaultWrongs();
     app.mission = null;
+    app.replayProblem = null;
+    app.replayingQuestionId = null;
     app.sessionStats = { problemsDone: 0, stepsCorrect: 0, streak: 0, stars: 0 };
+    updatePracticePillUI();
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.resetProgress) {
       window.KLS.bridge.resetProgress();
     }
@@ -1537,6 +1680,11 @@
 
   dom.newProblemBtn.addEventListener("click", () => { hideCompletionOverlay(); startGeneratedProblem(); });
   dom.startOverBtn.addEventListener("click", () => { hideCompletionOverlay(); startOver(); });
+  dom.practicePillBtn.addEventListener("click", () => {
+    hideCompletionOverlay();
+    startNextPracticeReplay();
+    render();
+  });
 
   // Completion overlay actions
   dom.completionAgainBtn.addEventListener("click", playAnotherFromOverlay);
@@ -1659,6 +1807,8 @@
 
   function rebindProfile() {
     app.progress = loadProgress();
+    app.wrongs = loadWrongs();
+    updatePracticePillUI();
     if (topMode === "game") {
       refreshStreakState();
       renderMissionPanel();
@@ -1672,7 +1822,20 @@
     }
     if (window.KLS.bridge.onHubMessage) {
       window.KLS.bridge.onHubMessage("setProfile", () => rebindProfile());
+      // Chrome bar's "🏠 Home" button — return to the game's default state
+      // (top-level Practice mode with a fresh problem). Cancels any active
+      // mission, replay queue, and overlay.
+      window.KLS.bridge.onHubMessage("goHome", () => goToGameHome());
     }
+  }
+
+  function goToGameHome() {
+    hideCompletionOverlay();
+    app.mission = null;
+    app.replayProblem = null;
+    app.replayingQuestionId = null;
+    setTopMode("practice");
+    startGeneratedProblem();
   }
 
   // ============================================================
@@ -1681,6 +1844,8 @@
 
   // Standalone or pre-profile: load whatever's at the un-scoped key
   app.progress = loadProgress();
+  app.wrongs = loadWrongs();
+  updatePracticePillUI();
 
   setSelectedSegment("[data-difficulty]", app.difficulty, "data-difficulty");
   setSelectedSegment("[data-mode]", app.mode, "data-mode");

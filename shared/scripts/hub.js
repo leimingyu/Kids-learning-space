@@ -13,7 +13,7 @@
       topics: ['word-problems'],
       tag: 'Word Problems',
       tagClass: 'tile__tag--reading',
-      storageBase: 'wordProblemAdventure_v1',
+      storageBase: ['wordProblemAdventure_v1', 'wordProblemAdventure_wrongs_v1'],
     },
     {
       slug: 'cosmic-math-quest',
@@ -33,6 +33,7 @@
       topics: ['fractions'],
       tag: 'Fractions',
       tagClass: 'tile__tag--math',
+      storageBase: 'letsLearnFractions_wrongs_v1',
     },
     {
       slug: 'long-division-coach',
@@ -42,7 +43,7 @@
       topics: ['long-division', 'mul-div'],
       tag: 'Long Division',
       tagClass: 'tile__tag--logic',
-      storageBase: 'longDivisionCoach_v1',
+      storageBase: ['longDivisionCoach_v1', 'longDivisionCoach_wrongs_v1'],
     },
   ];
 

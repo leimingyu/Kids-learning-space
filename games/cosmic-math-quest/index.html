@@ -4478,6 +4478,11 @@
 
   // Expose to the post-bridge inline script.
   window.__cmq_onProfileReady = reloadStateForActiveProfile;
+  // Chrome-bar "🏠 Home" → return to the menu screen. Cancels any active
+  // game/practice screen without resetting progress.
+  window.__cmq_onGoHome = function () {
+    try { showScreen('menu'); } catch (e) { /* ignore */ }
+  };
 })();
 
 </script>
@@ -4496,6 +4501,10 @@
       // profile-scoped key so each kid sees only their own progress.
       if (window.KLS.bridge.onProfileReady && window.__cmq_onProfileReady) {
         window.KLS.bridge.onProfileReady(window.__cmq_onProfileReady);
+      }
+      // Chrome-bar "🏠 Home" — return to this game's menu screen.
+      if (window.KLS.bridge.onHubMessage && window.__cmq_onGoHome) {
+        window.KLS.bridge.onHubMessage('goHome', window.__cmq_onGoHome);
       }
     }
   </script>

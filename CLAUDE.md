@@ -92,6 +92,8 @@ When adding or modifying a game that uses profile-scoped storage, register its `
 - Slugs are `kebab-case` and are the canonical ID in both URLs and the progress schema. Changing a slug invalidates a user's saved progress for that game.
 - Each game under `games/` has its own `docs/` directory with PRD/QA/review docs. **Respect those before touching a game's internals** — the games predate the hub and have their own design intent.
 - `prefers-reduced-motion` and `prefers-color-scheme: dark` are honored via token overrides and celebrate.js — preserve those paths when changing motion/visuals.
+- **Every game must track the kid's mistakes and expose a Practice mode that lets them replay or remediate those mistakes** — see `MISTAKES_AND_PRACTICE.md` at the project root for the canonical spec, plus each game's `docs/MISTAKES_AND_PRACTICE.md` for current status and per-game integration notes. Cosmic Math Quest is the reference implementation.
+- **Every game must let the kid return to its own home screen without leaving the iframe.** Two parallel surfaces: the shared chrome bar renders a `🏠 Home` button next to `← Hub` that sends a `{ type: 'kls:hub', event: 'goHome' }` postMessage, AND each game must subscribe via `bridge.onHubMessage('goHome', cb)` and navigate to its welcome/menu screen. For deep screens (mid-session, mid-mission), each game should also expose an in-game home affordance so standalone (file://) users — who don't get the chrome bar — can still escape. See `ARCHITECTURE.md` for the contract.
 
 ## Adding a new game
 
@@ -99,6 +101,7 @@ When adding or modifying a game that uses profile-scoped storage, register its `
 2. Add an entry to the `GAMES` array in `shared/scripts/hub.js` (slug, title, emoji, subtitle, topics, tag, tagClass).
 3. Optional: `<link>` `shared/styles/tokens.css` and `<script src="../../shared/scripts/game-bridge.js">` to wire progress. Hook `KLS.bridge.onVisible('#end-screen', () => { KLS.bridge.played(); KLS.bridge.celebrate(); })`.
 4. **If your game persists state**, scope its localStorage by `KLS.bridge.getProfileId()` so each profile starts clean — see "Per-profile state" above. Add a visible "Reset my progress" affordance.
+5. **Plan for mistakes-and-practice from day one.** Add a `<gameSlug>_wrongs_v1` storage key alongside the main state, register both in `GAMES[].storageBase` as an array, hook the wrong-answer signal into a `recordMistake(record)` function, and surface a Practice affordance in the game UI. See `MISTAKES_AND_PRACTICE.md`.
 
 If you add a new topic, also add it to the `TOPICS` filter array in `hub.js`.
 
@@ -106,4 +109,5 @@ If you add a new topic, also add it to the `TOPICS` filter array in `hub.js`.
 
 - `README.md` — user-facing intro and the 5-step "add a game" recipe.
 - `ARCHITECTURE.md` — full decision record (iframe choice, chrome strategy, progress schema, postMessage contract, routing rationale).
+- `MISTAKES_AND_PRACTICE.md` — cross-game requirement: save the kid's mistakes (profile-scoped) and expose a Practice mode that replays them.
 - `design-system.html` — open in a browser; living reference for every token and component.

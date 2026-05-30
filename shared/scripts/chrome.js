@@ -27,6 +27,20 @@
       onclick: saveAndLeave,
     }, '← Hub');
 
+    // "🏠 Home" — return to the current game's own welcome/home screen WITHOUT
+    // leaving the iframe. Sends a `goHome` postMessage; the game's bridge
+    // handler navigates internally. See ARCHITECTURE.md / game-bridge.js for
+    // the contract. Games that don't subscribe to `goHome` will see no
+    // effect (no-op fallback); fixing them belongs to that game's code, not
+    // here.
+    const homeBtn = el('button', {
+      class: 'chrome__home',
+      type: 'button',
+      'aria-label': 'Return to this game’s home screen',
+      title: 'Back to this game’s home (stay in the game)',
+      onclick: goGameHome,
+    }, '🏠 Home');
+
     const saveBtn = el('button', {
       class: 'chrome__save',
       type: 'button',
@@ -49,6 +63,7 @@
 
     const bar = el('div', { class: 'chrome' },
       backBtn,
+      homeBtn,
       saveBtn,
       profileBtn,
       el('div', { class: 'chrome__totals' }, totalsStarsEl, totalsStickersEl),
@@ -64,6 +79,13 @@
   function saveNow() {
     postToFrame('requestState');
     flashSaved();
+  }
+
+  /** Tell the active game to return to its own home/welcome screen. The
+   *  game is expected to subscribe via `bridge.onHubMessage('goHome', cb)`.
+   *  We don't navigate ourselves — the game knows what "home" means. */
+  function goGameHome() {
+    postToFrame('goHome');
   }
 
   /** Ask the game for its current state, then return to hub when it replies (or after a small timeout). */

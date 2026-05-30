@@ -53,9 +53,13 @@
         </div>
 
         <div class="toolbar__group toolbar__group--actions">
+          <button id="practicePillBtn" class="btn btn--secondary practicePill" type="button" hidden title="Replay a problem you got wrong before">
+            <span aria-hidden="true">🎯</span>
+            <span>Tricky problems: <strong id="practicePillCount">0</strong></span>
+          </button>
           <button id="newProblemBtn" class="btn btn--tertiary" type="button">New problem</button>
           <button id="startOverBtn" class="btn btn--tertiary" type="button">Start over</button>
-          <button id="resetProgressBtn" class="btn btn--tertiary" type="button" title="Erase streak, calendar, and stars for this profile">Reset my progress</button>
+          <button id="resetProgressBtn" class="btn btn--tertiary" type="button" title="Erase streak, calendar, stars, and tricky-problem history for this profile">Reset my progress</button>
         </div>
       </div>
     </header>

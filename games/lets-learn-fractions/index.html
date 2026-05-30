@@ -250,6 +250,19 @@
       transition: transform .12s var(--bounce), filter .2s ease, box-shadow .2s ease;
     }
     .btn.mega:active{ transform: translateY(8px); box-shadow: 0 6px 0 rgba(0,0,0,.10), 0 12px 20px rgba(0,0,0,.10); }
+    .trickyPracticeBtn{
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 18px;
+      background: #fff5d6;
+      border: 2px solid #f4c64a;
+      color: #6b4a04;
+      cursor: pointer;
+    }
+    .trickyPracticeBtn:hover{ background: #ffeec0; }
+    .trickyPracticeBtn strong{ color: #b8731a; }
     @media (hover:hover){
       .btn.mega:hover{ transform: translateY(-4px) scale(1.01); }
     }
@@ -1760,6 +1773,19 @@
             ▶️ Start Cooking!
           </button>
 
+          <!-- Mistakes-and-practice: shown only when there's at least one
+               unresolved tricky pizza waiting. Clicking starts a session
+               that re-presents the queued wrongs. -->
+          <button
+            class="btn trickyPracticeBtn"
+            id="trickyPracticeBtn"
+            type="button"
+            hidden
+            title="Replay pizzas you got wrong before"
+          >
+            🍕 Practice tricky pizzas (<strong id="trickyPracticeCount">0</strong>)
+          </button>
+
           <!-- How to play (collapsed by default — keeps the screen simple) -->
           <details class="card howToPlay">
             <summary class="howToSummary">
@@ -2341,7 +2367,99 @@
     }
 
     const recentKeys = []; // small FIFO to dodge immediate repeats
+
+    // ====================================================================
+    // Mistakes-and-Practice storage (cross-game spec).
+    // Profile-scoped via KLS.bridge.getProfileId(); falls back to un-scoped
+    // when standalone. Stores `records: [ {key, q, attempts, ts} ]`.
+    // ====================================================================
+    const WRONGS_KEY_BASE = "letsLearnFractions_wrongs_v1";
+    function wrongsKey(){
+      try {
+        const pid = (window.KLS && window.KLS.bridge && window.KLS.bridge.getProfileId)
+          ? window.KLS.bridge.getProfileId() : null;
+        return pid ? WRONGS_KEY_BASE + "__" + pid : WRONGS_KEY_BASE;
+      } catch(e){ return WRONGS_KEY_BASE; }
+    }
+    function loadWrongs(){
+      try {
+        const raw = localStorage.getItem(wrongsKey());
+        if(!raw) return { records: [] };
+        const parsed = JSON.parse(raw);
+        return { records: Array.isArray(parsed.records) ? parsed.records : [] };
+      } catch(e){ return { records: [] }; }
+    }
+    function saveWrongs(){
+      try { localStorage.setItem(wrongsKey(), JSON.stringify(wrongsStore)); }
+      catch(e){ /* ignore */ }
+    }
+    function resetWrongs(){
+      try { localStorage.removeItem(wrongsKey()); } catch(e){ /* ignore */ }
+      wrongsStore.records.length = 0;
+    }
+    /** Push a wrong record (dedup by question key, bump attempts). Caps the
+     *  active queue at 20 — oldest fall out, per the spec UX advice. */
+    function recordMistake(q){
+      if(!q || !q.key) return;
+      const existing = wrongsStore.records.find(r => r.key === q.key);
+      if(existing){
+        existing.attempts += 1;
+        existing.ts = new Date().toISOString();
+      } else {
+        wrongsStore.records.push({
+          key: q.key,
+          q: cloneQuestion(q),
+          attempts: 1,
+          ts: new Date().toISOString(),
+        });
+        if(wrongsStore.records.length > 20) wrongsStore.records.shift();
+      }
+      saveWrongs();
+    }
+    function resolveMistake(qkey){
+      const i = wrongsStore.records.findIndex(r => r.key === qkey);
+      if(i >= 0){
+        wrongsStore.records.splice(i, 1);
+        saveWrongs();
+      }
+    }
+    /** Deep-ish copy keeping just the data fields we need to re-present. */
+    function cloneQuestion(q){
+      const c = { type: q.type, key: q.key };
+      if(q.type === "ofN"){ c.n = q.n; c.d = q.d; c.ofN = q.ofN; c.ans = q.ans; }
+      else if(q.type === "equiv"){ c.n = q.n; c.d = q.d; c.d2 = q.d2; c.ans = q.ans; }
+      else if(q.type === "spot"){
+        c.n = q.n; c.d = q.d;
+        c.choices = (q.choices || []).map(ch => ({ n: ch.n, d: ch.d }));
+        c.ans = q.ans;
+      }
+      else if(q.type === "compare"){
+        c.a = { n: q.a.n, d: q.a.d };
+        c.b = { n: q.b.n, d: q.b.d };
+        c.ans = q.ans;
+      }
+      return c;
+    }
+
+    // In-memory store, hydrated on boot + on profile-change.
+    let wrongsStore = { records: [] };
+
+    // Tricky-practice mode flag. When true, generateQuestion() pulls from
+    // the wrongs queue instead of generating fresh, and correct answers
+    // resolve the queued record. Set by the "Practice tricky pizzas" button.
+    let isTrickyPractice = false;
+    let trickyQueueIdx = 0;
+
     function generateQuestion(){
+      // Tricky-practice mode pulls the next unresolved record from the queue.
+      // When the queue is exhausted, fall through to fresh generation so the
+      // session can still complete cleanly.
+      if(isTrickyPractice && wrongsStore.records.length > 0){
+        if(trickyQueueIdx >= wrongsStore.records.length) trickyQueueIdx = 0;
+        const rec = wrongsStore.records[trickyQueueIdx];
+        trickyQueueIdx += 1;
+        return cloneQuestion(rec.q);
+      }
       const p = bandParams(currentLevel, heat);
       let q, guard = 0;
       do{
@@ -3155,6 +3273,13 @@
         }
         // No modal on correct — inline chip + auto-advance.
         showResultChip(q);
+        // Mistakes-and-practice: a clean correct answer resolves any queued
+        // tricky pizza for this question — but only in tricky-practice mode,
+        // so kids who happen to get a fresh question right don't lose their
+        // queued items.
+        if(isTrickyPractice && q && q.key){
+          resolveMistake(q.key);
+        }
       } else {
         wrong++;
         streak = 0;
@@ -3163,6 +3288,10 @@
         coolHeat();
         setChefBubble("wrong");
         showWrongFeedback(q, kidAnsDisplay);
+        // Mistakes-and-practice: every wrong answer (any mode) goes into the
+        // queue so the kid can replay it via the Tricky Pizzas button.
+        recordMistake(q);
+        updateTrickyPillUI();
       }
 
       updateScoreboard();
@@ -3325,6 +3454,36 @@
     }
 
     function resetGame(){
+      isTrickyPractice = false;
+      trickyQueueIdx = 0;
+      startNewSession();
+      showScreen("game");
+    }
+
+    /** Wipe wrongs for this profile and refresh the pill. Triggered from a
+     *  long-press on Reset (kid-friendly: same button, more wipes). For v1
+     *  we keep it accessible only via DevTools / a future "settings" menu. */
+    function resetTrickyWrongs(){
+      resetWrongs();
+      updateTrickyPillUI();
+    }
+
+    /** Refresh the home-screen tricky-pizzas button: hide when no records,
+     *  show count when ≥1. */
+    function updateTrickyPillUI(){
+      const btn = document.getElementById("trickyPracticeBtn");
+      const cnt = document.getElementById("trickyPracticeCount");
+      if(!btn || !cnt) return;
+      const n = wrongsStore.records.length;
+      cnt.textContent = String(n);
+      btn.hidden = n === 0;
+    }
+
+    /** Enter tricky-practice mode: next session pulls from the wrongs queue. */
+    function startTrickyPractice(){
+      if(wrongsStore.records.length === 0) return;
+      isTrickyPractice = true;
+      trickyQueueIdx = 0;
       startNewSession();
       showScreen("game");
     }
@@ -3337,11 +3496,14 @@
     // Buttons / events
     // --------------------------
     document.getElementById("startBtn").addEventListener("click", ()=>{
+      isTrickyPractice = false;
+      trickyQueueIdx = 0;
       setSessionSizeFromHome();
       setStartFromHome();
       startNewSession();
       showScreen("game");
     });
+    document.getElementById("trickyPracticeBtn").addEventListener("click", startTrickyPractice);
 
     document.getElementById("endBtn").addEventListener("click", ()=>{
       showScreen("goodbye");
@@ -3503,6 +3665,34 @@
         window.KLS.bridge.celebrate();
       });
     }
+
+    // Hydrate wrongs store on boot, plus on profile-change so the queue is
+    // always scoped to the active kid. Standalone fires once; iframe defers.
+    (function () {
+      function rehydrate() {
+        try {
+          wrongsStore = loadWrongs();
+          updateTrickyPillUI();
+        } catch (e) { /* not yet defined — safe to ignore */ }
+      }
+      rehydrate();
+      if (window.KLS && window.KLS.bridge) {
+        if (window.KLS.bridge.onProfileReady) {
+          window.KLS.bridge.onProfileReady(rehydrate);
+        }
+        if (window.KLS.bridge.onHubMessage) {
+          window.KLS.bridge.onHubMessage('setProfile', rehydrate);
+          // Chrome-bar "🏠 Home" → cancel any active session and show home.
+          window.KLS.bridge.onHubMessage('goHome', function () {
+            try {
+              isTrickyPractice = false;
+              trickyQueueIdx = 0;
+              showScreen('home');
+            } catch (e) { /* ignore */ }
+          });
+        }
+      }
+    })();
   </script>
 </body>
 </html>

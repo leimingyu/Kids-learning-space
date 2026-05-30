@@ -485,6 +485,22 @@ body {
   .workCell--ghostTarget { animation: none; }
 }
 
+/* "Tricky problems" pill — visible in the Practice toolbar when the wrongs
+   store has at least one record. Inherits .btn styling, just a subtle accent. */
+.practicePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(251, 191, 36, 0.10);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: var(--text);
+}
+.practicePill:hover { background: rgba(251, 191, 36, 0.18); }
+.practicePill strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--warning);
+}
+
 /* ===== Solution 2: roaming-cursor active cell =====
    One cell at a time is "active" — pulses with a cyan outline and shows a
    blinking caret after the typed draft. The kid types directly into it.

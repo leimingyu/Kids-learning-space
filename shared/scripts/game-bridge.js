@@ -33,6 +33,12 @@
  *       has its own progress. When opened standalone (no hub) the bridge
  *       returns null from getProfileId() and games should fall back to
  *       an un-scoped legacy key.
+ *   { type: 'kls:hub', event: 'goHome' }
+ *     → kid clicked the chrome bar's "🏠 Home" button. Game should navigate
+ *       to its own welcome/home screen (NOT exit the iframe — that's what
+ *       the "← Hub" button does). Game subscribes via
+ *       `bridge.onHubMessage('goHome', cb)`. Games that don't subscribe
+ *       silently no-op — fix that game's code, not the bridge.
  */
 (function () {
   const embedded = (function () {

@@ -127,6 +127,29 @@ Games opt in by posting to `window.parent`:
 The parent validates the message's `slug` against the iframe's `src` before
 applying — one game cannot write to another's record.
 
+Hub → game messages (received via the bridge):
+
+```json
+{ "type": "kls:hub", "event": "requestState" }
+{ "type": "kls:hub", "event": "resumeState", "state": "<opaque blob>" }
+{ "type": "kls:hub", "event": "setProfile",  "profileId": "<string>" }
+{ "type": "kls:hub", "event": "goHome" }
+```
+
+`goHome` is sent by the chrome bar's `🏠 Home` button. Games subscribe via
+`bridge.onHubMessage('goHome', cb)` and are responsible for navigating
+internally to their own welcome/menu screen — the hub does NOT navigate.
+A game that doesn't subscribe is a no-op; the kid keeps seeing whatever
+screen they were on. The "← Hub" button remains the way to actually leave
+the iframe; `🏠 Home` keeps them inside the game.
+
+Each game should additionally surface an in-game home affordance (button,
+link, or escape gesture) on screens deeper than its own welcome screen.
+Two parallel discovery surfaces — chrome bar AND in-game — are required
+because the chrome bar only exists when the game is embedded in the hub;
+a game opened directly from `games/<slug>/index.html` (file:// or any
+static host) must still let the kid get back to its own home screen.
+
 ### 4. Routing — hash-based
 
 ```
