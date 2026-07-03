@@ -750,10 +750,15 @@
   // Snapshot pure helpers (unit-tested in tests/smoke-backup-snapshots.mjs)
   // ──────────────────────────────────────────────────────────────────────
 
-  /** Per-profile ⭐/🏆 rollup straight from an envelope's hub blob. */
+  /** Per-profile ⭐/🏆 rollup straight from an envelope's hub blob. The hub
+   *  blob stores `profiles` as an object map keyed by id (kls.progress.v2);
+   *  we also tolerate an array in case an older/hand-made envelope uses one. */
   function summarizeEnvelope(envelope) {
     const hub = envelope && envelope.hub;
-    const profiles = (hub && Array.isArray(hub.profiles)) ? hub.profiles : [];
+    const raw = hub && hub.profiles;
+    const profiles = Array.isArray(raw)
+      ? raw
+      : (raw && typeof raw === 'object' ? Object.keys(raw).map(function (k) { return raw[k]; }) : []);
     let totalStars = 0, totalStickers = 0;
     const out = profiles.map(function (p) {
       let stars = 0, stickers = 0;

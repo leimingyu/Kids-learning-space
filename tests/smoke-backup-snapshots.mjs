@@ -16,17 +16,18 @@ eval(code);
 
 const B = globalThis.window.KLS.backup._internals;
 
-// 1) summarizeEnvelope: per-profile stars/stickers from hub blob
+// 1) summarizeEnvelope: per-profile stars/stickers from hub blob.
+//    kls.progress.v2 stores `profiles` as an OBJECT MAP keyed by id.
 const env = {
   type: 'kls.backup', version: 1,
   hub: {
     version: 2,
-    profiles: [
-      { id: 'a', displayName: 'Emma', avatar: '🦊',
+    profiles: {
+      a: { id: 'a', displayName: 'Emma', avatar: '🦊',
         games: { g1: { levels: { l1: { stars: 3 }, l2: { stars: 2 } }, stickers: ['s1', 's2'] } } },
-      { id: 'b', displayName: 'Leo', avatar: '🐼',
+      b: { id: 'b', displayName: 'Leo', avatar: '🐼',
         games: { g1: { levels: { l1: { stars: 1 } }, stickers: ['s3'] } } },
-    ],
+    },
   },
   games: {},
 };
@@ -38,6 +39,10 @@ assert.strictEqual(emma.stickers, 2);
 assert.strictEqual(emma.name, 'Emma');
 assert.strictEqual(sum.totalStars, 6);
 assert.strictEqual(sum.totalStickers, 3);
+
+// tolerates an array shape too (older/hand-made envelopes)
+const arrSum = B.summarizeEnvelope({ hub: { profiles: [{ id: 'x', displayName: 'X', games: { g: { levels: { a: { stars: 2 } }, stickers: [] } } }] } });
+assert.strictEqual(arrSum.totalStars, 2);
 
 // summarizeEnvelope tolerates missing/empty hub
 assert.deepStrictEqual(B.summarizeEnvelope({}), { profiles: [], totalStars: 0, totalStickers: 0 });
