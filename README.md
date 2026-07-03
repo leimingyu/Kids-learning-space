@@ -23,13 +23,15 @@ macOS and Windows.
 
 Pick whichever is easiest — no install, works offline:
 
-- **Double-click a launcher** — `start-mac.command` (macOS) or `start-windows.bat`
-  (Windows). Each opens `index.html` in your default browser.
-- **Double-click `index.html`** directly.
-- **Serve locally** (see the backup note below):
+- **Double-click `index.html`** to just play. Saves become a download (see below).
+- **Double-click `Play Kids Learning Space`** (`.command` on macOS, `.bat` on
+  Windows) to play **with saves written into this folder** — it starts a tiny
+  local server (needs Python 3) and opens the game. This is the way to get a real
+  `saved_status/` folder next to the game.
+- **Serve locally** yourself (equivalent to the launcher):
 
   ```bash
-  python3 -m http.server 8000
+  python3 tools/kls_server.py 8000
   # open http://localhost:8000
   ```
 
@@ -69,8 +71,8 @@ saves into the folder in every browser.
 > **Why not straight into a folder next to the game?** A page opened by
 > double-clicking `index.html` runs as `file://`, and browsers forbid it from
 > writing to a chosen folder — the best it can do is a download. For an actual
-> `saved_status/` folder **next to the game**, written automatically, run the
-> **launcher** (`start-mac.command` / `start-windows.bat`); it starts a tiny
+> `saved_status/` folder **next to the game**, written automatically, open with
+> **Play Kids Learning Space** (`.command` / `.bat`); it starts a tiny
 > local server (`tools/kls_server.py`, needs Python 3) that writes
 > `kls-backup-latest.json` + `saved_status/kls-save-*.json` (newest 30) into
 > this folder in any browser.
@@ -81,8 +83,8 @@ saves into the folder in every browser.
 /
 ├── index.html              Hub landing + iframe stage
 ├── design-system.html      Living component documentation
-├── start-mac.command       Double-click launcher (macOS)
-├── start-windows.bat       Double-click launcher (Windows)
+├── Play Kids Learning Space.command   Double-click to play + save to this folder (macOS)
+├── Play Kids Learning Space.bat       Double-click to play + save to this folder (Windows)
 ├── README.md
 ├── ARCHITECTURE.md         Decisions: iframe, chrome, progress, routing
 ├── shared/
