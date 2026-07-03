@@ -1752,11 +1752,17 @@
     }
     const t = ev.target;
     const onButton = t instanceof HTMLElement && (t.tagName === "BUTTON" || t.tagName === "A");
-    // When a button/link has focus (e.g. the kid just clicked Check / Hint),
-    // let Enter/Space activate it natively — but DON'T swallow digit keys or
-    // Backspace, or the kid can't type into the cell until they click off the
-    // button they just pressed. (That was the "can't type any number" bug.)
-    if (onButton && (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar")) return;
+    // Let Space activate a focused button natively (standard keyboard behavior).
+    // Do NOT pass Enter through, though: there is no real input element to hold
+    // focus (see focusInputSoon — it's a no-op), so focus stays on whatever
+    // button the kid last clicked (New problem, Start over, difficulty, mode…).
+    // Passing Enter through would silently re-run that button instead of
+    // checking the answer — the kid types a digit, presses Enter, and "nothing
+    // happens". Enter must always mean "check my answer". preventDefault() below
+    // also suppresses any native click when the Check button itself is focused,
+    // so there's no double-check. Digits and Backspace still fall through so the
+    // kid can always type into the cell even with a button focused.
+    if (onButton && (ev.key === " " || ev.key === "Spacebar")) return;
 
     if (ev.key === "Enter") {
       ev.preventDefault();
