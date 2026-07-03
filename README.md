@@ -49,23 +49,22 @@ opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 ### Saving your game to a file
 
 Everyday progress **auto-saves in the browser** (survives closing/reopening and
-restarts). To keep a portable copy, click **💾 Save my game** (on the hub, or
-Parent page → Backups). It downloads a `saved_status/kls-save-<timestamp>.json`
-file:
+restarts). To write a copy to disk, click **💾 Save my game** (on the hub, or
+Parent page → Backups). It saves your profiles + progress into a **`saved_status`
+folder**, using the best method your browser allows:
 
-- In **Chrome/Edge** it appears in `Downloads/saved_status/`.
-- In Firefox/Safari it lands directly in Downloads (named `saved_status-…json`).
+1. If you ran the **launcher** (local server) → writes straight into
+   `Kids-learning-space/saved_status/` automatically, any browser.
+2. Otherwise, on **Chrome/Edge** it asks you to **pick the folder once** (pick
+   the `Kids-learning-space` folder to keep saves next to the game); after that
+   it writes to `…/saved_status/` there silently.
+3. If your browser won't let a double-clicked page pick a folder (e.g.
+   Firefox/Safari), it **downloads** a `saved_status/kls-save-….json` file
+   instead.
 
-Restore it later with **Import a file…**. This works even when you just
-double-click `index.html` — no launcher needed.
-
-**To make saves land in this game's own folder (no launcher):** because a
-double-clicked page can't choose a folder, the file goes to your browser's
-download location. Point that at this folder once — in Chrome/Edge:
-**Settings → Downloads → Location →** choose the `Kids-learning-space` folder
-(and turn off *"Ask where to save each file"*). Now every **Save my game**
-writes to `Kids-learning-space/saved_status/`, right next to the game. (Firefox
-and Safari don't create the subfolder — the file just goes to your downloads.)
+Restore any of these with **Import a file…**. No launcher is required for the
+double-click case — though the launcher is the only way to get fully *automatic*
+saves into the folder in every browser.
 
 > **Why not straight into a folder next to the game?** A page opened by
 > double-clicking `index.html` runs as `file://`, and browsers forbid it from

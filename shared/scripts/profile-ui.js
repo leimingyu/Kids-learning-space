@@ -529,23 +529,32 @@
 
       // "Save my game" — works even when the app was opened by double-clicking
       // index.html: downloads a saved_status/kls-save-<time>.json file.
-      if (backup.saveToDownload) {
+      if (backup.saveMyGame) {
+        const saveNote = el('p', { class: 'parent-page__note' },
+          'Saves your profiles + progress into a “saved_status” folder. The first time, your browser may ask you to pick the folder (pick this game’s folder, or anywhere) — after that it saves there. If your browser can’t pick a folder, it downloads the file instead. Restore later with “Import a file…”.');
         const saveGameBtn = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
-          try { if (backup.saveToDownload() !== false) { saveGameBtn.textContent = '✅ Saved!'; setTimeout(function () { saveGameBtn.textContent = '💾 Save my game'; }, 1600); } }
-          catch (e) { alert('Save failed: ' + (e && e.message ? e.message : e)); }
+          saveGameBtn.disabled = true;
+          backup.saveMyGame().then(function (r) {
+            saveGameBtn.disabled = false;
+            if (!r || r.mode === 'cancelled') { saveGameBtn.textContent = '💾 Save my game'; return; }
+            saveGameBtn.textContent = r.mode === 'download' ? '✅ Downloaded!' : '✅ Saved to folder!';
+            saveNote.textContent = r.mode === 'folder'
+              ? 'Saved into “' + (r.name || 'your folder') + '/saved_status/”. It saves there again next time.'
+              : r.mode === 'server'
+                ? 'Saved into this app’s saved_status/ folder.'
+                : 'Downloaded a saved_status file to your browser’s downloads.';
+            setTimeout(function () { saveGameBtn.textContent = '💾 Save my game'; }, 2000);
+          }).catch(function (e) { saveGameBtn.disabled = false; alert('Save failed: ' + (e && e.message ? e.message : e)); });
         } }, '💾 Save my game');
         backupCard.append(
           el('div', { class: 'btn-row' }, saveGameBtn),
-          el('p', { class: 'parent-page__note' },
-            'Saves a file into a “saved_status” folder, then restore it later with “Import a file…”. (Your progress also auto-saves in this browser.)'),
+          saveNote,
           el('details', { class: 'parent-backup__tip' },
-            el('summary', {}, 'Want saves to land in this game’s own folder?'),
+            el('summary', {}, 'Where exactly does it save?'),
             el('p', { class: 'parent-page__note' },
-              'Because a double-clicked page can’t choose a folder, the file goes to your browser’s download location, inside a “saved_status” subfolder (Chrome/Edge). ' +
-              'To make that be right next to the game, set your browser’s download folder to this Kids-learning-space folder: ' +
-              'in Chrome/Edge, Settings → Downloads → Location → choose the Kids-learning-space folder (and turn off “Ask where to save each file”). ' +
-              'Then every “Save my game” writes to Kids-learning-space/saved_status/ — no launcher needed. ' +
-              'Firefox/Safari don’t create the subfolder; there the file just goes to your downloads.'),
+              'Chrome/Edge let the page write into a saved_status folder you pick once (pick this Kids-learning-space folder to keep saves next to the game). ' +
+              'Firefox/Safari don’t allow that from a double-clicked file, so the save is downloaded instead (into a “saved_status” subfolder of your downloads on Chrome/Edge, or straight to downloads elsewhere). ' +
+              'For fully automatic saves into this folder in any browser, use the launcher (local server).'),
           ),
         );
       }

@@ -393,6 +393,69 @@
     return true;
   }
 
+  /** Ensure we hold readwrite permission on a persisted directory handle,
+   *  re-requesting it (needs a user gesture — a Save click provides one). */
+  async function ensureRWPermission(handle) {
+    try {
+      if (!handle) return false;
+      if (await verifyRWPermission(handle)) return true;
+      if (typeof handle.requestPermission === 'function') {
+        return (await handle.requestPermission({ mode: 'readwrite' })) === 'granted';
+      }
+      return false;
+    } catch (e) { return false; }
+  }
+
+  /**
+   * "Save my game" — write the profile + status into a `saved_status` folder
+   * using the best mechanism the browser allows, falling back to a download so
+   * a save is ALWAYS produced. Must be called from a user gesture (the Save
+   * button) so the folder picker/permission prompt is allowed.
+   *
+   * Order: local save-server (launcher) → File System Access folder (picked
+   * once, then remembered — works wherever the browser permits the picker,
+   * including a double-clicked file:// page in browsers that allow it) →
+   * download (always works). Returns { mode:'server'|'folder'|'download'|'cancelled', name? }.
+   */
+  async function saveMyGame() {
+    const envelope = buildEnvelope();
+    if (envelopeIsEmpty(envelope)) {
+      const ok = window.confirm("There's nothing to save yet. Save anyway?");
+      if (!ok) return { mode: 'cancelled' };
+    }
+    // 1. Local save server (if the launcher is running) — writes into the app
+    //    folder automatically.
+    try {
+      if (await detectSaveServer()) {
+        await postSaveToServer(envelope);
+        noteMirrored();
+        return { mode: 'server' };
+      }
+    } catch (e) { /* fall through */ }
+    // 2. File System Access: write into a `saved_status` subfolder of a folder
+    //    the user picks once (then remembered). No launcher, no server.
+    if (typeof window.showDirectoryPicker === 'function') {
+      try {
+        let dh = await getLastDirHandle();
+        if (!(await ensureRWPermission(dh))) dh = null;
+        if (!dh) dh = await connectBackupFolder(); // prompts the pick, persists the handle
+        if (dh) {
+          await writeHistoryToFolder(dh, envelope, new Date());
+          noteMirrored();
+          return { mode: 'folder', name: dh.name || 'your folder' };
+        }
+        // User cancelled the pick → fall through to a download so the save still happens.
+      } catch (e) {
+        // Picker unavailable/blocked in this context (some browsers block it on
+        // file://) → fall through to the download so nothing is lost.
+      }
+    }
+    // 3. Download fallback (always works, incl. plain file://).
+    downloadText(savedStatusDownloadName(new Date()), JSON.stringify(envelope, null, 2));
+    try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); } catch (e) { /* ignore */ }
+    return { mode: 'download' };
+  }
+
   function getLastExportedAt() {
     try { return localStorage.getItem(LAST_EXPORT_KEY) || null; } catch (e) { return null; }
   }
@@ -1005,6 +1068,7 @@
   window.KLS.backup = {
     exportToFile: exportToFile,
     saveToDownload: saveToDownload,
+    saveMyGame: saveMyGame,
     importFromFile: importFromFile,
     getLastExportedAt: getLastExportedAt,
     pickBackupFolder: pickBackupFolder,
