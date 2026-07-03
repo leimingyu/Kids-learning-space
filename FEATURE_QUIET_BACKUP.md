@@ -1,9 +1,36 @@
 # Feature Request: Quiet Backup ("The Quiet Combo")
 
-**Status:** Proposed — awaiting approval
+**Status:** Shipped (Phase 1 + Phase 2) — see "Implemented" below. Tracks GitHub issue #1.
 **Date:** 2026-07-03
 **Builds on:** `BACKUP_RESTORE.md` (envelope format, REPLACE semantics, versioning rules — all unchanged)
 **Replaces:** the hub's 💾 chip + popover menu, the "back up your data" nudge banner, and the habit of manually exporting `kls-backup-*.json` files.
+
+## Implemented
+
+All hub/shared-layer only; no game file was touched. `BACKUP_VERSION` stays `1`.
+
+- `shared/scripts/backup.js` — the `kls-backup` IndexedDB is bumped to v2 with a
+  `snapshots` object store (keyed by ISO `ts`). A debounced (~10 s) scheduler
+  (`initSnapshots`) wires `KLS.progress.subscribe` + `storage` + `pagehide` /
+  `visibilitychange:hidden`, dedupes identical payloads (`envelopePayloadEqual`),
+  and thins with the Time-Machine policy (`thinSnapshots`: <24 h all / 24 h–30 d
+  daily / monthly beyond / hard cap 60). `restoreSnapshot(ts)` writes a
+  **"Before restore"** safety snapshot first, so timeline restore is undoable.
+  Phase 2: `connectBackupFolder` / `getFolderStatus` / `mirrorAfterSnapshot`
+  mirror `kls-backup-latest.json` + daily `kls-backup-YYYYMMDD.json` (pruned to
+  14) to a chosen folder, throttled to ≤ 1 write/hour + one on `pagehide`;
+  permission loss sets a silent reconnect flag.
+- `shared/scripts/hub.js` — the 💾 chip/popover and the nudge banner are removed;
+  the account-actions row is now just a quiet **👨‍👧 Parent page** link. `boot()`
+  calls `KLS.backup.initSnapshots()`.
+- `shared/scripts/profile-ui.js` — the Parent page renders a **Backups** status
+  card, a **Restore from a moment…** timeline (Today / Yesterday / This week /
+  Older, per-profile ⭐/🏆 from the snapshot), the Phase-2 folder row, and quiet
+  Export / Import links (import keeps the type-REPLACE confirmation).
+- `shared/styles/components.css` — dead `.hub__nudge*` / `.hub__quick-*` popover
+  styles removed; `.parent-backup*` / `.timeline*` / `.hub__parent-link` added.
+- Pure helpers are unit-tested in `tests/smoke-backup-snapshots.mjs`; the full
+  snapshot → dedupe → restore → undo pipeline was verified in a browser.
 
 ## One-sentence pitch
 

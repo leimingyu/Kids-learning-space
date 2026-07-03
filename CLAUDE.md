@@ -18,11 +18,14 @@ python3 -m http.server 8000
 # → http://localhost:8000
 ```
 
-Smoke test for the Cosmic Math Quest learning-intelligence module:
+Smoke tests (no browser; each `eval`s a source file into a faked `window`):
 ```bash
+# Cosmic Math Quest learning-intelligence: fact-family / weak-family aggregation
 node games/cosmic-math-quest/tests/smoke-learning-intelligence.mjs
+
+# Quiet Backup snapshot helpers: summarize / dedupe / thinning / period-grouping
+node tests/smoke-backup-snapshots.mjs
 ```
-(This is the only test in the repo. It `eval`s `learningIntelligence.js` into a faked `window` and asserts on fact-family / weak-family aggregation.)
 
 Regenerate Word Problem Adventure question banks (Python, patches the HTML in place):
 ```bash
