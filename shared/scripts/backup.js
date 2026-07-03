@@ -460,6 +460,96 @@
     return typeof window.showDirectoryPicker === 'function';
   }
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Snapshot pure helpers (unit-tested in tests/smoke-backup-snapshots.mjs)
+  // ──────────────────────────────────────────────────────────────────────
+
+  /** Per-profile ⭐/🏆 rollup straight from an envelope's hub blob. */
+  function summarizeEnvelope(envelope) {
+    const hub = envelope && envelope.hub;
+    const profiles = (hub && Array.isArray(hub.profiles)) ? hub.profiles : [];
+    let totalStars = 0, totalStickers = 0;
+    const out = profiles.map(function (p) {
+      let stars = 0, stickers = 0;
+      const games = (p && p.games) || {};
+      Object.keys(games).forEach(function (slug) {
+        const g = games[slug] || {};
+        stickers += ((g.stickers || []).length);
+        const levels = g.levels || {};
+        Object.keys(levels).forEach(function (lv) { stars += (levels[lv].stars || 0); });
+      });
+      totalStars += stars; totalStickers += stickers;
+      return { id: p.id, name: p.displayName || 'Friend', avatar: p.avatar || '🦊', stars: stars, stickers: stickers };
+    });
+    return { profiles: out, totalStars: totalStars, totalStickers: totalStickers };
+  }
+
+  /** Payload equality for dedupe — ignores volatile envelope metadata. */
+  function envelopePayloadEqual(a, b) {
+    if (!a || !b) return a === b;
+    try {
+      return JSON.stringify({ hub: a.hub, games: a.games }) === JSON.stringify({ hub: b.hub, games: b.games });
+    } catch (e) { return false; }
+  }
+
+  function startOfLocalDay(ms) { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  function localDayKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function localMonthKey(ms) { const d = new Date(ms); return d.getFullYear() + '-' + (d.getMonth() + 1); }
+
+  /**
+   * Time-Machine thinning. Input: records [{ts:ISO,...}] (any order).
+   * Output: array of ts strings to DELETE. Keeps: all < 24h; last-of-day for
+   * 24h–30d; last-of-month beyond; hard cap 60 (oldest surplus removed).
+   * The single newest record is never deleted.
+   */
+  function thinSnapshots(records, now) {
+    const HOUR = 3600 * 1000, DAY = 24 * HOUR;
+    const sorted = records.slice().sort(function (a, b) {
+      return new Date(a.ts).getTime() - new Date(b.ts).getTime();
+    }); // ascending (oldest first)
+    if (sorted.length === 0) return [];
+    const newestTs = sorted[sorted.length - 1].ts;
+    const keep = new Set();
+    const lastByDay = {}, lastByMonth = {};
+    sorted.forEach(function (r) {
+      const t = new Date(r.ts).getTime();
+      const age = now - t;
+      if (age < DAY) { keep.add(r.ts); return; }
+      if (age < 30 * DAY) { lastByDay[localDayKey(t)] = r.ts; return; }
+      lastByMonth[localMonthKey(t)] = r.ts;
+    });
+    Object.keys(lastByDay).forEach(function (k) { keep.add(lastByDay[k]); });
+    Object.keys(lastByMonth).forEach(function (k) { keep.add(lastByMonth[k]); });
+    keep.add(newestTs);
+    // Hard cap 60: keep the 60 newest of the survivors.
+    const survivors = sorted.filter(function (r) { return keep.has(r.ts); });
+    if (survivors.length > 60) {
+      const capped = survivors.slice(survivors.length - 60); // newest 60
+      const cappedSet = new Set(capped.map(function (r) { return r.ts; }));
+      survivors.forEach(function (r) { if (!cappedSet.has(r.ts)) keep.delete(r.ts); });
+    }
+    return sorted.filter(function (r) { return !keep.has(r.ts); }).map(function (r) { return r.ts; });
+  }
+
+  /** Bucket records into Today / Yesterday / This week / Older (newest-first). */
+  function groupSnapshotsByPeriod(records, now) {
+    const DAY = 24 * 3600 * 1000;
+    const todayStart = startOfLocalDay(now);
+    const yesterdayStart = todayStart - DAY;
+    const weekStart = todayStart - 6 * DAY; // last 7 calendar days incl today
+    const out = { today: [], yesterday: [], thisWeek: [], older: [] };
+    records.slice().sort(function (a, b) {
+      return new Date(b.ts).getTime() - new Date(a.ts).getTime(); // newest-first
+    }).forEach(function (r) {
+      const t = new Date(r.ts).getTime();
+      if (t >= todayStart) out.today.push(r);
+      else if (t >= yesterdayStart) out.yesterday.push(r);
+      else if (t >= weekStart) out.thisWeek.push(r);
+      else out.older.push(r);
+    });
+    return out;
+  }
+
   window.KLS = window.KLS || {};
   window.KLS.backup = {
     exportToFile: exportToFile,
@@ -469,5 +559,12 @@
     hasBackupFolder: hasBackupFolder,
     supportsDirectoryPicker: supportsDirectoryPicker,
     BACKUP_VERSION: BACKUP_VERSION,
+    _internals: {
+      summarizeEnvelope: summarizeEnvelope,
+      envelopePayloadEqual: envelopePayloadEqual,
+      thinSnapshots: thinSnapshots,
+      groupSnapshotsByPeriod: groupSnapshotsByPeriod,
+      buildEnvelope: buildEnvelope,
+    },
   };
 })();
