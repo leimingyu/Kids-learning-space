@@ -1249,6 +1249,9 @@ code {
 .timeline__moment-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .timeline__time { font-weight: var(--kls-fw-semibold); color: var(--kls-ink); }
 .timeline__who { font-size: var(--kls-fs-sm); color: var(--kls-muted); }
+.parent-backup__tip { margin-top: var(--kls-space-2); }
+.parent-backup__tip summary { cursor: pointer; color: var(--kls-primary); font-size: var(--kls-fs-sm); }
+.parent-backup__tip summary:focus-visible { outline: none; box-shadow: var(--kls-shadow-focus); border-radius: var(--kls-radius-md); }
 
 .btn-tiny {
   padding: 4px 10px;
