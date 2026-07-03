@@ -552,9 +552,9 @@
           el('details', { class: 'parent-backup__tip' },
             el('summary', {}, 'Where exactly does it save?'),
             el('p', { class: 'parent-page__note' },
-              'Chrome/Edge let the page write into a saved_status folder you pick once (pick this Kids-learning-space folder to keep saves next to the game). ' +
-              'Firefox/Safari don’t allow that from a double-clicked file, so the save is downloaded instead (into a “saved_status” subfolder of your downloads on Chrome/Edge, or straight to downloads elsewhere). ' +
-              'For fully automatic saves into this folder in any browser, use the launcher (local server).'),
+              'An actual “saved_status” folder is only created by the “Play Kids Learning Space” launcher (a tiny local server) — it writes kls-backup-latest.json + saved_status/kls-save-*.json right next to the game, in any browser. ' +
+              'If you just double-clicked index.html, the browser won’t let the page make a folder, so Save instead downloads a single file named “saved_status_…json” to your Downloads (restore it with “Import a file…”). ' +
+              'On Chrome/Edge you can also pick a folder once when prompted, and it will save there.'),
           ),
         );
       }

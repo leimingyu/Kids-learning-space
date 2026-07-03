@@ -52,30 +52,27 @@ opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 
 Everyday progress **auto-saves in the browser** (survives closing/reopening and
 restarts). To write a copy to disk, click **💾 Save my game** (on the hub, or
-Parent page → Backups). It saves your profiles + progress into a **`saved_status`
-folder**, using the best method your browser allows:
+Parent page → Backups). What it does depends on how you opened the app:
 
-1. If you ran the **launcher** (local server) → writes straight into
-   `Kids-learning-space/saved_status/` automatically, any browser.
-2. Otherwise, on **Chrome/Edge** it asks you to **pick the folder once** (pick
-   the `Kids-learning-space` folder to keep saves next to the game); after that
-   it writes to `…/saved_status/` there silently.
-3. If your browser won't let a double-clicked page pick a folder (e.g.
-   Firefox/Safari), it **downloads** a `saved_status/kls-save-….json` file
-   instead.
+1. **Opened with `Play Kids Learning Space`** (the launcher / local server) →
+   Save writes real files into **`Kids-learning-space/saved_status/`**, right
+   next to the game, in **any browser**. *This is the only way to get an actual
+   `saved_status/` folder* — verified.
+2. **Double-clicked `index.html`, Chrome/Edge** → Save may offer to let you
+   **pick a folder once**; if you do, it writes into a `saved_status/` folder
+   there. If you decline (or it's blocked), it downloads instead.
+3. **Double-clicked `index.html`, any other case** → Save **downloads a single
+   file** named `saved_status_kls-save-….json` to your browser's Downloads.
+   (Browsers sanitize the name, so it's a flat file — *not* a folder.)
 
-Restore any of these with **Import a file…**. No launcher is required for the
-double-click case — though the launcher is the only way to get fully *automatic*
-saves into the folder in every browser.
+Restore any of these with **Import a file…**.
 
-> **Why not straight into a folder next to the game?** A page opened by
-> double-clicking `index.html` runs as `file://`, and browsers forbid it from
-> writing to a chosen folder — the best it can do is a download. For an actual
-> `saved_status/` folder **next to the game**, written automatically, open with
-> **Play Kids Learning Space** (`.command` / `.bat`); it starts a tiny
-> local server (`tools/kls_server.py`, needs Python 3) that writes
-> `kls-backup-latest.json` + `saved_status/kls-save-*.json` (newest 30) into
-> this folder in any browser.
+> **The honest limit:** a page opened by double-clicking `index.html` runs as
+> `file://`, and browsers forbid it from writing to a folder on disk — that's a
+> verified security rule, not a missing feature. So an actual `saved_status/`
+> **folder** (next to the game, automatic) requires `Play Kids Learning Space`,
+> which starts a tiny local server (`tools/kls_server.py`, needs Python 3).
+> Without it, `index.html` can only download a `saved_status_…json` file.
 
 ## What's where
 
