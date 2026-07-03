@@ -12,3 +12,6 @@ __pycache__/
 # OS / scratch
 Thumbs.db
 *.swp
+
+# Local progress backups exported from the hub — device-specific, never commit
+kls-backup-*.json
