@@ -176,6 +176,13 @@ shows "Reconnect folder…". Never a popup, never anything on the hub.
 > double-click (`file://`) case gets a real folder where the browser permits it,
 > and a download otherwise. See
 > `docs/superpowers/specs/2026-07-03-save-my-game-download-design.md`.
+>
+> **Correction (2026-07-03):** earlier notes/specs claimed `showDirectoryPicker`
+> is blocked on `file://`. That was WRONG — verified live that it works on
+> `file://` in Chrome/Edge (`isSecureContext` true, picker opens). So a plain
+> **double-clicked `index.html` in Chrome/Edge → Save → pick a folder once →
+> real `saved_status/` folder there, no launcher.** Firefox/Safari lack the
+> picker → download fallback.
 
 - After each autosave snapshot (throttled to at most one folder write / 3 min,
   plus one on `pagehide`), and immediately on manual **Save to folder now**

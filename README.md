@@ -48,31 +48,28 @@ saved and you can still Export a file manually. For fully automatic backups in
 **any** browser, run the local server above (`http://localhost`) instead of
 opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 
-### Saving your game to a file
+### Saving your game to a folder
 
 Everyday progress **auto-saves in the browser** (survives closing/reopening and
-restarts). To write a copy to disk, click **💾 Save my game** (on the hub, or
-Parent page → Backups). What it does depends on how you opened the app:
+restarts). To save into a **`saved_status` folder on disk**, click
+**💾 Save my game** (on the hub, or Parent page → Backups).
 
-1. **Opened with `Play Kids Learning Space`** (the launcher / local server) →
-   Save writes real files into **`Kids-learning-space/saved_status/`**, right
-   next to the game, in **any browser**. *This is the only way to get an actual
-   `saved_status/` folder* — verified.
-2. **Double-clicked `index.html`, Chrome/Edge** → Save may offer to let you
-   **pick a folder once**; if you do, it writes into a `saved_status/` folder
-   there. If you decline (or it's blocked), it downloads instead.
-3. **Double-clicked `index.html`, any other case** → Save **downloads a single
-   file** named `saved_status_kls-save-….json` to your browser's Downloads.
-   (Browsers sanitize the name, so it's a flat file — *not* a folder.)
+**On Chrome or Edge — just double-click `index.html`, no launcher needed:**
+the first time you Save, the browser asks you to **pick a folder** (pick the
+`Kids-learning-space` folder to keep saves next to the game). It then writes
+`kls-backup-latest.json` + `saved_status/kls-save-<time>.json` into a
+`saved_status/` folder there. Every later Save writes to the same place
+(after a browser restart it may ask once to re-confirm access). Verified: the
+File System Access API works on `file://` in Chrome/Edge.
+
+**On Firefox or Safari** (which don't support that folder API from a
+double-clicked file): Save **downloads** the backup as a `saved_status_…json`
+file to your Downloads instead. To get a real folder there too, open with
+**`Play Kids Learning Space`** (starts a tiny local server, `tools/kls_server.py`,
+needs Python 3) — it writes into `Kids-learning-space/saved_status/` in any
+browser, automatically.
 
 Restore any of these with **Import a file…**.
-
-> **The honest limit:** a page opened by double-clicking `index.html` runs as
-> `file://`, and browsers forbid it from writing to a folder on disk — that's a
-> verified security rule, not a missing feature. So an actual `saved_status/`
-> **folder** (next to the game, automatic) requires `Play Kids Learning Space`,
-> which starts a tiny local server (`tools/kls_server.py`, needs Python 3).
-> Without it, `index.html` can only download a `saved_status_…json` file.
 
 ## What's where
 

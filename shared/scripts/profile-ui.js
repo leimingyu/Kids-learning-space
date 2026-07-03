@@ -527,11 +527,12 @@
 
       if (!backup) { backupCard.append(el('p', {}, 'Backup module not loaded.')); return; }
 
-      // "Save my game" — works even when the app was opened by double-clicking
-      // index.html: downloads a saved_status/kls-save-<time>.json file.
+      // "Save my game" — on Chrome/Edge (even a double-clicked index.html) this
+      // opens a folder picker and writes into a saved_status/ folder; on
+      // Firefox/Safari it downloads a file instead.
       if (backup.saveMyGame) {
         const saveNote = el('p', { class: 'parent-page__note' },
-          'Saves your profiles + progress into a “saved_status” folder. The first time, your browser may ask you to pick the folder (pick this game’s folder, or anywhere) — after that it saves there. If your browser can’t pick a folder, it downloads the file instead. Restore later with “Import a file…”.');
+          'Saves your profiles + progress into a “saved_status” folder on Chrome/Edge (even when you just double-click index.html): the first time it asks you to pick a folder — pick this Kids-learning-space folder to keep saves next to the game — then it saves there each time. On Firefox/Safari it downloads a file instead. Restore later with “Import a file…”.');
         const saveGameBtn = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
           saveGameBtn.disabled = true;
           backup.saveMyGame().then(function (r) {
@@ -552,9 +553,9 @@
           el('details', { class: 'parent-backup__tip' },
             el('summary', {}, 'Where exactly does it save?'),
             el('p', { class: 'parent-page__note' },
-              'An actual “saved_status” folder is only created by the “Play Kids Learning Space” launcher (a tiny local server) — it writes kls-backup-latest.json + saved_status/kls-save-*.json right next to the game, in any browser. ' +
-              'If you just double-clicked index.html, the browser won’t let the page make a folder, so Save instead downloads a single file named “saved_status_…json” to your Downloads (restore it with “Import a file…”). ' +
-              'On Chrome/Edge you can also pick a folder once when prompted, and it will save there.'),
+              'Chrome/Edge (including a double-clicked index.html): Save opens a one-time folder picker and writes kls-backup-latest.json + saved_status/kls-save-*.json into a saved_status/ folder inside the folder you choose. Pick this Kids-learning-space folder to keep saves next to the game. ' +
+              'Firefox/Safari don’t offer that picker from a double-clicked file, so Save downloads a “saved_status_…json” file to your Downloads (restore it with “Import a file…”). ' +
+              'For fully automatic saves into this folder in any browser, open with “Play Kids Learning Space” (local server).'),
           ),
         );
       }
