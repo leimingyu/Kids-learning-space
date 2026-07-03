@@ -450,13 +450,38 @@
       });
     }
 
+    // Dispatch on where saves go: automatic local server, or picked folder.
+    function renderSaveTarget(row, st) {
+      row.innerHTML = '';
+      if (st && st.mode === 'server') { renderServerRow(row, st); return; }
+      renderFolderRow(row, st || { mode: 'none' });
+    }
+
+    function renderServerRow(row, st) {
+      const n = typeof st.count === 'number' ? st.count : 0;
+      const saveBtn = el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
+        saveBtn.disabled = true;
+        backup.saveHistoryNow()
+          .then(function () { renderBackupCard(); })
+          .catch(function (e) { saveBtn.disabled = false; alert('Save to folder failed: ' + (e && e.message ? e.message : e)); });
+      } }, '💾 Save now');
+      row.append(
+        el('p', { class: 'parent-backup__status' },
+          '📁 Saving to this app’s folder' + (st.folder ? ' (' + st.folder + ')' : '')
+          + ' · saves/ has ' + n + ' file' + (n === 1 ? '' : 's')),
+        el('p', { class: 'parent-page__note' },
+          'Every autosave and the button below write into the folder automatically — no folder-picker needed.'),
+        el('div', { class: 'btn-row' }, saveBtn),
+      );
+    }
+
     function renderFolderRow(row, st) {
       row.innerHTML = '';
       if (!st || !st.supported) {
-        // file:// / Safari / Firefox: the File System Access API isn't available.
-        // Be honest about how to enable folder-saving rather than hiding it.
+        // No save server and no File System Access API (e.g. opened as a plain
+        // file). Be honest about how to enable folder-saving rather than hiding it.
         row.append(el('p', { class: 'parent-page__note' },
-          'To keep save files in a folder, run the app with the launcher (local server) in Chrome or Edge. Progress and “Export a file…” still work here.'));
+          'To save into a folder automatically, open the app with the launcher (start-mac.command / start-windows.bat) — it runs a local server that writes the files (any browser). You’re currently opening it as a plain file; progress and “Export a file…” still work here.'));
         return;
       }
       if (!st.connected) {
@@ -525,10 +550,11 @@
         });
       }
 
-      // Phase 2: folder row (hidden on browsers without showDirectoryPicker).
+      // Where saves go: local save server (automatic) → picked folder → none.
       const folderRow = el('div', { class: 'parent-backup__folder' });
       backupCard.append(folderRow);
-      if (backup.getFolderStatus) backup.getFolderStatus().then(function (st) { renderFolderRow(folderRow, st); });
+      if (backup.getSaveTargetStatus) backup.getSaveTargetStatus().then(function (st) { renderSaveTarget(folderRow, st); });
+      else if (backup.getFolderStatus) backup.getFolderStatus().then(function (st) { renderFolderRow(folderRow, st); });
 
       // Quiet Export / Import links — the off-device escape hatch. Import keeps
       // the stronger type-REPLACE confirmation because a file can come from

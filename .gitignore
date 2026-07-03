@@ -13,5 +13,7 @@ __pycache__/
 Thumbs.db
 *.swp
 
-# Local progress backups exported from the hub — device-specific, never commit
+# Local progress backups / save history written into the app folder —
+# device-specific user data, never commit
 kls-backup-*.json
+/saves/

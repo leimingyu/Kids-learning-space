@@ -162,6 +162,12 @@ shows "Reconnect folder…". Never a popup, never anything on the hub.
 > versioned **save history** instead of coarse daily files, and gains a manual
 > **💾 Save to folder now** button. See
 > `docs/superpowers/specs/2026-07-03-save-history-to-folder-design.md`.
+>
+> **Update (2026-07-03, auto-save-server):** the **primary** save-to-folder
+> mechanism is now the launcher's local server (`tools/kls_server.py`), which
+> writes into the app folder automatically in any browser with no folder-picker.
+> The File System Access folder mirror below is the **fallback** when no server
+> is running. See `docs/superpowers/specs/2026-07-03-auto-save-server-decision.md`.
 
 - After each autosave snapshot (throttled to at most one folder write / 3 min,
   plus one on `pagehide`), and immediately on manual **Save to folder now**
