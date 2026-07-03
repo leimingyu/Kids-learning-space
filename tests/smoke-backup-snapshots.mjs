@@ -86,4 +86,26 @@ assert.strictEqual(groups.older.length, 1);
 const twoToday = B.groupSnapshotsByPeriod([rec(1 * H), rec(2 * H)], now).today;
 assert.ok(new Date(twoToday[0].ts).getTime() > new Date(twoToday[1].ts).getTime());
 
+// 5) Save-history filename + pruning (folder mirror)
+const stamp = B.stampForFilename(new Date('2026-07-03T04:09:07'));
+assert.strictEqual(stamp, '20260703-040907');
+assert.strictEqual(B.historyFilename(new Date('2026-07-03T04:09:07')), 'kls-save-20260703-040907.json');
+
+// selectHistoryToPrune: keep newest 30, delete the rest, ignore non-matching
+const names = [];
+for (let i = 0; i < 32; i++) {
+  const hh = String(i).padStart(2, '0');
+  names.push('kls-save-20260703-' + hh + '0000.json');
+}
+names.push('kls-backup-latest.json'); // must be ignored
+names.push('notes.txt');              // must be ignored
+const prune = B.selectHistoryToPrune(names, 30);
+assert.strictEqual(prune.length, 2, 'should delete the 2 oldest of 32');
+assert.strictEqual(prune[0], 'kls-save-20260703-000000.json');
+assert.strictEqual(prune[1], 'kls-save-20260703-010000.json');
+assert.ok(!prune.includes('kls-backup-latest.json'));
+assert.ok(!prune.includes('notes.txt'));
+// under the cap → nothing to prune
+assert.deepStrictEqual(B.selectHistoryToPrune(['kls-save-20260703-000000.json'], 30), []);
+
 console.log('smoke-backup-snapshots: OK');

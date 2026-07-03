@@ -158,15 +158,20 @@ shows "Reconnect folder…". Never a popup, never anything on the hub.
 
 ### Behavior
 
-- After each snapshot write (throttled to at most one disk write per hour,
-  plus one on `pagehide`), mirror to the connected folder:
-  - `kls-backup-latest.json` — always the newest envelope (stable name, so
-    the folder never grows).
-  - `kls-backup-YYYYMMDD.json` — last envelope of each day; prune to 14
-    daily files.
-- Reuses the existing persisted directory handle + `pickBackupFolder()`
-  from `backup.js`; permission is re-checked with `queryPermission` before
-  each write and failure is silent (status row only).
+> **Update (2026-07-03, save-history-to-folder):** the mirror now writes a
+> versioned **save history** instead of coarse daily files, and gains a manual
+> **💾 Save to folder now** button. See
+> `docs/superpowers/specs/2026-07-03-save-history-to-folder-design.md`.
+
+- After each autosave snapshot (throttled to at most one folder write / 3 min,
+  plus one on `pagehide`), and immediately on manual **Save to folder now**
+  (`saveHistoryNow()`, no throttle), write to the connected folder:
+  - `kls-backup-latest.json` — always the newest envelope (stable name).
+  - `saves/kls-save-<YYYYMMDD-HHmmss>.json` — one file per save; newest **30**
+    kept, older pruned (`MIRROR_HISTORY_KEEP`).
+- Reuses the persisted directory handle + `connectBackupFolder()` from
+  `backup.js`; permission is re-checked with `queryPermission` before each
+  write and failure is silent (status row shows "Reconnect folder…").
 - Restoring from a mirrored file uses the existing Import path — a mirror
   file *is* a normal backup file.
 

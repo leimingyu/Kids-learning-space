@@ -452,10 +452,16 @@
 
     function renderFolderRow(row, st) {
       row.innerHTML = '';
-      if (!st || !st.supported) return; // Safari/Firefox: no folder UI at all
+      if (!st || !st.supported) {
+        // file:// / Safari / Firefox: the File System Access API isn't available.
+        // Be honest about how to enable folder-saving rather than hiding it.
+        row.append(el('p', { class: 'parent-page__note' },
+          'To keep save files in a folder, run the app with the launcher (local server) in Chrome or Edge. Progress and “Export a file…” still work here.'));
+        return;
+      }
       if (!st.connected) {
         row.append(
-          el('p', { class: 'parent-page__note' }, 'Keep backup files in a folder — survives a browser wipe or a move to a new computer.'),
+          el('p', { class: 'parent-page__note' }, 'Keep your save history as files in a folder — pick this app’s folder so saves sit next to index.html. Survives a browser wipe or a move to a new computer.'),
           el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
             backup.connectBackupFolder().then(function (dh) { if (dh) renderBackupCard(); })
               .catch(function (e) { alert('Could not connect folder: ' + (e && e.message ? e.message : e)); });
@@ -473,8 +479,19 @@
         );
         return;
       }
-      row.append(el('p', { class: 'parent-page__note' },
-        'Folder connected · ' + st.name + (st.lastMirrorAt ? ' · updated ' + fmtRel(st.lastMirrorAt) : '')));
+      const hist = typeof st.historyCount === 'number' ? st.historyCount : 0;
+      const saveBtn = el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
+        saveBtn.disabled = true;
+        backup.saveHistoryNow()
+          .then(function () { renderBackupCard(); })
+          .catch(function (e) { saveBtn.disabled = false; alert('Save to folder failed: ' + (e && e.message ? e.message : e)); });
+      } }, '💾 Save to folder now');
+      row.append(
+        el('p', { class: 'parent-page__note' },
+          'Folder connected · ' + st.name + ' · saves/ has ' + hist + ' file' + (hist === 1 ? '' : 's')
+          + (st.lastMirrorAt ? ' · updated ' + fmtRel(st.lastMirrorAt) : '')),
+        el('div', { class: 'btn-row' }, saveBtn),
+      );
     }
 
     function renderBackupCard() {
