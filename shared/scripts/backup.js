@@ -498,20 +498,46 @@
   }
 
   /**
-   * Two-step destructive restore. Caller is responsible for the
-   * type-REPLACE confirmation BEFORE invoking this. After success, the page
-   * reloads so every iframe re-reads state from scratch.
+   * Shared REPLACE restore: wipe → write → full reload. The `envelope` must be
+   * pre-validated by the caller. After success the page reloads so every
+   * iframe re-reads state and the active profile id is re-pushed via
+   * chrome.pushProfileToIframe.
+   */
+  function restoreFromEnvelope(envelope) {
+    // All validation has passed — only now do we touch state.
+    wipeAppKeys();
+    writeFromEnvelope(envelope);
+    location.hash = '';
+    location.reload();
+  }
+
+  /**
+   * Two-step destructive restore from a file. Caller is responsible for the
+   * type-REPLACE confirmation BEFORE invoking this.
    */
   function importFromFile(file) {
     return parseFile(file).then(function (envelope) {
-      // All validation has passed — only now do we touch state.
-      wipeAppKeys();
-      writeFromEnvelope(envelope);
-      // Force a full reload so iframes/games re-read state and the active
-      // profile id is re-pushed via chrome.pushProfileToIframe.
-      location.hash = '';
-      location.reload();
+      restoreFromEnvelope(envelope);
     });
+  }
+
+  /**
+   * Undoable timeline restore: first snapshot the CURRENT state as
+   * "Before restore" (awaited so it survives the reload), then REPLACE with
+   * the chosen snapshot's envelope.
+   */
+  async function restoreSnapshot(ts) {
+    const record = await getSnapshot(ts);
+    if (!record || !record.envelope) throw new Error("That moment couldn't be found.");
+    validate(record.envelope); // defensive; snapshots are our own envelopes
+    await takeSnapshotNow({ label: 'Before restore' });
+    restoreFromEnvelope(record.envelope);
+  }
+
+  async function getSnapshotsMeta() { return listSnapshots(); }
+  async function getLastSnapshotAt() {
+    const list = await listSnapshots();
+    return list.length ? list[0].ts : null;
   }
 
   /** Has the user set up (or been offered) a backup folder yet? */
@@ -522,6 +548,95 @@
   /** True iff this browser can support the "default to project folder" flow. */
   function supportsDirectoryPicker() {
     return typeof window.showDirectoryPicker === 'function';
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Auto-snapshot scheduler
+  // ──────────────────────────────────────────────────────────────────────
+  const SNAPSHOT_DEBOUNCE_MS = 10000;
+  let snapTimer = null;
+  let snapWiredUp = false;
+
+  function envelopeIsEmpty(env) {
+    return !env.hub && Object.keys(env.games || {}).length === 0;
+  }
+
+  function scheduleSnapshot() {
+    if (!snapshotsAvailable()) return;
+    if (snapTimer) clearTimeout(snapTimer);
+    snapTimer = setTimeout(function () { snapTimer = null; takeSnapshotNow({}); }, SNAPSHOT_DEBOUNCE_MS);
+  }
+
+  async function takeSnapshotNow(opts) {
+    if (!snapshotsAvailable()) return false;
+    const label = (opts && opts.label) || null;
+    const envelope = buildEnvelope();
+    if (envelopeIsEmpty(envelope) && !label) return false; // nothing to back up
+    // Dedupe against the newest existing snapshot (unless this is a labelled
+    // safety snapshot, which we always want to keep).
+    if (!label) {
+      const newest = (await listSnapshots())[0];
+      if (newest) {
+        const full = await getSnapshot(newest.ts);
+        if (full && envelopePayloadEqual(full.envelope, envelope)) return false;
+      }
+    }
+    const record = {
+      ts: new Date().toISOString(),
+      label: label,
+      envelope: envelope,
+      summary: summarizeEnvelope(envelope),
+    };
+    await putSnapshot(record);
+    // Retention thinning.
+    const all = await listSnapshots();
+    const toDelete = thinSnapshots(all, Date.now());
+    if (toDelete.length) await deleteSnapshots(toDelete);
+    // Phase 2 mirror (defined in the folder-mirror section; guarded no-op
+    // until then). Function declarations hoist, so this is safe to reference.
+    if (typeof mirrorAfterSnapshot === 'function') { mirrorAfterSnapshot(envelope, false); }
+    return true;
+  }
+
+  /** Is `key` owned by this app (hub key or a registered game base)? */
+  function isAppKey(key) {
+    if (key.startsWith('kls.')) return true;
+    return gamesWithStorage().some(function (g) {
+      return basesOf(g).some(function (b) { return key.startsWith(b + '__'); });
+    });
+  }
+
+  function initSnapshots() {
+    if (snapWiredUp) return;
+    snapWiredUp = true;
+    if (!snapshotsAvailable()) return;
+    // Trigger 1: hub progress writes.
+    try {
+      if (window.KLS && window.KLS.progress && window.KLS.progress.subscribe) {
+        window.KLS.progress.subscribe(function () { scheduleSnapshot(); });
+      }
+    } catch (e) { /* ignore */ }
+    // Trigger 2: same-origin game iframes writing their profile-scoped keys
+    // (storage events fire on the parent window for iframe writes).
+    try {
+      window.addEventListener('storage', function (ev) {
+        if (ev.key === null || (typeof ev.key === 'string' && isAppKey(ev.key))) scheduleSnapshot();
+      });
+    } catch (e) { /* ignore */ }
+    // Trigger 3: final catch-all when the tab is going away.
+    function flushOnExit() {
+      if (snapTimer) { clearTimeout(snapTimer); snapTimer = null; }
+      takeSnapshotNow({});
+      if (typeof mirrorAfterSnapshot === 'function') { mirrorAfterSnapshot(buildEnvelope(), true); }
+    }
+    try { window.addEventListener('pagehide', flushOnExit); } catch (e) { /* ignore */ }
+    try {
+      window.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden') flushOnExit();
+      });
+    } catch (e) { /* ignore */ }
+    // Catch-up: ensure a snapshot exists for progress earned before wiring.
+    scheduleSnapshot();
   }
 
   // ──────────────────────────────────────────────────────────────────────
@@ -623,6 +738,12 @@
     hasBackupFolder: hasBackupFolder,
     supportsDirectoryPicker: supportsDirectoryPicker,
     BACKUP_VERSION: BACKUP_VERSION,
+    initSnapshots: initSnapshots,
+    takeSnapshotNow: takeSnapshotNow,
+    restoreSnapshot: restoreSnapshot,
+    getSnapshotsMeta: getSnapshotsMeta,
+    getLastSnapshotAt: getLastSnapshotAt,
+    snapshotsAvailable: snapshotsAvailable,
     _internals: {
       summarizeEnvelope: summarizeEnvelope,
       envelopePayloadEqual: envelopePayloadEqual,
