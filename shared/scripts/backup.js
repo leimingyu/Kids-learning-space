@@ -545,10 +545,24 @@
   // ──────────────────────────────────────────────────────────────────────
   const LAST_MIRROR_KEY = 'kls.backup.lastMirrorAt';
   const FOLDER_RECONNECT_KEY = 'kls.backup.folderNeedsReconnect';
-  const MIRROR_THROTTLE_MS = 3600 * 1000; // ≤ 1 disk write per hour
-  const MIRROR_DAILY_KEEP = 14;
+  const MIRROR_THROTTLE_MS = 3 * 60 * 1000;  // ≤ 1 folder write / 3 min (autosave)
+  const MIRROR_HISTORY_KEEP = 30;            // newest N history files kept in saves/
+  const SAVES_SUBDIR = 'saves';
 
-  function ymd(d) { return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
+  /** 'YYYYMMDD-HHmmss' local timestamp for a save-history filename. */
+  function stampForFilename(d) {
+    return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate())
+      + '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
+  }
+  function historyFilename(d) { return 'kls-save-' + stampForFilename(d) + '.json'; }
+
+  /** Of the kls-save-*.json names, return the oldest beyond `keep` to delete. */
+  function selectHistoryToPrune(names, keep) {
+    const hist = names.filter(function (n) { return /^kls-save-\d{8}-\d{6}\.json$/.test(n); });
+    hist.sort(); // lexical == chronological
+    const excess = hist.length - keep;
+    return excess > 0 ? hist.slice(0, excess) : [];
+  }
 
   async function verifyRWPermission(handle) {
     try {
@@ -585,12 +599,22 @@
     try { needsReconnect = localStorage.getItem(FOLDER_RECONNECT_KEY) === '1'; } catch (e) { /* ignore */ }
     let lastMirrorAt = null;
     try { lastMirrorAt = localStorage.getItem(LAST_MIRROR_KEY) || null; } catch (e) { /* ignore */ }
+    let historyCount = 0;
+    if (dh) {
+      try {
+        const saves = await dh.getDirectoryHandle(SAVES_SUBDIR, { create: false });
+        for await (const entry of saves.entries()) {
+          if (entry[1].kind === 'file' && /^kls-save-.*\.json$/.test(entry[0])) historyCount++;
+        }
+      } catch (e) { /* no saves dir yet, or permission not granted */ }
+    }
     return {
       supported: supported,
       connected: !!dh,
       name: dh ? (dh.name || 'backup folder') : null,
       needsReconnect: needsReconnect,
       lastMirrorAt: lastMirrorAt,
+      historyCount: historyCount,
     };
   }
 
@@ -601,25 +625,39 @@
     await w.close();
   }
 
-  async function pruneDailyMirrors(dh) {
-    const daily = [];
+  async function pruneHistory(savesDir) {
+    const names = [];
     try {
-      for await (const entry of dh.entries()) {
-        const name = entry[0], handle = entry[1];
-        if (handle.kind === 'file' && /^kls-backup-\d{8}\.json$/.test(name)) daily.push(name);
+      for await (const entry of savesDir.entries()) {
+        if (entry[1].kind === 'file') names.push(entry[0]);
       }
     } catch (e) { return; }
-    daily.sort(); // lexical == chronological for YYYYMMDD
-    const excess = daily.length - MIRROR_DAILY_KEEP;
-    for (let i = 0; i < excess; i++) {
-      try { await dh.removeEntry(daily[i]); } catch (e) { /* ignore */ }
+    const toDelete = selectHistoryToPrune(names, MIRROR_HISTORY_KEEP);
+    for (let i = 0; i < toDelete.length; i++) {
+      try { await savesDir.removeEntry(toDelete[i]); } catch (e) { /* ignore */ }
     }
   }
 
   /**
-   * Mirror the newest envelope to the connected folder. Throttled to ≤ 1 disk
-   * write per hour unless `force` (pagehide). Silent on any failure; sets a
-   * reconnect flag when write permission is missing.
+   * Write the newest envelope into the connected folder: kls-backup-latest.json
+   * at the root, plus a versioned saves/kls-save-<stamp>.json history file
+   * (pruned to MIRROR_HISTORY_KEEP). Takes the dir handle + date as arguments so
+   * it is testable against a mock filesystem. Returns the history filename.
+   */
+  async function writeHistoryToFolder(dh, envelope, date) {
+    const text = JSON.stringify(envelope, null, 2);
+    await writeFileInDir(dh, 'kls-backup-latest.json', text);
+    const saves = await dh.getDirectoryHandle(SAVES_SUBDIR, { create: true });
+    const name = historyFilename(date);
+    await writeFileInDir(saves, name, text);
+    await pruneHistory(saves);
+    return name;
+  }
+
+  /**
+   * Mirror the newest envelope to the connected folder after an autosave
+   * snapshot. Throttled to ≤ 1 folder write / 3 min unless `force` (pagehide).
+   * Silent on any failure; sets a reconnect flag when write permission is gone.
    */
   async function mirrorAfterSnapshot(envelope, force) {
     if (envelopeIsEmpty(envelope)) return;
@@ -633,11 +671,8 @@
     }
     const ok = await verifyRWPermission(dh);
     if (!ok) { try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ } return; }
-    const text = JSON.stringify(envelope, null, 2);
     try {
-      await writeFileInDir(dh, 'kls-backup-latest.json', text);
-      await writeFileInDir(dh, 'kls-backup-' + ymd(new Date()) + '.json', text);
-      await pruneDailyMirrors(dh);
+      await writeHistoryToFolder(dh, envelope, new Date());
       try {
         localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
         localStorage.removeItem(FOLDER_RECONNECT_KEY);
@@ -645,6 +680,29 @@
     } catch (e) {
       try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e2) { /* ignore */ }
     }
+  }
+
+  /**
+   * Manual "Save to folder now": force an immediate latest.json + history file,
+   * bypassing the autosave throttle. Throws a friendly error when no folder is
+   * connected or write permission was lost, so the UI can guide the user.
+   */
+  async function saveHistoryNow() {
+    const dh = await getLastDirHandle();
+    if (!dh) throw new Error('No folder is connected yet. Click “Choose folder…” first.');
+    const ok = await verifyRWPermission(dh);
+    if (!ok) {
+      try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ }
+      throw new Error('The folder lost write permission. Click “Reconnect folder…”.');
+    }
+    const envelope = buildEnvelope();
+    if (envelopeIsEmpty(envelope)) throw new Error('There’s nothing to save yet.');
+    await writeHistoryToFolder(dh, envelope, new Date());
+    try {
+      localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
+      localStorage.removeItem(FOLDER_RECONNECT_KEY);
+    } catch (e) { /* ignore */ }
+    return true;
   }
 
   /** Has the user set up (or been offered) a backup folder yet? */
@@ -858,12 +916,17 @@
     snapshotsAvailable: snapshotsAvailable,
     connectBackupFolder: connectBackupFolder,
     getFolderStatus: getFolderStatus,
+    saveHistoryNow: saveHistoryNow,
     _internals: {
       summarizeEnvelope: summarizeEnvelope,
       envelopePayloadEqual: envelopePayloadEqual,
       thinSnapshots: thinSnapshots,
       groupSnapshotsByPeriod: groupSnapshotsByPeriod,
       buildEnvelope: buildEnvelope,
+      stampForFilename: stampForFilename,
+      historyFilename: historyFilename,
+      selectHistoryToPrune: selectHistoryToPrune,
+      writeHistoryToFolder: writeHistoryToFolder,
     },
   };
 })();
