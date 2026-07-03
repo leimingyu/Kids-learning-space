@@ -540,6 +540,113 @@
     return list.length ? list[0].ts : null;
   }
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Phase 2 — optional backup-folder mirror (Chrome/Edge only)
+  // ──────────────────────────────────────────────────────────────────────
+  const LAST_MIRROR_KEY = 'kls.backup.lastMirrorAt';
+  const FOLDER_RECONNECT_KEY = 'kls.backup.folderNeedsReconnect';
+  const MIRROR_THROTTLE_MS = 3600 * 1000; // ≤ 1 disk write per hour
+  const MIRROR_DAILY_KEEP = 14;
+
+  function ymd(d) { return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
+
+  async function verifyRWPermission(handle) {
+    try {
+      if (!handle || typeof handle.queryPermission !== 'function') return false;
+      const q = await handle.queryPermission({ mode: 'readwrite' });
+      return q === 'granted';
+    } catch (e) { return false; }
+  }
+
+  /** Explicit connect: pick a folder with write access and remember it. */
+  async function connectBackupFolder() {
+    if (typeof window.showDirectoryPicker !== 'function') {
+      throw new Error('This browser can’t keep backup files in a folder. Use Chrome or Edge.');
+    }
+    try {
+      const dh = await window.showDirectoryPicker({ id: 'kls-backup-dir', mode: 'readwrite' });
+      // Ensure we actually hold write permission (some flows grant read only).
+      if (typeof dh.requestPermission === 'function') {
+        await dh.requestPermission({ mode: 'readwrite' });
+      }
+      await saveLastDirHandle(dh);
+      try { localStorage.removeItem(FOLDER_RECONNECT_KEY); } catch (e) { /* ignore */ }
+      return dh;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return null;
+      throw e;
+    }
+  }
+
+  async function getFolderStatus() {
+    const supported = typeof window.showDirectoryPicker === 'function';
+    const dh = await getLastDirHandle();
+    let needsReconnect = false;
+    try { needsReconnect = localStorage.getItem(FOLDER_RECONNECT_KEY) === '1'; } catch (e) { /* ignore */ }
+    let lastMirrorAt = null;
+    try { lastMirrorAt = localStorage.getItem(LAST_MIRROR_KEY) || null; } catch (e) { /* ignore */ }
+    return {
+      supported: supported,
+      connected: !!dh,
+      name: dh ? (dh.name || 'backup folder') : null,
+      needsReconnect: needsReconnect,
+      lastMirrorAt: lastMirrorAt,
+    };
+  }
+
+  async function writeFileInDir(dh, name, text) {
+    const fh = await dh.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+
+  async function pruneDailyMirrors(dh) {
+    const daily = [];
+    try {
+      for await (const entry of dh.entries()) {
+        const name = entry[0], handle = entry[1];
+        if (handle.kind === 'file' && /^kls-backup-\d{8}\.json$/.test(name)) daily.push(name);
+      }
+    } catch (e) { return; }
+    daily.sort(); // lexical == chronological for YYYYMMDD
+    const excess = daily.length - MIRROR_DAILY_KEEP;
+    for (let i = 0; i < excess; i++) {
+      try { await dh.removeEntry(daily[i]); } catch (e) { /* ignore */ }
+    }
+  }
+
+  /**
+   * Mirror the newest envelope to the connected folder. Throttled to ≤ 1 disk
+   * write per hour unless `force` (pagehide). Silent on any failure; sets a
+   * reconnect flag when write permission is missing.
+   */
+  async function mirrorAfterSnapshot(envelope, force) {
+    if (envelopeIsEmpty(envelope)) return;
+    const dh = await getLastDirHandle();
+    if (!dh) return;
+    if (!force) {
+      try {
+        const last = localStorage.getItem(LAST_MIRROR_KEY);
+        if (last && Date.now() - new Date(last).getTime() < MIRROR_THROTTLE_MS) return;
+      } catch (e) { /* ignore */ }
+    }
+    const ok = await verifyRWPermission(dh);
+    if (!ok) { try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ } return; }
+    const text = JSON.stringify(envelope, null, 2);
+    try {
+      await writeFileInDir(dh, 'kls-backup-latest.json', text);
+      await writeFileInDir(dh, 'kls-backup-' + ymd(new Date()) + '.json', text);
+      await pruneDailyMirrors(dh);
+      try {
+        localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
+        localStorage.removeItem(FOLDER_RECONNECT_KEY);
+      } catch (e) { /* ignore */ }
+    } catch (e) {
+      try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e2) { /* ignore */ }
+    }
+  }
+
   /** Has the user set up (or been offered) a backup folder yet? */
   async function hasBackupFolder() {
     return !!(await getLastDirHandle());
@@ -744,6 +851,8 @@
     getSnapshotsMeta: getSnapshotsMeta,
     getLastSnapshotAt: getLastSnapshotAt,
     snapshotsAvailable: snapshotsAvailable,
+    connectBackupFolder: connectBackupFolder,
+    getFolderStatus: getFolderStatus,
     _internals: {
       summarizeEnvelope: summarizeEnvelope,
       envelopePayloadEqual: envelopePayloadEqual,
