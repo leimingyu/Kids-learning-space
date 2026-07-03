@@ -48,19 +48,20 @@ opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 
 ### Saving the history to a folder on disk
 
-You can have the app keep your save history as real files in a folder — e.g.
-the app's own folder. Launch it with a launcher (they start a local server for
-you) in **Chrome or Edge**, then open **Parent page → Backups → Choose folder…**
-and pick the folder once. After that, every autosave and the **💾 Save to folder
-now** button write into it:
+Launch the app with a **launcher** (`start-mac.command` / `start-windows.bat`).
+They start a tiny local server (`tools/kls_server.py`) that writes your save
+history straight into this app's folder — **automatically, in any browser, with
+no folder-picker**:
 
 - `kls-backup-latest.json` — the newest full backup.
 - `saves/kls-save-<timestamp>.json` — one file per save (newest 30 kept).
 
-Any of those files restores via **Import a file…**. This uses the browser's File
-System Access API, so it needs Chrome/Edge over `http://localhost` (the launcher)
-— not `file://`, and not Safari/Firefox. Everywhere else, progress + Export a
-file still work.
+Every autosave writes there, and **Parent page → Backups → 💾 Save now** forces
+one immediately. Any of those files restores via **Import a file…**. Requires
+Python 3 (used only to run the local server). If Python is missing, the launcher
+opens the app as a file and folder-saving is unavailable — but progress and
+**Export a file…** still work, and Chrome/Edge users can fall back to **Choose
+folder…** (the File System Access API).
 
 ## What's where
 

@@ -8,7 +8,10 @@ Static, no-build, no-framework, `file://`-friendly site. Pure vanilla HTML/CSS/J
 
 **Self-contained / offline:** no runtime network dependency. Fonts (Fredoka + Nunito) are bundled under `shared/fonts/` (OFL) and wired via `shared/styles/fonts.css` — do NOT re-introduce a `fonts.googleapis.com` `<link>`. Games already use system-font stacks. Launchers (`start-mac.command`, `start-windows.bat`) prefer a local `python3 -m http.server` (so folder-saving + full auto-backup work) and fall back to opening `index.html` via `file://`; `.gitattributes` keeps the `.bat` CRLF and marks `*.woff2` binary. Silent auto-backup (IndexedDB) needs Chrome/Edge on `file://` or any browser over `http://localhost`; progress + manual Export work everywhere.
 
-**Save-to-folder (File System Access):** when a folder is connected (Parent page → Choose folder…), `backup.js` mirrors each autosave snapshot AND the manual `saveHistoryNow()` into it: `kls-backup-latest.json` + `saves/kls-save-<stamp>.json` history (newest 30, `MIRROR_HISTORY_KEEP`), autosave throttled to `MIRROR_THROTTLE_MS` (3 min). Chrome/Edge + secure context only (`http://localhost`, not `file://`). Pure helpers (`stampForFilename`, `selectHistoryToPrune`) + the FS worker (`writeHistoryToFolder`) are on `KLS.backup._internals` for tests.
+**Save-to-folder:** two mechanisms, `backup.js` prefers the first.
+1. **Local save server (primary, automatic, any browser).** `tools/kls_server.py` (started by the launchers) serves the app AND exposes `GET /__kls_ping__` + `POST /__kls_save__`; the client `detectSaveServer()`/`postSaveToServer()` POST the envelope and the *server* writes `kls-backup-latest.json` + `saves/kls-save-<stamp>.json` (newest 30) into the app folder. Binds `127.0.0.1`, validates the envelope, server-chosen filenames (no traversal).
+2. **File System Access folder (fallback).** When no server, a user-picked folder (Parent page → Choose folder…) via `writeHistoryToFolder` — Chrome/Edge + `http://localhost` only.
+`mirrorAfterSnapshot` (autosave, throttled `MIRROR_THROTTLE_MS`=3 min) and `saveHistoryNow` (manual) route server→folder; `pagehide` uses `sendBeacon`. `getSaveTargetStatus()` → `{mode:'server'|'folder'|'none'}` drives the Parent page. `saves/` + `kls-backup-*.json` are gitignored. Pure helpers (`stampForFilename`, `selectHistoryToPrune`) on `KLS.backup._internals`.
 
 ## Commands
 
@@ -29,6 +32,9 @@ node games/cosmic-math-quest/tests/smoke-learning-intelligence.mjs
 
 # Quiet Backup snapshot helpers: summarize / dedupe / thinning / period-grouping
 node tests/smoke-backup-snapshots.mjs
+
+# Local save-server file logic: history count + prune-to-30
+python3 tools/test_kls_server.py
 ```
 
 Regenerate Word Problem Adventure question banks (Python, patches the HTML in place):
