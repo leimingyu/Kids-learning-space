@@ -1742,7 +1742,11 @@
     }
     const t = ev.target;
     const onButton = t instanceof HTMLElement && (t.tagName === "BUTTON" || t.tagName === "A");
-    if (onButton && ev.key !== "Backspace") return;
+    // When a button/link has focus (e.g. the kid just clicked Check / Hint),
+    // let Enter/Space activate it natively — but DON'T swallow digit keys or
+    // Backspace, or the kid can't type into the cell until they click off the
+    // button they just pressed. (That was the "can't type any number" bug.)
+    if (onButton && (ev.key === "Enter" || ev.key === " " || ev.key === "Spacebar")) return;
 
     if (ev.key === "Enter") {
       ev.preventDefault();
