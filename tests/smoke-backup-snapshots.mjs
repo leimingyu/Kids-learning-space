@@ -90,6 +90,7 @@ assert.ok(new Date(twoToday[0].ts).getTime() > new Date(twoToday[1].ts).getTime(
 const stamp = B.stampForFilename(new Date('2026-07-03T04:09:07'));
 assert.strictEqual(stamp, '20260703-040907');
 assert.strictEqual(B.historyFilename(new Date('2026-07-03T04:09:07')), 'kls-save-20260703-040907.json');
+assert.strictEqual(B.savedStatusDownloadName(new Date('2026-07-03T04:09:07')), 'saved_status/kls-save-20260703-040907.json');
 
 // selectHistoryToPrune: keep newest 30, delete the rest, ignore non-matching
 const names = [];
