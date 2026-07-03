@@ -654,55 +654,127 @@
     return name;
   }
 
+  function noteMirrored() {
+    try {
+      localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
+      localStorage.removeItem(FOLDER_RECONNECT_KEY);
+    } catch (e) { /* ignore */ }
+  }
+  function noteReconnectNeeded() {
+    try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Local save-server bridge (tools/kls_server.py).
+  //
+  // When the app is served by the bundled launcher, a tiny local server writes
+  // the save history straight into the app folder — no folder-picker, any
+  // browser. The client just POSTs the envelope. Detection is cached.
+  // ──────────────────────────────────────────────────────────────────────
+  const SAVE_PING = '/__kls_ping__';
+  const SAVE_POST = '/__kls_save__';
+  let _saveServer; // undefined = unprobed, true/false = cached
+
+  function httpContext() {
+    try { return typeof fetch === 'function' && /^https?:$/.test(location.protocol); }
+    catch (e) { return false; }
+  }
+
+  async function pingSaveServer() {
+    if (!httpContext()) return null;
+    try {
+      const res = await fetch(SAVE_PING, { cache: 'no-store' });
+      if (!res.ok) return null;
+      const j = await res.json();
+      return (j && j.kls) ? j : null;
+    } catch (e) { return null; }
+  }
+
+  async function detectSaveServer() {
+    if (_saveServer !== undefined) return _saveServer;
+    _saveServer = !!(await pingSaveServer());
+    return _saveServer;
+  }
+
+  async function postSaveToServer(envelope) {
+    const res = await fetch(SAVE_POST, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(envelope),
+    });
+    if (!res.ok) throw new Error('save server HTTP ' + res.status);
+    const j = await res.json();
+    if (!j || !j.ok) throw new Error((j && j.error) || 'save server error');
+    return j; // { ok, file, count }
+  }
+
   /**
-   * Mirror the newest envelope to the connected folder after an autosave
-   * snapshot. Throttled to ≤ 1 folder write / 3 min unless `force` (pagehide).
-   * Silent on any failure; sets a reconnect flag when write permission is gone.
+   * Write the newest envelope to disk after an autosave snapshot. Throttled to
+   * ≤ 1 write / 3 min unless `force` (pagehide). Prefers the local save server
+   * (writes into the app folder automatically); falls back to the File System
+   * Access folder mirror when a folder was picked. Silent on any failure.
    */
   async function mirrorAfterSnapshot(envelope, force) {
     if (envelopeIsEmpty(envelope)) return;
-    const dh = await getLastDirHandle();
-    if (!dh) return;
     if (!force) {
       try {
         const last = localStorage.getItem(LAST_MIRROR_KEY);
         if (last && Date.now() - new Date(last).getTime() < MIRROR_THROTTLE_MS) return;
       } catch (e) { /* ignore */ }
     }
-    const ok = await verifyRWPermission(dh);
-    if (!ok) { try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ } return; }
-    try {
-      await writeHistoryToFolder(dh, envelope, new Date());
-      try {
-        localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
-        localStorage.removeItem(FOLDER_RECONNECT_KEY);
-      } catch (e) { /* ignore */ }
-    } catch (e) {
-      try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e2) { /* ignore */ }
+    // Preferred: the local save server writes into the app folder for us.
+    if (await detectSaveServer()) {
+      try { await postSaveToServer(envelope); noteMirrored(); } catch (e) { /* silent */ }
+      return;
     }
+    // Fallback: File System Access folder mirror (Chrome/Edge, user-picked).
+    const dh = await getLastDirHandle();
+    if (!dh) return;
+    const ok = await verifyRWPermission(dh);
+    if (!ok) { noteReconnectNeeded(); return; }
+    try { await writeHistoryToFolder(dh, envelope, new Date()); noteMirrored(); }
+    catch (e) { noteReconnectNeeded(); }
   }
 
   /**
-   * Manual "Save to folder now": force an immediate latest.json + history file,
-   * bypassing the autosave throttle. Throws a friendly error when no folder is
-   * connected or write permission was lost, so the UI can guide the user.
+   * Manual "Save to folder now": force an immediate write, bypassing the
+   * autosave throttle. Uses the save server if present, else the picked folder.
+   * Throws a friendly error the UI can surface.
    */
   async function saveHistoryNow() {
-    const dh = await getLastDirHandle();
-    if (!dh) throw new Error('No folder is connected yet. Click “Choose folder…” first.');
-    const ok = await verifyRWPermission(dh);
-    if (!ok) {
-      try { localStorage.setItem(FOLDER_RECONNECT_KEY, '1'); } catch (e) { /* ignore */ }
-      throw new Error('The folder lost write permission. Click “Reconnect folder…”.');
-    }
     const envelope = buildEnvelope();
     if (envelopeIsEmpty(envelope)) throw new Error('There’s nothing to save yet.');
+    if (await detectSaveServer()) {
+      const j = await postSaveToServer(envelope); // throws on failure
+      noteMirrored();
+      return j;
+    }
+    const dh = await getLastDirHandle();
+    if (!dh) throw new Error('No save folder yet. Launch the app with the launcher (local server), or click “Choose folder…” in Chrome/Edge.');
+    const ok = await verifyRWPermission(dh);
+    if (!ok) { noteReconnectNeeded(); throw new Error('The folder lost write permission. Click “Reconnect folder…”.'); }
     await writeHistoryToFolder(dh, envelope, new Date());
-    try {
-      localStorage.setItem(LAST_MIRROR_KEY, new Date().toISOString());
-      localStorage.removeItem(FOLDER_RECONNECT_KEY);
-    } catch (e) { /* ignore */ }
-    return true;
+    noteMirrored();
+    return { ok: true };
+  }
+
+  /**
+   * Unified "where do saves go?" status for the Parent page.
+   *  { mode:'server', folder, count }      — local save server (automatic)
+   *  { mode:'folder', ...folderStatus }    — File System Access picked folder
+   *  { mode:'none' }                       — file:// / Safari / Firefox, no server
+   */
+  async function getSaveTargetStatus() {
+    // Use the cached probe (one ping per session); only re-ping for a fresh
+    // count when the server is actually present, so the no-server path never
+    // spams the console with 404 probes.
+    if (await detectSaveServer()) {
+      const ping = await pingSaveServer();
+      if (ping) return { mode: 'server', folder: ping.folder || null, count: ping.count || 0 };
+    }
+    const folder = await getFolderStatus();
+    if (folder.supported) { const out = { mode: 'folder' }; for (const k in folder) out[k] = folder[k]; return out; }
+    return { mode: 'none' };
   }
 
   /** Has the user set up (or been offered) a backup folder yet? */
@@ -792,7 +864,15 @@
     function flushOnExit() {
       if (snapTimer) { clearTimeout(snapTimer); snapTimer = null; }
       takeSnapshotNow({});
-      if (typeof mirrorAfterSnapshot === 'function') { mirrorAfterSnapshot(buildEnvelope(), true); }
+      const env = buildEnvelope();
+      // A fetch may not finish during unload; sendBeacon to the save server is
+      // the reliable exit write. Falls back to the normal mirror path.
+      if (_saveServer === true && !envelopeIsEmpty(env)
+          && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        try { navigator.sendBeacon(SAVE_POST, new Blob([JSON.stringify(env)], { type: 'application/json' })); return; }
+        catch (e) { /* fall through */ }
+      }
+      mirrorAfterSnapshot(env, true);
     }
     try { window.addEventListener('pagehide', flushOnExit); } catch (e) { /* ignore */ }
     try {
@@ -916,6 +996,7 @@
     snapshotsAvailable: snapshotsAvailable,
     connectBackupFolder: connectBackupFolder,
     getFolderStatus: getFolderStatus,
+    getSaveTargetStatus: getSaveTargetStatus,
     saveHistoryNow: saveHistoryNow,
     _internals: {
       summarizeEnvelope: summarizeEnvelope,
