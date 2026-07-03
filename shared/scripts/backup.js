@@ -71,6 +71,8 @@
   // ──────────────────────────────────────────────────────────────────────
   const IDB_NAME = 'kls-backup';
   const IDB_STORE = 'handles';
+  const IDB_SNAP_STORE = 'snapshots';
+  const IDB_VERSION = 2;
   const IDB_KEY_FILE = 'lastFileHandle';
   const IDB_KEY_DIR  = 'lastDirHandle';
   // localStorage flag so we don't pester the user with the "set up your
@@ -80,9 +82,11 @@
   function openHandleDB() {
     return new Promise(function (resolve, reject) {
       if (typeof indexedDB === 'undefined') { reject(new Error('no IDB')); return; }
-      const req = indexedDB.open(IDB_NAME, 1);
+      const req = indexedDB.open(IDB_NAME, IDB_VERSION);
       req.onupgradeneeded = function () {
-        req.result.createObjectStore(IDB_STORE);
+        const db = req.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        if (!db.objectStoreNames.contains(IDB_SNAP_STORE)) db.createObjectStore(IDB_SNAP_STORE, { keyPath: 'ts' });
       };
       req.onsuccess = function () { resolve(req.result); };
       req.onerror = function () { reject(req.error); };
@@ -119,6 +123,66 @@
       await new Promise(function (resolve, reject) {
         const tx = db.transaction(IDB_STORE, 'readwrite');
         tx.objectStore(IDB_STORE).delete(key);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    } catch (e) { /* best-effort */ }
+  }
+
+  // ── Snapshot store ops (all best-effort; never throw to callers) ────────
+  function snapshotsAvailable() { return typeof indexedDB !== 'undefined'; }
+
+  async function putSnapshot(record) {
+    try {
+      const db = await openHandleDB();
+      await new Promise(function (resolve, reject) {
+        const tx = db.transaction(IDB_SNAP_STORE, 'readwrite');
+        tx.objectStore(IDB_SNAP_STORE).put(record);
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    } catch (e) { /* best-effort */ }
+  }
+
+  /** List metadata only (ts, label, summary) — envelopes are heavy. */
+  async function listSnapshots() {
+    try {
+      const db = await openHandleDB();
+      return await new Promise(function (resolve, reject) {
+        const tx = db.transaction(IDB_SNAP_STORE, 'readonly');
+        const req = tx.objectStore(IDB_SNAP_STORE).getAll();
+        req.onsuccess = function () {
+          const list = (req.result || []).map(function (r) {
+            return { ts: r.ts, label: r.label || null, summary: r.summary || null };
+          });
+          list.sort(function (a, b) { return new Date(b.ts).getTime() - new Date(a.ts).getTime(); });
+          resolve(list);
+        };
+        req.onerror = function () { reject(req.error); };
+      });
+    } catch (e) { return []; }
+  }
+
+  async function getSnapshot(ts) {
+    try {
+      const db = await openHandleDB();
+      return await new Promise(function (resolve, reject) {
+        const tx = db.transaction(IDB_SNAP_STORE, 'readonly');
+        const req = tx.objectStore(IDB_SNAP_STORE).get(ts);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    } catch (e) { return null; }
+  }
+
+  async function deleteSnapshots(tsArray) {
+    if (!tsArray || !tsArray.length) return;
+    try {
+      const db = await openHandleDB();
+      await new Promise(function (resolve, reject) {
+        const tx = db.transaction(IDB_SNAP_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_SNAP_STORE);
+        tsArray.forEach(function (ts) { store.delete(ts); });
         tx.oncomplete = function () { resolve(); };
         tx.onerror = function () { reject(tx.error); };
       });
