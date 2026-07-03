@@ -824,8 +824,9 @@
       dom.calendarStrip.appendChild(cell);
     }
 
-    // Mission progress dots
-    if (app.mission) {
+    // Mission progress dots (only while a problem is actually in progress —
+    // currentIndex can briefly point past the last problem at completion).
+    if (app.mission && app.mission.problems[app.mission.currentIndex]) {
       dom.missionProblemTotal.textContent = String(app.mission.problems.length);
       dom.missionProblemIndex.textContent = String(app.mission.currentIndex + 1);
       dom.missionProblemRole.textContent =
@@ -864,9 +865,13 @@
   function loadMissionProblem() {
     if (!app.mission) return;
     const cur = app.mission.problems[app.mission.currentIndex];
-    newProblem(cur.problem);
-    // Mission uses guided mode by default for clarity
+    // Mission uses guided mode by default for clarity. This MUST be set before
+    // newProblem() runs — newProblem() calls render(), and if a stale 'demo'
+    // (Watch) mode carried over from Practice, the mission would render
+    // watch-only (Check hidden, Next shown) and the kid couldn't actually
+    // solve it. Setting the mode first makes that render use guided.
     app.mode = "guided";
+    newProblem(cur.problem);
   }
 
   function onProblemCompletedInMission() {
@@ -897,8 +902,13 @@
       }
 
       showMissionSummary(avg);
-      renderMissionPanel();
+      // Clear the mission BEFORE re-rendering the panel. currentIndex was just
+      // pushed past the last problem, so renderMissionPanel()'s dots code would
+      // read problems[currentIndex] (undefined) and throw — which also skipped
+      // this very reset. Clearing first makes the panel skip the dots and just
+      // refresh the calendar/streak for the summary screen.
       app.mission = null;
+      renderMissionPanel();
     } else {
       // Load next problem
       setTimeout(() => {
