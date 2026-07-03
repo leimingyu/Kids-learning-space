@@ -408,61 +408,141 @@
     );
     root.append(summary);
 
-    // Backup / Restore card — uses window.KLS.backup (see BACKUP_RESTORE.md).
+    // ── Quiet Backup: status card + restore timeline + folder + quiet links ──
     const backup = window.KLS && window.KLS.backup;
+    const fmtRel = (window.KLS.util && window.KLS.util.formatRelative) || function (x) { return new Date(x).toLocaleString(); };
 
-    const restoreInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
-    restoreInput.addEventListener('change', function (ev) {
-      const file = ev.target.files && ev.target.files[0];
-      ev.target.value = '';
-      if (!file || !backup) return;
-      const typed = window.prompt(
-        "Restoring will REPLACE all profiles and progress on this device with the backup file's contents. " +
-        "Profiles on this device that aren't in the backup will be deleted.\n\n" +
-        'Type REPLACE to continue:'
-      );
-      if (typed !== 'REPLACE') {
-        alert('Restore cancelled. Nothing was changed.');
+    const backupCard = el('div', { class: 'card parent-page__card parent-backup' });
+    root.append(backupCard);
+
+    function renderTimeline(wrap, list) {
+      wrap.innerHTML = '';
+      if (!list.length) { wrap.append(el('p', { class: 'parent-page__note' }, 'No moments yet.')); return; }
+      const groups = backup._internals.groupSnapshotsByPeriod(list, Date.now());
+      const order = [['today', 'Today'], ['yesterday', 'Yesterday'], ['thisWeek', 'This week'], ['older', 'Older']];
+      order.forEach(function (pair) {
+        const items = groups[pair[0]];
+        if (!items.length) return;
+        wrap.append(el('h3', { class: 'timeline__heading' }, pair[1]));
+        items.forEach(function (m) {
+          const time = new Date(m.ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          const who = ((m.summary && m.summary.profiles) || []).map(function (p) {
+            return p.avatar + ' ' + p.name + ' ⭐ ' + p.stars + ' 🏆 ' + p.stickers;
+          }).join('  ·  ') || 'no progress yet';
+          const row = el('div', { class: 'timeline__moment' },
+            el('div', { class: 'timeline__moment-main' },
+              el('span', { class: 'timeline__time' }, time + (m.label ? ' — ' + m.label : '')),
+              el('span', { class: 'timeline__who' }, who),
+            ),
+            el('button', {
+              type: 'button', class: 'btn btn-secondary btn-tiny',
+              onclick: function () {
+                const when = new Date(m.ts).toLocaleString();
+                if (!window.confirm('Go back to ' + when + '?\n\nEverything on this device will look exactly as it did then. A "Before restore" moment is saved first, so you can undo this.')) return;
+                backup.restoreSnapshot(m.ts).catch(function (e) {
+                  alert('Restore failed: ' + (e && e.message ? e.message : e));
+                });
+              },
+            }, 'Replace everything'),
+          );
+          wrap.append(row);
+        });
+      });
+    }
+
+    function renderFolderRow(row, st) {
+      row.innerHTML = '';
+      if (!st || !st.supported) return; // Safari/Firefox: no folder UI at all
+      if (!st.connected) {
+        row.append(
+          el('p', { class: 'parent-page__note' }, 'Keep backup files in a folder — survives a browser wipe or a move to a new computer.'),
+          el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
+            backup.connectBackupFolder().then(function (dh) { if (dh) renderBackupCard(); })
+              .catch(function (e) { alert('Could not connect folder: ' + (e && e.message ? e.message : e)); });
+          } }, '📁 Choose folder…'),
+        );
         return;
       }
-      backup.importFromFile(file).catch(function (e) {
-        alert('Restore failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
-      });
-    });
+      if (st.needsReconnect) {
+        row.append(
+          el('p', { class: 'parent-page__note' }, 'Backup folder “' + st.name + '” lost permission.'),
+          el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
+            backup.connectBackupFolder().then(function (dh) { if (dh) renderBackupCard(); })
+              .catch(function (e) { alert('Could not reconnect: ' + (e && e.message ? e.message : e)); });
+          } }, 'Reconnect folder…'),
+        );
+        return;
+      }
+      row.append(el('p', { class: 'parent-page__note' },
+        'Folder connected · ' + st.name + (st.lastMirrorAt ? ' · updated ' + fmtRel(st.lastMirrorAt) : '')));
+    }
 
-    const lastExport = backup ? backup.getLastExportedAt() : null;
-    const lastExportLabel = lastExport
-      ? 'Last backed up: ' + new Date(lastExport).toLocaleString()
-      : 'No backup made yet on this device.';
+    function renderBackupCard() {
+      backupCard.innerHTML = '';
+      const available = backup && backup.snapshotsAvailable && backup.snapshotsAvailable();
 
-    const eximCard = el('div', { class: 'card parent-page__card' },
-      el('h2', { class: 'parent-page__section' }, 'Backup & Restore'),
-      el('p', {}, 'Back up every profile and all game progress to a single JSON file. ' +
-        'Save it somewhere safe (Files, email to yourself, cloud drive) — it is the ' +
-        'only way to recover this data if the browser clears its storage.'),
-      el('p', { class: 'parent-page__note' }, lastExportLabel),
-      el('div', { class: 'btn-row' },
-        el('button', {
-          type: 'button',
-          class: 'btn btn-primary',
+      backupCard.append(el('h2', { class: 'parent-page__section' }, 'Backups'));
+
+      if (!backup) { backupCard.append(el('p', {}, 'Backup module not loaded.')); return; }
+
+      if (!available) {
+        backupCard.append(el('p', {}, 'Automatic backups aren’t available in this browser. You can still export and import a file below.'));
+      } else {
+        const statusLine = el('p', { class: 'parent-backup__status' }, 'On · loading…');
+        backupCard.append(statusLine);
+        const timelineWrap = el('div', { class: 'parent-backup__timeline', hidden: true });
+        const restoreBtn = el('button', {
+          type: 'button', class: 'btn btn-secondary',
           onclick: function () {
-            if (!backup) { alert('Backup module not loaded.'); return; }
-            backup.exportToFile().then(function (ok) {
-              if (ok) setTimeout(renderParent, 400); // refresh "Last backed up" line
-            }).catch(function (e) {
-              alert('Save failed: ' + (e && e.message ? e.message : e));
-            });
+            timelineWrap.hidden = !timelineWrap.hidden;
+            restoreBtn.textContent = timelineWrap.hidden ? 'Restore from a moment…' : 'Hide moments';
           },
-        }, '💾 Back up everything'),
-        el('button', {
-          type: 'button',
-          class: 'btn btn-secondary',
-          onclick: function () { restoreInput.click(); },
-        }, '📥 Restore from backup…'),
-      ),
-      restoreInput,
-    );
-    root.append(eximCard);
+        }, 'Restore from a moment…');
+        backupCard.append(el('div', { class: 'btn-row' }, restoreBtn), timelineWrap);
+
+        backup.getSnapshotsMeta().then(function (list) {
+          statusLine.textContent = list.length
+            ? 'On · last snapshot ' + fmtRel(list[0].ts) + ' · ' + list.length + ' moment' + (list.length === 1 ? '' : 's') + ' kept'
+            : 'On · no snapshots yet — play a game and one appears within ~10 seconds';
+          renderTimeline(timelineWrap, list);
+        });
+      }
+
+      // Phase 2: folder row (hidden on browsers without showDirectoryPicker).
+      const folderRow = el('div', { class: 'parent-backup__folder' });
+      backupCard.append(folderRow);
+      if (backup.getFolderStatus) backup.getFolderStatus().then(function (st) { renderFolderRow(folderRow, st); });
+
+      // Quiet Export / Import links — the off-device escape hatch. Import keeps
+      // the stronger type-REPLACE confirmation because a file can come from
+      // anywhere.
+      const importInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
+      importInput.addEventListener('change', function (ev) {
+        const file = ev.target.files && ev.target.files[0];
+        ev.target.value = '';
+        if (!file) return;
+        const typed = window.prompt(
+          "Importing will REPLACE all profiles and progress on this device with the file's contents.\n\nType REPLACE to continue:");
+        if (typed !== 'REPLACE') { alert('Import cancelled. Nothing was changed.'); return; }
+        backup.importFromFile(file).catch(function (e) {
+          alert('Import failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
+        });
+      });
+      backupCard.append(
+        el('p', { class: 'parent-backup__links' },
+          el('a', { href: '#', class: 'parent-backup__link', onclick: function (e) {
+            e.preventDefault();
+            backup.exportToFile().catch(function (err) { alert('Export failed: ' + (err && err.message ? err.message : err)); });
+          } }, 'Export a file…'),
+          el('span', { 'aria-hidden': 'true' }, '  ·  '),
+          el('a', { href: '#', class: 'parent-backup__link', onclick: function (e) { e.preventDefault(); importInput.click(); } }, 'Import a file…'),
+          importInput,
+        ),
+        el('p', { class: 'parent-page__note' }, 'Snapshots and file backups use the same format — either can restore the other.')
+      );
+    }
+
+    renderBackupCard();
 
     // Danger zone
     const dangerCard = el('div', { class: 'card parent-page__card' },
