@@ -229,12 +229,14 @@
     const saveBtn = el('button', {
       type: 'button',
       class: 'btn btn-secondary btn-tiny',
-      title: 'Download a save file (into a saved_status folder)',
+      title: 'Save your game into a saved_status folder (or a download)',
       onclick: function () {
-        if (!backup || !backup.saveToDownload) { alert('Backup module not loaded.'); return; }
-        try {
-          if (backup.saveToDownload() !== false) flashSavedGame(saveBtn);
-        } catch (e) { alert('Save failed: ' + (e && e.message ? e.message : e)); }
+        if (!backup || !backup.saveMyGame) { alert('Backup module not loaded.'); return; }
+        saveBtn.disabled = true;
+        backup.saveMyGame().then(function (r) {
+          saveBtn.disabled = false;
+          if (r && r.mode !== 'cancelled') flashSavedGame(saveBtn, r.mode);
+        }).catch(function (e) { saveBtn.disabled = false; alert('Save failed: ' + (e && e.message ? e.message : e)); });
       },
     }, '💾 Save my game');
     slot.append(
@@ -243,12 +245,12 @@
     );
   }
 
-  /** Brief "Saved ✓" confirmation on the Save button. */
-  function flashSavedGame(btn) {
-    const prev = btn.textContent;
-    btn.textContent = '✅ Saved!';
+  /** Brief confirmation on the Save button, worded to match where it landed. */
+  function flashSavedGame(btn, mode) {
+    const prev = '💾 Save my game';
+    btn.textContent = mode === 'download' ? '✅ Downloaded!' : '✅ Saved to folder!';
     btn.disabled = true;
-    setTimeout(function () { btn.textContent = prev; btn.disabled = false; }, 1600);
+    setTimeout(function () { btn.textContent = prev; btn.disabled = false; }, 1800);
   }
 
   function renderGame(slug) {

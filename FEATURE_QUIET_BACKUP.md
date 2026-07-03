@@ -170,9 +170,11 @@ shows "Reconnect folder…". Never a popup, never anything on the hub.
 > is running. See `docs/superpowers/specs/2026-07-03-auto-save-server-decision.md`.
 >
 > **Update (2026-07-03, save-my-game):** the on-disk folder is renamed
-> `saves/` → **`saved_status/`**, and a **💾 Save my game** button downloads
-> `saved_status/kls-save-*.json` so the pure double-click (`file://`) case can
-> produce a save file (into Downloads) with no launcher. See
+> `saves/` → **`saved_status/`**, and a **💾 Save my game** button (`saveMyGame()`)
+> writes into a `saved_status` folder using the best method the browser allows —
+> save server → File System Access folder (picked once) → download — so the
+> double-click (`file://`) case gets a real folder where the browser permits it,
+> and a download otherwise. See
 > `docs/superpowers/specs/2026-07-03-save-my-game-download-design.md`.
 
 - After each autosave snapshot (throttled to at most one folder write / 3 min,
