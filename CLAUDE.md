@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Static, no-build, no-framework, `file://`-friendly site. Pure vanilla HTML/CSS/JS — no npm, no bundler, no server required. Browser baseline: Chrome 111+, Safari 15.4+, Firefox 113+ (`oklch()` + `:focus-visible`).
 
-**Self-contained / offline:** no runtime network dependency. Fonts (Fredoka + Nunito) are bundled under `shared/fonts/` (OFL) and wired via `shared/styles/fonts.css` — do NOT re-introduce a `fonts.googleapis.com` `<link>`. Games already use system-font stacks. Double-click launchers exist for both OSes (`start-mac.command`, `start-windows.bat`); `.gitattributes` keeps the `.bat` CRLF and marks `*.woff2` binary. Silent auto-backup (IndexedDB) needs Chrome/Edge on `file://` or any browser over `http://localhost`; progress + manual Export work everywhere.
+**Self-contained / offline:** no runtime network dependency. Fonts (Fredoka + Nunito) are bundled under `shared/fonts/` (OFL) and wired via `shared/styles/fonts.css` — do NOT re-introduce a `fonts.googleapis.com` `<link>`. Games already use system-font stacks. Launchers (`start-mac.command`, `start-windows.bat`) prefer a local `python3 -m http.server` (so folder-saving + full auto-backup work) and fall back to opening `index.html` via `file://`; `.gitattributes` keeps the `.bat` CRLF and marks `*.woff2` binary. Silent auto-backup (IndexedDB) needs Chrome/Edge on `file://` or any browser over `http://localhost`; progress + manual Export work everywhere.
+
+**Save-to-folder (File System Access):** when a folder is connected (Parent page → Choose folder…), `backup.js` mirrors each autosave snapshot AND the manual `saveHistoryNow()` into it: `kls-backup-latest.json` + `saves/kls-save-<stamp>.json` history (newest 30, `MIRROR_HISTORY_KEEP`), autosave throttled to `MIRROR_THROTTLE_MS` (3 min). Chrome/Edge + secure context only (`http://localhost`, not `file://`). Pure helpers (`stampForFilename`, `selectHistoryToPrune`) + the FS worker (`writeHistoryToFolder`) are on `KLS.backup._internals` for tests.
 
 ## Commands
 
