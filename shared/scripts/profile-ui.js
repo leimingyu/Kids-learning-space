@@ -481,7 +481,7 @@
         // No save server and no File System Access API (e.g. opened as a plain
         // file). Be honest about how to enable folder-saving rather than hiding it.
         row.append(el('p', { class: 'parent-page__note' },
-          'To save into a folder automatically, open the app with the launcher (start-mac.command / start-windows.bat) — it runs a local server that writes the files (any browser). You’re currently opening it as a plain file; progress and “Export a file…” still work here.'));
+          'To save into a folder automatically, open the app with “Play Kids Learning Space” (.command / .bat) — it runs a local server that writes the files (any browser). You’re currently opening it as a plain file; progress and “Export a file…” still work here.'));
         return;
       }
       if (!st.connected) {

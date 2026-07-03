@@ -1,5 +1,6 @@
 #!/bin/bash
-# Kids Learning Space — macOS launcher.
+# Play Kids Learning Space — macOS.
+# Double-click THIS to play with saves written into this folder.
 # Starts a small local server (tools/kls_server.py) so saves land as real files
 # in THIS folder automatically — no browser folder-picker, any browser. Falls
 # back to opening index.html directly (file://) if Python 3 isn't installed
