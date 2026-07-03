@@ -730,83 +730,24 @@ code {
   line-height: 1.2;
 }
 
-/* ===== Solution 1: chip-with-menu for account actions =====
-   Replaces the three big "Save / Load / Choose folder" buttons + Parent
-   link with a single details-style chip at the bottom-right. */
+/* ===== Account-actions row (Quiet Backup) =====
+   The hub renders no backup UI. All that's left is a quiet link to the
+   grown-ups Parent page (which hosts the restore timeline). */
 .hub__quick-row {
   display: flex;
   justify-content: flex-end;
   margin-top: var(--kls-space-4);
 }
-.hub__quick-menu {
-  position: relative;
-}
-.hub__quick-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: var(--kls-radius-pill);
-  background: var(--kls-surface-elev);
-  border: 1px solid var(--kls-border);
-  box-shadow: var(--kls-shadow-1);
+.hub__parent-link {
   font-size: var(--kls-fs-sm);
   color: var(--kls-muted);
-  cursor: pointer;
-  list-style: none;
-}
-.hub__quick-summary::-webkit-details-marker { display: none; }
-.hub__quick-summary:hover { background: var(--kls-surface); }
-.hub__quick-summary:focus-visible {
-  outline: none;
-  box-shadow: var(--kls-shadow-focus);
-}
-.hub__quick-icon { font-size: 1rem; }
-.hub__quick-status { font-weight: var(--kls-fw-semibold); color: var(--kls-ink); }
-.hub__quick-caret {
-  font-size: 0.7rem;
-  color: var(--kls-muted);
-  transition: transform var(--kls-dur-base) var(--kls-ease-out);
-}
-.hub__quick-menu[open] .hub__quick-caret { transform: rotate(180deg); }
-.hub__quick-pop {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  min-width: 200px;
-  background: var(--kls-surface-elev);
-  border: 1px solid var(--kls-border);
-  border-radius: var(--kls-radius-lg);
-  box-shadow: var(--kls-shadow-3);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 10;
-}
-.hub__quick-item {
-  display: block;
-  padding: 8px 10px;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  font: inherit;
-  font-size: var(--kls-fs-sm);
-  color: var(--kls-ink);
-  border-radius: var(--kls-radius-md);
-  cursor: pointer;
   text-decoration: none;
 }
-.hub__quick-item:hover  { background: var(--kls-surface); }
-.hub__quick-item:focus-visible {
+.hub__parent-link:hover { text-decoration: underline; }
+.hub__parent-link:focus-visible {
   outline: none;
   box-shadow: var(--kls-shadow-focus);
-}
-/* Resume item gets the accent treatment so the most-recent-saved game is
-   visually distinct from the file-import "Load…" option below it. */
-.hub__quick-item--resume {
-  color: var(--kls-primary);
-  font-weight: var(--kls-fw-semibold);
+  border-radius: var(--kls-radius-md);
 }
 
 /* Narrow screens — let the slim header stack so the title doesn't get
@@ -929,23 +870,6 @@ code {
   color: var(--kls-muted);
   font-size: var(--kls-fs-lg);
 }
-
-.hub__nudge {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--kls-space-3);
-  padding: var(--kls-space-3) var(--kls-space-4);
-  margin: 0 auto var(--kls-space-5);
-  max-width: 720px;
-  background: var(--kls-surface-2);
-  border: 2px dashed var(--kls-border);
-  border-radius: var(--kls-radius-lg);
-  color: var(--kls-ink);
-}
-.hub__nudge-icon { font-size: var(--kls-fs-xl); line-height: 1; }
-.hub__nudge-text { flex: 1 1 220px; font-size: var(--kls-fs-sm); }
-.hub__nudge .btn-tiny { white-space: nowrap; }
 
 .hub__account-actions {
   margin: var(--kls-space-6) auto var(--kls-space-3);
@@ -1306,6 +1230,26 @@ code {
 .parent-page__table th, .parent-page__table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--kls-border); }
 .parent-page__table th { color: var(--kls-muted); font-weight: var(--kls-fw-semibold); }
 .parent-page__note { color: var(--kls-muted); font-size: 0.85rem; margin-top: var(--kls-space-3); }
+
+/* Quiet Backup — parent-page status card + restore timeline */
+.parent-backup__status { font-weight: var(--kls-fw-semibold); color: var(--kls-ink); }
+.parent-backup__timeline { margin-top: var(--kls-space-3); }
+.parent-backup__folder { margin-top: var(--kls-space-3); }
+.parent-backup__links { margin-top: var(--kls-space-3); font-size: var(--kls-fs-sm); }
+.parent-backup__link { color: var(--kls-primary); text-decoration: underline; cursor: pointer; }
+.timeline__heading {
+  font-size: var(--kls-fs-sm); text-transform: uppercase; letter-spacing: .04em;
+  color: var(--kls-muted); margin: var(--kls-space-3) 0 var(--kls-space-1);
+}
+.timeline__moment {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--kls-space-3);
+  padding: var(--kls-space-2) var(--kls-space-3); border-radius: var(--kls-radius-md);
+  background: var(--kls-surface); margin-bottom: var(--kls-space-1); flex-wrap: wrap;
+}
+.timeline__moment-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.timeline__time { font-weight: var(--kls-fw-semibold); color: var(--kls-ink); }
+.timeline__who { font-size: var(--kls-fs-sm); color: var(--kls-muted); }
+
 .btn-tiny {
   padding: 4px 10px;
   font-size: 0.82rem;
