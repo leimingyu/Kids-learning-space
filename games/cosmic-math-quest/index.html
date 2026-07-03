@@ -977,8 +977,11 @@
           <button type="button" class="segment-btn" data-mode="divide" aria-pressed="false">Division</button>
           <button type="button" class="segment-btn" data-mode="mixed" aria-pressed="false">Mixed</button>
         </div>
+        <div class="btn-row" id="cmq-resume-row" hidden>
+          <button type="button" class="btn btn-primary cmq-resume" id="btn-cmq-resume">▶ Continue my last session</button>
+        </div>
         <div class="btn-row">
-          <button type="button" class="btn btn-primary" id="btn-play">▶ Play Mission</button>
+          <button type="button" class="btn btn-primary" id="btn-play">🆕 Play Mission</button>
         </div>
         <div class="segment-label">Things to Improve</div>
         <div class="btn-row mistake-actions">
@@ -4483,6 +4486,67 @@
   window.__cmq_onGoHome = function () {
     try { showScreen('menu'); } catch (e) { /* ignore */ }
   };
+
+  // Resume-blob contract — entry-context only. Captures which screen the
+  // kid is on plus mode/level. Restoring lands them at the same screen
+  // (a fresh round at the same level/mode); we don't try to rebuild the
+  // in-progress question queue.
+  window.__cmq_captureState = function () {
+    try {
+      var active = document.querySelector('.screen.active');
+      return {
+        v: 1,
+        screen: active ? active.id : 'screen-menu',
+        mode: (GameState && GameState.mode) || null,
+        level: (GameState && GameState.level) || null,
+      };
+    } catch (e) { return { v: 1, screen: 'screen-menu' }; }
+  };
+  // Approach 4: stash the blob; the kid clicks Continue or Play Mission
+  // on the menu to decide. We don't auto-restore.
+  var __cmq_pendingResume = null;
+  function __cmq_showResumeRow(on) {
+    var row = document.getElementById('cmq-resume-row');
+    if (row) row.hidden = !on;
+  }
+  function __cmq_clearPendingResume() {
+    __cmq_pendingResume = null;
+    __cmq_showResumeRow(false);
+    try {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
+        window.KLS.bridge.clearState();
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function __cmq_doRestoreFromBlob(blob) {
+    if (!blob || blob.v !== 1) return;
+    try {
+      if (GameState) {
+        if (blob.mode)  GameState.mode  = blob.mode;
+        if (blob.level) GameState.level = blob.level;
+      }
+      showScreen('menu');
+    } catch (e) { /* corrupted blob */ }
+  }
+  window.__cmq_restoreState = function (blob) {
+    if (!blob || blob.v !== 1) return;
+    __cmq_pendingResume = blob;
+    __cmq_showResumeRow(true);
+  };
+  // Wire Continue / Play Mission interactions.
+  (function () {
+    var rb = document.getElementById('btn-cmq-resume');
+    if (rb) rb.addEventListener('click', function () {
+      var blob = __cmq_pendingResume;
+      __cmq_pendingResume = null;
+      __cmq_showResumeRow(false);
+      __cmq_doRestoreFromBlob(blob);
+    });
+    var play = document.getElementById('btn-play');
+    if (play) play.addEventListener('click', function () {
+      if (__cmq_pendingResume) __cmq_clearPendingResume();
+    }, true);
+  })();
 })();
 
 </script>
@@ -4505,6 +4569,17 @@
       // Chrome-bar "🏠 Home" — return to this game's menu screen.
       if (window.KLS.bridge.onHubMessage && window.__cmq_onGoHome) {
         window.KLS.bridge.onHubMessage('goHome', window.__cmq_onGoHome);
+      }
+      // Resume-blob contract — Save button + hub Resume item.
+      if (window.KLS.bridge.onHubMessage && window.__cmq_captureState) {
+        window.KLS.bridge.onHubMessage('requestState', function () {
+          try { window.KLS.bridge.saveState(window.__cmq_captureState()); } catch (e) {}
+        });
+      }
+      if (window.KLS.bridge.onHubMessage && window.__cmq_restoreState) {
+        window.KLS.bridge.onHubMessage('resumeState', function (msg) {
+          try { if (msg && msg.state) window.__cmq_restoreState(msg.state); } catch (e) {}
+        });
       }
     }
   </script>

@@ -88,36 +88,43 @@
     return GAMES.filter((g) => g.topics.includes(activeTopic));
   }
 
-  function makeTile(g) {
+  // (Big-tile renderer removed — Solution 1 uses only the compact mini tile.
+  //  If a future redesign needs a hero card, restore via git history.)
+
+  /** Compact tile — used in the single-section library. Solution 1 removes
+   *  the tile tag (it duplicated the filter chips) and replaces the standalone
+   *  Continue section with an inline ▶ overlay on tiles that have saved state. */
+  function makeTileMini(g) {
     const stars = gameStarsTotal(g.slug);
     const game = progress.getGame(g.slug);
-    const last = game.lastPlayedAt;
     const stickers = (game.stickers || []).length;
     const hasSaved = !!game.gameState;
 
-    const badges = [];
-    if (stars > 0)    badges.push(el('span', { class: 'tile__badge tile__badge--stars' }, '⭐ ' + stars));
-    if (stickers > 0) badges.push(el('span', { class: 'tile__badge tile__badge--stickers' }, '🏆 ' + stickers));
-    if (hasSaved)    badges.push(el('span', { class: 'tile__badge tile__badge--saved', title: 'Saved game waiting' }, '💾 Continue'));
+    const meta = [];
+    if (stars > 0)    meta.push(el('span', { class: 'tile__badge tile__badge--stars' },    '⭐ ' + stars));
+    if (stickers > 0) meta.push(el('span', { class: 'tile__badge tile__badge--stickers' }, '🏆 ' + stickers));
 
+    const classes = 'tile tile--mini' + (hasSaved ? ' tile--resumable' : '');
     return el('a', {
-      class: 'tile',
+      class: classes,
       href: '#/games/' + g.slug,
-      'aria-label': g.title,
+      'aria-label': hasSaved ? 'Continue ' + g.title : g.title,
+      title: g.subtitle,
     },
-      el('div', { class: 'tile__illo', 'aria-hidden': 'true' }, g.emoji),
-      el('span', { class: 'tile__tag ' + (g.tagClass || '') }, g.tag),
-      el('h2', { class: 'tile__title' }, g.title),
-      el('p', { class: 'tile__subtitle' }, g.subtitle),
-      el('div', { class: 'tile__badges' }, badges),
-      el('div', { class: 'tile__stats' },
-        el('span', { class: 'tile__lastplayed' },
-          last ? 'Played ' + formatRelative(last) : 'Not played yet'),
+      el('div', { class: 'tile-mini__row' },
+        el('div', { class: 'tile-mini__emoji', 'aria-hidden': 'true' }, g.emoji),
+        el('div', { class: 'tile-mini__body' },
+          el('h3', { class: 'tile-mini__title' }, g.title),
+          meta.length ? el('div', { class: 'tile-mini__meta' }, meta) : null,
+        ),
       ),
     );
   }
 
-  function renderTiles() {
+  // (Continue section removed in Solution 1 — inline ▶ overlay on resumable
+  //  tiles serves the same purpose without a duplicate row.)
+
+  function renderLibrary() {
     const tilesEl = qs('#hub-tiles');
     if (!tilesEl) return;
     const games = visibleGames();
@@ -130,7 +137,11 @@
       );
       return;
     }
-    games.forEach((g) => tilesEl.append(makeTile(g)));
+    games.forEach((g) => tilesEl.append(makeTileMini(g)));
+  }
+
+  function renderTiles() {
+    renderLibrary();
   }
 
   function renderFilter() {
@@ -229,13 +240,20 @@
 
     const profile = progress.get().profile;
 
+    // Solution 1 "Single-section stripped": no Continue section, no "All games"
+    // heading, no subtitle, no tile tags (filter chips already do that job),
+    // no bottom Parent link. Account actions collapse into a single chip
+    // menu at the bottom-right.
     hub.innerHTML = ''
-      + '<header class="hub__header">'
-      +   '<svg class="hub__mascot" viewBox="0 0 200 200" role="img" aria-label="Pip the fox">'
-      +     '<use href="#pip-curious"></use>'
-      +   '</svg>'
-      +   '<h1 class="hub__title">Kids Learning Space</h1>'
-      +   '<p class="hub__subtitle">Pick a game and start learning!</p>'
+      + '<header class="hub__header hub__header--slim">'
+      +   '<div class="hub__brand">'
+      +     '<svg class="hub__mascot hub__mascot--small" viewBox="0 0 200 200" role="img" aria-label="Pip the fox">'
+      +       '<use href="#pip-curious"></use>'
+      +     '</svg>'
+      +     '<div class="hub__brand-text">'
+      +       '<h1 class="hub__title hub__title--slim">Kids Learning Space</h1>'
+      +     '</div>'
+      +   '</div>'
       +   '<button type="button" class="hub__profile-pill" id="hub-profile-pill" aria-label="Switch profile">'
       +     '<span class="hub__profile-avatar" aria-hidden="true"></span>'
       +     '<span class="hub__profile-name"></span>'
@@ -243,9 +261,8 @@
       +   '</button>'
       + '</header>'
       + '<div id="hub-filter" class="hub__filter" role="group" aria-label="Filter games by topic"></div>'
-      + '<div id="hub-tiles" class="hub__tiles"></div>'
-      + '<div id="hub-account-actions" class="hub__account-actions"></div>'
-      + '<p class="hub__parent-link"><a href="#/parent">Parent / Data Page</a></p>';
+      + '<div id="hub-tiles" class="hub__library-grid"></div>'
+      + '<div id="hub-account-actions" class="hub__quick-row"></div>';
 
     qs('.hub__profile-avatar', hub).textContent = profile ? profile.avatar : '🦊';
     qs('.hub__profile-name',   hub).textContent = profile ? profile.displayName : 'Friend';
@@ -259,13 +276,16 @@
     renderAccountActions();
   }
 
-  /** Save / Load all account info buttons, rendered below the tiles. */
+  /** Single chip-with-menu replaces the old three-button row + Parent link.
+   *  Default state: "💾 Saved 2m ago ▾" (or "Not saved yet"). Clicking opens
+   *  a small popover with Save now / Load / Choose folder / Parent. */
   function renderAccountActions() {
     const slot = qs('#hub-account-actions');
     if (!slot) return;
     slot.innerHTML = '';
     const backup = window.KLS && window.KLS.backup;
 
+    // Hidden file input reused by the Load action.
     const loadInput = el('input', {
       type: 'file', accept: 'application/json', style: 'display:none',
     });
@@ -278,62 +298,62 @@
         "Accounts on this device that aren't in the file will be deleted.\n\n" +
         'Type REPLACE to continue:'
       );
-      if (typed !== 'REPLACE') {
-        alert('Load cancelled. Nothing was changed.');
-        return;
-      }
+      if (typed !== 'REPLACE') { alert('Load cancelled. Nothing was changed.'); return; }
       backup.importFromFile(file).catch(function (e) {
         alert('Load failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
       });
     });
 
     const lastExport = backup ? backup.getLastExportedAt() : null;
-    const note = lastExport
-      ? 'Last saved: ' + new Date(lastExport).toLocaleString()
-      : 'No saved file yet on this device.';
+    const statusText = lastExport
+      ? 'Saved ' + formatRelative(lastExport)
+      : 'Not saved yet';
 
-    // The "Choose backup folder" button is only useful in browsers that
-    // support the directory picker (Chrome/Edge over http/https). Hide it
-    // elsewhere — Safari/Firefox/file:// users get the regular Save As flow.
-    const folderButton = (backup && backup.supportsDirectoryPicker())
-      ? el('button', {
-          type: 'button',
-          class: 'btn btn-muted btn-tiny',
-          title: 'Make the Save dialog default to your project folder',
-          onclick: function () {
-            backup.pickBackupFolder().then(function (dh) {
-              if (dh) alert('Backup folder set. The Save dialog will default to it next time.');
-            }).catch(function (e) {
-              alert('Could not set backup folder: ' + (e && e.message ? e.message : e));
-            });
-          },
-        }, '📁 Choose backup folder')
-      : null;
+    function doSaveNow() {
+      if (!backup) { alert('Backup module not loaded.'); return; }
+      backup.exportToFile().then(function (ok) {
+        if (ok) renderAccountActions(); // refresh "Saved Nm ago" line
+      }).catch(function (e) {
+        alert('Save failed: ' + (e && e.message ? e.message : e));
+      });
+    }
+    function doChooseFolder() {
+      backup.pickBackupFolder().then(function (dh) {
+        if (dh) alert('Backup folder set. The Save dialog will default to it next time.');
+      }).catch(function (e) {
+        alert('Could not set backup folder: ' + (e && e.message ? e.message : e));
+      });
+    }
 
-    slot.append(
-      el('div', { class: 'hub__account-actions-row' },
-        el('button', {
-          type: 'button',
-          class: 'btn btn-secondary',
-          onclick: function () {
-            if (!backup) { alert('Backup module not loaded.'); return; }
-            backup.exportToFile().then(function (ok) {
-              if (ok) renderAccountActions(); // refresh "Last saved" line
-            }).catch(function (e) {
-              alert('Save failed: ' + (e && e.message ? e.message : e));
-            });
-          },
-        }, '💾 Save all account info'),
-        el('button', {
-          type: 'button',
-          class: 'btn btn-secondary',
-          onclick: function () { loadInput.click(); },
-        }, '📥 Load all account info…'),
-        loadInput,
+    // Resume isn't surfaced here anymore — it lives on each game's home
+    // screen (Approach 4). The hub stays a pure picker; the kid sees a
+    // Continue/New choice once they pick a game.
+    const menuItems = [
+      el('button', { type: 'button', class: 'hub__quick-item', onclick: doSaveNow }, '💾 Save now'),
+      el('button', { type: 'button', class: 'hub__quick-item', onclick: function () { loadInput.click(); } }, '📥 Import backup file…'),
+    ];
+    if (backup && backup.supportsDirectoryPicker()) {
+      menuItems.push(el('button', { type: 'button', class: 'hub__quick-item', onclick: doChooseFolder }, '📁 Choose folder'));
+    }
+    menuItems.push(el('a', { class: 'hub__quick-item', href: '#/parent' }, '👨‍👧 Parent / Data Page'));
+
+    const details = el('details', { class: 'hub__quick-menu' },
+      el('summary', { class: 'hub__quick-summary', title: lastExport ? new Date(lastExport).toLocaleString() : 'No saved file yet on this device.' },
+        el('span', { class: 'hub__quick-icon', 'aria-hidden': 'true' }, '💾'),
+        el('span', { class: 'hub__quick-status' }, statusText),
+        el('span', { class: 'hub__quick-caret', 'aria-hidden': 'true' }, '▾'),
       ),
-      el('p', { class: 'hub__account-actions-note' }, note),
-      folderButton ? el('p', { class: 'hub__account-actions-secondary' }, folderButton) : null,
+      el('div', { class: 'hub__quick-pop' }, menuItems),
+      loadInput,
     );
+    // Close on outside click — small UX nicety.
+    document.addEventListener('click', function onDoc(ev) {
+      if (!details.open) return;
+      if (details.contains(ev.target)) return;
+      details.open = false;
+    });
+
+    slot.append(details);
   }
 
   function renderGame(slug) {
@@ -367,16 +387,11 @@
       }
     }
 
-    // Resume gate: if a saved blob exists, ask the kid before loading the iframe.
-    const saved = progress.getGameState(slug);
-    if (saved != null && profileUI && profileUI.confirmResume) {
-      profileUI.confirmResume(slug, saved,
-        function onResume() { actuallyStart(saved); },
-        function onStartOver() { progress.clearGameState(slug); actuallyStart(null); }
-      );
-    } else {
-      actuallyStart(null);
-    }
+    // Approach 4: the hub no longer asks "Continue or start over?" — that
+    // decision lives on the game's home screen. We always load the game
+    // and push the saved blob (if any). The game STASHES the blob and
+    // shows a two-button choice on its home screen.
+    actuallyStart(progress.getGameState(slug));
   }
 
   function route() {

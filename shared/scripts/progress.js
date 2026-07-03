@@ -111,15 +111,38 @@
   // ────────────────────────────────────────────────────────────────────────
   const listeners = new Set();
 
+  /** In-memory cache of the parsed state. The hub render path calls every
+   *  public API method multiple times per game (getGame, gameStarsTotal,
+   *  etc.) and each call used to re-read localStorage + JSON.parse the
+   *  whole blob — including kilobytes of saved gameState. The cache
+   *  collapses ~30 parses-per-render into 1 per session.
+   *
+   *  Invalidation: `write()` updates the cache directly (we just wrote it,
+   *  so it's authoritative). Cross-tab writes invalidate via the `storage`
+   *  event listener below. Reset paths null the cache explicitly.
+   *
+   *  Mutation contract: callers within this module mutate `s` then call
+   *  `write(s)`. Outside callers (hub, chrome, etc.) MUST treat returned
+   *  objects as read-only — same contract the v1 API already had. */
+  let _cache = null;
+  function invalidateCache() { _cache = null; }
+
   function readRaw() {
+    if (_cache) return _cache;
     // Prefer v2.
     let raw;
     try { raw = localStorage.getItem(KEY); } catch (e) { /* private mode */ }
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed && parsed.version === CURRENT_VERSION) return parsed;
-        if (parsed && parsed.version < CURRENT_VERSION) return runMigrations(parsed);
+        if (parsed && parsed.version === CURRENT_VERSION) {
+          _cache = parsed;
+          return _cache;
+        }
+        if (parsed && parsed.version < CURRENT_VERSION) {
+          _cache = runMigrations(parsed);
+          return _cache;
+        }
       } catch (e) {
         console.warn('[KLS] v2 parse failed', e);
       }
@@ -134,13 +157,15 @@
           const migrated = runMigrations(v1);
           // Persist v2 immediately (leave v1 untouched as backup).
           try { localStorage.setItem(KEY, JSON.stringify(migrated)); } catch (e) { /* ignore */ }
-          return migrated;
+          _cache = migrated;
+          return _cache;
         }
       } catch (e) {
         console.warn('[KLS] v1 parse failed', e);
       }
     }
-    return defaultState();
+    _cache = defaultState();
+    return _cache;
   }
 
   function write(state) {
@@ -150,8 +175,24 @@
       console.warn('[KLS] progress write failed', e);
       return;
     }
+    // We just wrote this state — it IS the cache now.
+    _cache = state;
     listeners.forEach((fn) => { try { fn(state); } catch (err) { console.error(err); } });
   }
+
+  // Cross-tab sync: if another tab writes to our key, drop the cache so
+  // the next read picks up the new state. The `storage` event only fires
+  // on OTHER tabs (not the one that wrote), so we don't double-invalidate.
+  try {
+    window.addEventListener('storage', function (ev) {
+      if (ev.key === KEY || ev.key === LEGACY_V1_KEY || ev.key === null /* clear() */) {
+        invalidateCache();
+        // Wake subscribers so they can re-render with the new state.
+        const fresh = readRaw();
+        listeners.forEach((fn) => { try { fn(fresh); } catch (err) { console.error(err); } });
+      }
+    });
+  } catch (e) { /* SSR / no window */ }
 
   function genProfileId() {
     return 'p_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
@@ -388,6 +429,7 @@
         try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
         try { localStorage.removeItem(LEGACY_V1_KEY); } catch (e) { /* ignore */ }
         const fresh = defaultState();
+        _cache = fresh;
         listeners.forEach((fn) => { try { fn(fresh); } catch (e) { console.error(e); } });
       }
     },

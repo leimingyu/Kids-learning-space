@@ -564,6 +564,47 @@ body {
   }
 }
 
+/* ===== Resume choice overlay (Approach 4) =====
+   Shown on game load when the hub pushed a saved blob. Kid picks
+   Continue (restore saved state) or New (discard and start fresh). */
+.resumeOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+}
+.resumeOverlay[hidden] { display: none; }
+.resumeOverlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(11, 18, 32, 0.78);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.resumeOverlay__card {
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+  width: min(92vw, 420px);
+  padding: 24px 28px;
+  border-radius: 22px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(110, 231, 255, 0.18), rgba(167, 243, 208, 0.12)),
+    rgba(18, 28, 51, 0.96);
+  border: 2px solid rgba(110, 231, 255, 0.40);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.resumeOverlay__title { margin: 0 0 6px; font-size: 22px; }
+.resumeOverlay__lead { margin: 6px 0 16px; color: var(--muted); }
+.resumeOverlay__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 /* ===== Completion overlay (Approach 2: full-screen reward) =====
    Shown in Practice mode after a problem is solved. Game-mode missions
    use their own summary screen and skip this overlay.

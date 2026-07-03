@@ -137,6 +137,15 @@
     }
     .btn-game-home:hover { background: #f5f7fb; }
     .btn-game-home:active { transform: translateY(1px); box-shadow: none; }
+    /* Approach 4: the prominent Continue button on the welcome screen,
+       shown only when the hub pushed a resume blob. */
+    .btn-resume {
+      width: 100%;
+      background: linear-gradient(135deg, #2dd4bf 0%, #06b6d4 100%);
+      color: #fff;
+      font-weight: 700;
+    }
+    .btn-resume:hover { filter: brightness(1.05); }
 
     /* Small inline count badge inside the "Practice by Type" welcome button.
        Visible only when there's at least one unresolved tricky question. */
@@ -1160,6 +1169,9 @@
         Read each story. Find the numbers. Decide: add, subtract, compare, or share!
         Tap <strong>Start Game</strong> to pick a level and begin your adventure.
       </p>
+      <div class="btn-row" id="welcome-resume-row" hidden>
+        <button type="button" class="btn btn-primary btn-resume" id="btn-resume-welcome">▶ Continue my last session</button>
+      </div>
       <div class="btn-row">
         <button type="button" class="btn btn-primary"   id="btn-start-welcome">🗺️ Adventure</button>
         <button type="button" class="btn btn-secondary" id="btn-daily-welcome">📅 Daily Challenge</button>
@@ -4281,6 +4293,79 @@
   // doesn't exist yet). The bottom script registers the handler after the
   // bridge has attached. Same pattern as cosmic-math-quest's __cmq_onGoHome.
   window.__wpa_goHome = goToGameHome;
+
+  // Resume-blob contract — entry-context only. Approach 4: STASH the blob,
+  // show a Continue button on the welcome screen. The kid picks Continue
+  // (restore) or any other entry (discard).
+  function findActiveScreenId() {
+    const active = document.querySelector(".screen.active");
+    return active ? active.id : "screen-welcome";
+  }
+  window.__wpa_captureState = function () {
+    return {
+      v: 1,
+      screen: findActiveScreenId(),
+      mode: isPracticeMode ? "practice" : isDailyMode ? "daily" : "journey",
+      practiceType: practiceType || null,
+      selectedLevel: selectedLevel || null,
+      selectedSessionLabel: selectedSessionLabel || "",
+    };
+  };
+  let __wpa_pendingResume = null;
+  function showWelcomeResumeButton(on) {
+    const row = document.getElementById("welcome-resume-row");
+    if (row) row.hidden = !on;
+  }
+  function clearPendingResume() {
+    __wpa_pendingResume = null;
+    showWelcomeResumeButton(false);
+    // Tell the hub we used / discarded the blob.
+    try {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
+        window.KLS.bridge.clearState();
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function consumePendingResume() {
+    if (!__wpa_pendingResume) return;
+    const blob = __wpa_pendingResume;
+    __wpa_pendingResume = null;
+    showWelcomeResumeButton(false);
+    doRestoreFromBlob(blob);
+  }
+  function doRestoreFromBlob(blob) {
+    if (!blob || blob.v !== 1) return;
+    leavePracticeMode();
+    leaveDailyMode();
+    selectedLevel = blob.selectedLevel || null;
+    selectedSessionLabel = blob.selectedSessionLabel || "";
+    const target = blob.screen || "screen-welcome";
+    if (target === "screen-daily" || target === "screen-daily-summary") {
+      renderDailyIntro();
+      showScreen("screen-daily");
+    } else if (target === "screen-practice-picker") {
+      renderPracticePicker();
+      showScreen("screen-practice-picker");
+    } else if (target === "screen-game" && blob.mode === "practice" && blob.practiceType) {
+      startPracticeRun(blob.practiceType, "all");
+    } else {
+      showScreen("screen-welcome");
+    }
+  }
+  window.__wpa_restoreState = function (blob) {
+    if (!blob || blob.v !== 1) return;
+    __wpa_pendingResume = blob;
+    showWelcomeResumeButton(true);
+  };
+  // Hook the Continue button + auto-discard the stash on any "fresh" entry.
+  document.getElementById("btn-resume-welcome").addEventListener("click", consumePendingResume);
+  ["btn-start-welcome","btn-daily-welcome","btn-practice-welcome"].forEach(function (id) {
+    const b = document.getElementById(id);
+    if (b) b.addEventListener("click", function () {
+      // Kid chose a "fresh" entry — drop the stashed blob so the offer goes away.
+      if (__wpa_pendingResume) clearPendingResume();
+    });
+  });
   document.getElementById("btn-daily-home").addEventListener("click", function () {
     showScreen("screen-welcome");
   });
@@ -4439,6 +4524,17 @@
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.onHubMessage) {
       if (window.__wpa_goHome) {
         window.KLS.bridge.onHubMessage("goHome", window.__wpa_goHome);
+      }
+      // Resume-blob contract.
+      if (window.__wpa_captureState) {
+        window.KLS.bridge.onHubMessage("requestState", function () {
+          try { window.KLS.bridge.saveState(window.__wpa_captureState()); } catch (e) {}
+        });
+      }
+      if (window.__wpa_restoreState) {
+        window.KLS.bridge.onHubMessage("resumeState", function (msg) {
+          try { if (msg && msg.state) window.__wpa_restoreState(msg.state); } catch (e) {}
+        });
       }
     }
   </script>

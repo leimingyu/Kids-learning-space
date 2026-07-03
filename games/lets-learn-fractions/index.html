@@ -250,6 +250,11 @@
       transition: transform .12s var(--bounce), filter .2s ease, box-shadow .2s ease;
     }
     .btn.mega:active{ transform: translateY(8px); box-shadow: 0 6px 0 rgba(0,0,0,.10), 0 12px 20px rgba(0,0,0,.10); }
+    .btn.resume {
+      background: linear-gradient(180deg, #2dd4bf 0%, #06b6d4 100%);
+      color: #fff;
+      margin-bottom: 12px;
+    }
     .trickyPracticeBtn{
       width: 100%;
       margin-top: 10px;
@@ -1767,6 +1772,12 @@
               <button type="button" class="lenChip" data-len="50" role="radio" aria-checked="false">50</button>
             </div>
           </div>
+
+          <!-- Resume from saved state (Approach 4) — shown only when the
+               hub pushed a resume blob. The kid picks Continue or Start fresh. -->
+          <button class="btn mega resume" id="resumeBtn" aria-label="Continue last session" hidden>
+            ▶ Continue my last session
+          </button>
 
           <!-- Start -->
           <button class="btn mega play" id="startBtn" aria-label="Start Cooking">
@@ -3675,6 +3686,75 @@
           updateTrickyPillUI();
         } catch (e) { /* not yet defined — safe to ignore */ }
       }
+      function findActiveScreen() {
+        const a = document.querySelector('.screen.active');
+        return a ? a.id : 'home';
+      }
+      function captureState() {
+        return {
+          v: 1,
+          screen: findActiveScreen(),
+          level: currentLevel,
+          isTrickyPractice: !!isTrickyPractice,
+          sessionSize: sessionSize,
+        };
+      }
+      // Approach 4: stash, show Continue button on home, kid picks.
+      var __llf_pendingResume = null;
+      function showResumeButton(on) {
+        var btn = document.getElementById('resumeBtn');
+        if (btn) btn.hidden = !on;
+      }
+      function clearPendingResume() {
+        __llf_pendingResume = null;
+        showResumeButton(false);
+        try {
+          if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
+            window.KLS.bridge.clearState();
+          }
+        } catch (e) { /* ignore */ }
+      }
+      function doRestoreFromBlob(blob) {
+        if (!blob || blob.v !== 1) return;
+        if (blob.level === 'easy' || blob.level === 'medium' || blob.level === 'hard') {
+          currentLevel = blob.level;
+        }
+        if (typeof blob.sessionSize === 'number') sessionSize = blob.sessionSize;
+        isTrickyPractice = false;
+        trickyQueueIdx = 0;
+        if (blob.screen === 'game') {
+          if (blob.isTrickyPractice && wrongsStore.records.length > 0) {
+            startTrickyPractice();
+          } else {
+            startNewSession();
+            showScreen('game');
+          }
+        } else if (blob.screen === 'summary') {
+          showScreen('summary');
+        } else {
+          showScreen('home');
+        }
+      }
+      function restoreState(blob) {
+        // Stash, don't restore — kid will click Continue on the home screen.
+        if (!blob || blob.v !== 1) return;
+        __llf_pendingResume = blob;
+        showResumeButton(true);
+      }
+      // Hook the Continue button + dismiss on Start fresh.
+      (function wireResumeBtns() {
+        var rb = document.getElementById('resumeBtn');
+        if (rb) rb.addEventListener('click', function () {
+          var blob = __llf_pendingResume;
+          __llf_pendingResume = null;
+          showResumeButton(false);
+          doRestoreFromBlob(blob);
+        });
+        var sb = document.getElementById('startBtn');
+        if (sb) sb.addEventListener('click', function () {
+          if (__llf_pendingResume) clearPendingResume();
+        }, true); // capture so we run before the existing startBtn handler
+      })();
       rehydrate();
       if (window.KLS && window.KLS.bridge) {
         if (window.KLS.bridge.onProfileReady) {
@@ -3689,6 +3769,13 @@
               trickyQueueIdx = 0;
               showScreen('home');
             } catch (e) { /* ignore */ }
+          });
+          // Resume-blob contract.
+          window.KLS.bridge.onHubMessage('requestState', function () {
+            try { window.KLS.bridge.saveState(captureState()); } catch (e) {}
+          });
+          window.KLS.bridge.onHubMessage('resumeState', function (msg) {
+            try { if (msg && msg.state) restoreState(msg.state); } catch (e) {}
           });
         }
       }

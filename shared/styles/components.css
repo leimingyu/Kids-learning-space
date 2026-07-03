@@ -538,10 +538,343 @@ code {
 }
 .hub__profile-name { font-weight: var(--kls-fw-semibold); }
 
+/* Legacy single-grid rule — superseded by the two-tier layout below. Kept
+   for any consumer still referencing the bare `.hub__tiles` class. */
 .hub__tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--kls-space-5);
+}
+
+/* ===== Two-tier hub: Continue + Library (Solution 4) =====
+   - Top section: 1–2 large "Continue where you left off" tiles (full .tile).
+   - Bottom section: compact .tile--mini grid of every game, scales to 10+. */
+
+.hub__section {
+  margin-bottom: var(--kls-space-7);
+}
+.hub__section[hidden] { display: none; }
+
+.hub__section-title {
+  font-family: var(--kls-font-display);
+  font-size: var(--kls-fs-lg);
+  color: var(--kls-muted);
+  font-weight: var(--kls-fw-semibold);
+  letter-spacing: 0.01em;
+  margin: 0 0 var(--kls-space-4);
+}
+
+.hub__continue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--kls-space-5);
+}
+
+.hub__library-grid {
+  display: grid;
+  /* Solution 8: tighter min so 5–8 tiles fit per row on a typical laptop. */
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--kls-space-3);
+}
+
+/* ===== Slim header (Solution 1) =====
+   Mascot + title + profile pill on a single row, ~80 px tall instead of
+   ~400 px. Reclaims the vertical space the hero chrome used to eat. */
+.hub__header--slim {
+  display: flex;
+  align-items: center;
+  gap: var(--kls-space-4);
+  margin-bottom: var(--kls-space-3);
+  padding: var(--kls-space-3) 0;
+  text-align: left;
+}
+.hub__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--kls-space-3);
+  flex: 1;
+  min-width: 0;
+}
+.hub__brand-text { min-width: 0; }
+.hub__mascot--small {
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.hub__title--slim {
+  font-size: var(--kls-fs-xl);
+  margin: 0;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hub__subtitle--slim {
+  font-size: var(--kls-fs-sm);
+  margin: 2px 0 0;
+  color: var(--kls-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Continue strip (Solution 3) =====
+   Replaces the big Continue cards with a horizontal row of compact pill
+   "avatars" — emoji circle + name + saved-state indicator. */
+.hub__section--strip {
+  margin-bottom: var(--kls-space-4);
+}
+.hub__section-title--inline {
+  font-size: var(--kls-fs-sm);
+  margin: 0 0 var(--kls-space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.hub__continue-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kls-space-3);
+}
+.continue-avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px 5px 5px;
+  border-radius: var(--kls-radius-pill);
+  background: var(--kls-surface-elev);
+  border: 2px solid transparent;
+  box-shadow: var(--kls-shadow-1);
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--kls-dur-base) var(--kls-ease-spring),
+              box-shadow var(--kls-dur-base) var(--kls-ease-out);
+}
+.continue-avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--kls-shadow-2);
+}
+.continue-avatar:focus-visible {
+  outline: none;
+  border-color: var(--kls-accent);
+  box-shadow: var(--kls-shadow-focus);
+}
+.continue-avatar__emoji {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg,
+              oklch(0.94 0.07 70 / 0.85),
+              oklch(0.92 0.08 30 / 0.75));
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.continue-avatar__name {
+  font-family: var(--kls-font-display);
+  font-size: var(--kls-fs-sm);
+  font-weight: var(--kls-fw-semibold);
+  color: var(--kls-primary);
+  white-space: nowrap;
+}
+.continue-avatar__pill {
+  color: var(--kls-accent);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+.continue-avatar__stars {
+  font-size: var(--kls-fs-xs);
+  color: var(--kls-muted);
+}
+.continue-avatar--saved {
+  border-color: oklch(0.93 0.06 195 / 0.6);
+}
+
+/* ===== Tighter mini tile (Solution 8) =====
+   Reduce padding, emoji, and title size so more games fit per row. */
+.tile--mini {
+  padding: 10px 12px;
+}
+.tile-mini__emoji {
+  width: 40px;
+  height: 40px;
+  font-size: 1.4rem;
+  border-radius: var(--kls-radius-md);
+}
+.tile-mini__title {
+  font-size: var(--kls-fs-sm);
+  margin-bottom: 2px;
+}
+.tile-mini__row {
+  gap: 10px;
+}
+
+/* ===== Solution 1: inline ▶ resume cue on tiles with saved state =====
+   Replaces the standalone "Continue" section. A small accent triangle
+   pins to the top-right corner of the tile so the kid sees at a glance
+   which games have something waiting. */
+.tile--mini { position: relative; }
+.tile--resumable::after {
+  content: "▶";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.75rem;
+  color: var(--kls-accent);
+  background: var(--kls-accent-soft, oklch(0.93 0.06 195));
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ===== Solution 1: chip-with-menu for account actions =====
+   Replaces the three big "Save / Load / Choose folder" buttons + Parent
+   link with a single details-style chip at the bottom-right. */
+.hub__quick-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--kls-space-4);
+}
+.hub__quick-menu {
+  position: relative;
+}
+.hub__quick-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--kls-radius-pill);
+  background: var(--kls-surface-elev);
+  border: 1px solid var(--kls-border);
+  box-shadow: var(--kls-shadow-1);
+  font-size: var(--kls-fs-sm);
+  color: var(--kls-muted);
+  cursor: pointer;
+  list-style: none;
+}
+.hub__quick-summary::-webkit-details-marker { display: none; }
+.hub__quick-summary:hover { background: var(--kls-surface); }
+.hub__quick-summary:focus-visible {
+  outline: none;
+  box-shadow: var(--kls-shadow-focus);
+}
+.hub__quick-icon { font-size: 1rem; }
+.hub__quick-status { font-weight: var(--kls-fw-semibold); color: var(--kls-ink); }
+.hub__quick-caret {
+  font-size: 0.7rem;
+  color: var(--kls-muted);
+  transition: transform var(--kls-dur-base) var(--kls-ease-out);
+}
+.hub__quick-menu[open] .hub__quick-caret { transform: rotate(180deg); }
+.hub__quick-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 200px;
+  background: var(--kls-surface-elev);
+  border: 1px solid var(--kls-border);
+  border-radius: var(--kls-radius-lg);
+  box-shadow: var(--kls-shadow-3);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 10;
+}
+.hub__quick-item {
+  display: block;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: var(--kls-fs-sm);
+  color: var(--kls-ink);
+  border-radius: var(--kls-radius-md);
+  cursor: pointer;
+  text-decoration: none;
+}
+.hub__quick-item:hover  { background: var(--kls-surface); }
+.hub__quick-item:focus-visible {
+  outline: none;
+  box-shadow: var(--kls-shadow-focus);
+}
+/* Resume item gets the accent treatment so the most-recent-saved game is
+   visually distinct from the file-import "Load…" option below it. */
+.hub__quick-item--resume {
+  color: var(--kls-primary);
+  font-weight: var(--kls-fw-semibold);
+}
+
+/* Narrow screens — let the slim header stack so the title doesn't get
+   crushed against the profile pill. */
+@media (max-width: 540px) {
+  .hub__header--slim {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--kls-space-2);
+  }
+  .hub__title--slim,
+  .hub__subtitle--slim { white-space: normal; }
+  .hub__brand { justify-content: center; text-align: center; }
+}
+
+/* Compact tile — used in the All-games library. Single-row layout: emoji
+   square on the left, title + tag/badges stacked on the right. Drops the
+   subtitle and last-played line so the hub stays scannable at 10+ games. */
+.tile--mini {
+  padding: var(--kls-space-3) var(--kls-space-4);
+}
+.tile--mini .tile__illo { display: none; }
+.tile-mini__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--kls-space-3);
+  align-items: center;
+}
+.tile-mini__emoji {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--kls-radius-lg);
+  background: linear-gradient(135deg,
+              oklch(0.94 0.07 70 / 0.85),
+              oklch(0.92 0.08 30 / 0.75));
+  display: grid;
+  place-items: center;
+  font-size: 1.9rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.tile-mini__body {
+  min-width: 0;
+}
+.tile-mini__title {
+  font-family: var(--kls-font-display);
+  font-size: var(--kls-fs-md);
+  margin: 0 0 4px;
+  color: var(--kls-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tile-mini__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: var(--kls-fs-xs);
+}
+.tile-mini__meta .tile__tag {
+  margin-bottom: 0;
+  font-size: 10px;
+  padding: 1px 8px;
+}
+.tile-mini__meta .tile__badge {
+  font-size: 11px;
+  padding: 1px 7px;
 }
 
 .hub__mascot {

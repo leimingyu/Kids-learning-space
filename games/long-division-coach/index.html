@@ -314,6 +314,19 @@
         </aside>
       </div>
 
+      <!-- ====================== RESUME CHOICE OVERLAY (Approach 4) ====================== -->
+      <div id="resumeOverlay" class="resumeOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="resumeTitle">
+        <div class="resumeOverlay__backdrop"></div>
+        <div class="resumeOverlay__card" role="document">
+          <h2 id="resumeTitle" class="resumeOverlay__title">Welcome back!</h2>
+          <p class="resumeOverlay__lead">You have a saved problem from your last session.</p>
+          <div class="resumeOverlay__actions">
+            <button id="resumeContinueBtn" class="btn btn--primary" type="button">▶ Continue last problem</button>
+            <button id="resumeFreshBtn"    class="btn btn--secondary" type="button">🆕 New problem</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ====================== COMPLETION OVERLAY (Practice mode) ====================== -->
       <div
         id="completionOverlay"

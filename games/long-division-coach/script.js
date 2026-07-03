@@ -1826,7 +1826,98 @@
       // (top-level Practice mode with a fresh problem). Cancels any active
       // mission, replay queue, and overlay.
       window.KLS.bridge.onHubMessage("goHome", () => goToGameHome());
+
+      // Resume-blob contract.
+      // requestState: chrome bar's Save button → reply with current snapshot.
+      // resumeState:  hub pushed a saved blob → STASH it (don't auto-restore).
+      //               The kid picks Continue or New on the resume overlay.
+      window.KLS.bridge.onHubMessage("requestState", () => {
+        try {
+          window.KLS.bridge.saveState(captureSessionBlob());
+        } catch (e) { /* never throw inside a message handler */ }
+      });
+      window.KLS.bridge.onHubMessage("resumeState", (msg) => {
+        try {
+          if (msg && msg.state) showResumeChoice(msg.state);
+        } catch (e) { /* corrupted blob — leave game in default state */ }
+      });
     }
+  }
+
+  /** Capture enough state to drop the kid back at the exact same problem,
+   *  same phase, same partial answer they were in. Engine objects are plain
+   *  data already (see `cloneEngineState`), so they serialize cleanly. */
+  function captureSessionBlob() {
+    return {
+      v: 1,
+      topMode: topMode,
+      mode: app.mode,
+      difficulty: app.difficulty,
+      problem: app.problem ? Object.assign({}, app.problem) : null,
+      engine: app.engine ? cloneEngineState(app.engine) : null,
+      inputValue: app.inputValue || "",
+      attemptsThisProblem: app.attemptsThisProblem,
+      hintsUsedThisProblem: app.hintsUsedThisProblem,
+      revealUsedThisProblem: !!app.revealUsedThisProblem,
+      // Mission state is intentionally NOT captured for v1 — restoring
+      // mid-mission is a future enhancement.
+    };
+  }
+
+  /** Approach 4: stash the resume blob and show a two-button overlay so the
+   *  kid explicitly picks Continue or New. Saves were happening on every
+   *  game-state change anyway; this just makes the choice explicit. */
+  let _pendingResumeBlob = null;
+  function showResumeChoice(blob) {
+    if (!blob || blob.v !== 1) return;
+    _pendingResumeBlob = blob;
+    const overlay = document.getElementById("resumeOverlay");
+    if (overlay) overlay.hidden = false;
+  }
+  function hideResumeOverlay() {
+    const overlay = document.getElementById("resumeOverlay");
+    if (overlay) overlay.hidden = true;
+  }
+  function onResumeContinue() {
+    hideResumeOverlay();
+    if (_pendingResumeBlob) {
+      const blob = _pendingResumeBlob;
+      _pendingResumeBlob = null;
+      restoreSessionBlob(blob);
+    }
+  }
+  function onResumeFresh() {
+    hideResumeOverlay();
+    _pendingResumeBlob = null;
+    if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
+      window.KLS.bridge.clearState();
+    }
+    startGeneratedProblem();
+  }
+
+  function restoreSessionBlob(blob) {
+    if (!blob || blob.v !== 1 || !blob.problem || !blob.engine) return;
+    hideCompletionOverlay();
+    app.mission = null;
+    app.replayProblem = null;
+    app.replayingQuestionId = null;
+    if (blob.difficulty === "easy" || blob.difficulty === "medium" || blob.difficulty === "hard") {
+      app.difficulty = blob.difficulty;
+    }
+    if (blob.mode === "demo" || blob.mode === "guided" || blob.mode === "independent") {
+      app.mode = blob.mode;
+    }
+    setTopMode(blob.topMode === "game" ? "game" : "practice");
+    app.problem = blob.problem;
+    app.engine = blob.engine; // already a clone — safe to use directly
+    app.history = [];
+    app.attemptsThisStep = 0;
+    app.attemptsThisProblem = blob.attemptsThisProblem | 0;
+    app.hintsUsedThisProblem = blob.hintsUsedThisProblem | 0;
+    app.revealUsedThisProblem = !!blob.revealUsedThisProblem;
+    setInputValue(blob.inputValue || "");
+    setAppFeedback("neutral", "Resumed where you left off!");
+    render();
   }
 
   function goToGameHome() {
@@ -1841,6 +1932,14 @@
   // ============================================================
   // Boot
   // ============================================================
+
+  // Resume choice overlay buttons.
+  (function wireResumeOverlay() {
+    const c = document.getElementById("resumeContinueBtn");
+    const f = document.getElementById("resumeFreshBtn");
+    if (c) c.addEventListener("click", onResumeContinue);
+    if (f) f.addEventListener("click", onResumeFresh);
+  })();
 
   // Standalone or pre-profile: load whatever's at the un-scoped key
   app.progress = loadProgress();
