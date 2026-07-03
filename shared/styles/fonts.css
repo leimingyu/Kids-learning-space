@@ -1,0 +1,29 @@
+/*
+ * Self-hosted web fonts — bundled, no network dependency.
+ *
+ * Fredoka + Nunito, latin-subset variable woff2 (see ../fonts/). Both are
+ * licensed under the SIL Open Font License 1.1 (../fonts/OFL-*.txt), which
+ * permits bundling and redistribution. This file replaces the old
+ * fonts.googleapis.com <link>s so the hub is fully offline / self-contained.
+ *
+ * Weight is a variable range so one file per family serves every weight the
+ * hub uses (Fredoka 500/600/700, Nunito 400/600/700/800). Any glyph missing
+ * from the latin subset falls through the --kls-font-* fallback chain in
+ * tokens.css to a system font, so nothing renders as tofu.
+ */
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 500 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('../fonts/fredoka-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400 800;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url('../fonts/nunito-latin.woff2') format('woff2');
+}
