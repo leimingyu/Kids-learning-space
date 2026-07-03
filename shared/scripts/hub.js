@@ -1,5 +1,5 @@
 (function () {
-  const { qs, el, formatRelative } = window.KLS.util;
+  const { qs, el } = window.KLS.util;
   const progress = window.KLS.progress;
   const chrome = window.KLS.chrome;
   const profileUI = window.KLS.profileUI;
@@ -171,64 +171,6 @@
     node.classList.add('kls-page-enter');
   }
 
-  /** Should the "back up your data" nudge be shown right now? */
-  function shouldNudgeBackup() {
-    // Only nudge if the user has progress worth losing.
-    const snap = progress.get();
-    if (!snap.profile) return false;
-    if (snap.totals.stars === 0 && snap.totals.stickers === 0) return false;
-
-    // Respect dismissal (1 day) and last-export age (>= 7 days = stale).
-    const NUDGE_DISMISS_KEY = 'kls.backup.nudgeDismissedAt';
-    const ONE_DAY = 24 * 60 * 60 * 1000;
-    const STALE_AFTER = 7 * ONE_DAY;
-    try {
-      const dismissed = localStorage.getItem(NUDGE_DISMISS_KEY);
-      if (dismissed && Date.now() - new Date(dismissed).getTime() < ONE_DAY) return false;
-    } catch (e) { /* ignore */ }
-    const backup = window.KLS && window.KLS.backup;
-    if (!backup) return false;
-    const last = backup.getLastExportedAt();
-    if (!last) return true; // never backed up + has progress → nudge
-    return Date.now() - new Date(last).getTime() > STALE_AFTER;
-  }
-
-  function dismissNudgeForToday() {
-    try { localStorage.setItem('kls.backup.nudgeDismissedAt', new Date().toISOString()); } catch (e) { /* ignore */ }
-  }
-
-  function renderBackupNudge(parent) {
-    if (!shouldNudgeBackup()) return;
-    const backup = window.KLS && window.KLS.backup;
-    const last = backup ? backup.getLastExportedAt() : null;
-    const msg = last
-      ? "It's been a while since you last backed up. Save a fresh copy so progress can't be lost."
-      : 'Your kids’ progress lives only in this browser. Save a backup file so it can’t be lost.';
-    const banner = el('div', { class: 'hub__nudge', role: 'note' },
-      el('span', { class: 'hub__nudge-icon', 'aria-hidden': 'true' }, '💾'),
-      el('span', { class: 'hub__nudge-text' }, msg),
-      el('button', {
-        type: 'button',
-        class: 'btn btn-primary btn-tiny',
-        onclick: function () {
-          if (!backup) { alert('Backup module not loaded.'); return; }
-          backup.exportToFile().then(function (ok) {
-            if (ok) banner.remove();
-          }).catch(function (e) {
-            alert('Save failed: ' + (e && e.message ? e.message : e));
-          });
-        },
-      }, 'Back up now'),
-      el('button', {
-        type: 'button',
-        class: 'btn btn-muted btn-tiny',
-        'aria-label': 'Dismiss for today',
-        onclick: function () { dismissNudgeForToday(); banner.remove(); },
-      }, 'Later'),
-    );
-    parent.prepend(banner);
-  }
-
   function renderHub() {
     chrome.unmount();
     const hub = qs('#hub-root');
@@ -270,90 +212,22 @@
       location.hash = '#/profiles';
     });
 
-    renderBackupNudge(hub);
     renderFilter();
     renderTiles();
     renderAccountActions();
   }
 
-  /** Single chip-with-menu replaces the old three-button row + Parent link.
-   *  Default state: "💾 Saved 2m ago ▾" (or "Not saved yet"). Clicking opens
-   *  a small popover with Save now / Load / Choose folder / Parent. */
+  /** The hub renders no backup UI (Quiet Backup — snapshots happen silently
+   *  in the background). The only thing left in the account-actions row is a
+   *  quiet link to the grown-ups Parent page, which now hosts the restore
+   *  timeline plus the manual Export/Import escape hatch. */
   function renderAccountActions() {
     const slot = qs('#hub-account-actions');
     if (!slot) return;
     slot.innerHTML = '';
-    const backup = window.KLS && window.KLS.backup;
-
-    // Hidden file input reused by the Load action.
-    const loadInput = el('input', {
-      type: 'file', accept: 'application/json', style: 'display:none',
-    });
-    loadInput.addEventListener('change', function (ev) {
-      const file = ev.target.files && ev.target.files[0];
-      ev.target.value = '';
-      if (!file || !backup) return;
-      const typed = window.prompt(
-        "Loading will REPLACE all accounts and progress on this device with the file's contents. " +
-        "Accounts on this device that aren't in the file will be deleted.\n\n" +
-        'Type REPLACE to continue:'
-      );
-      if (typed !== 'REPLACE') { alert('Load cancelled. Nothing was changed.'); return; }
-      backup.importFromFile(file).catch(function (e) {
-        alert('Load failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
-      });
-    });
-
-    const lastExport = backup ? backup.getLastExportedAt() : null;
-    const statusText = lastExport
-      ? 'Saved ' + formatRelative(lastExport)
-      : 'Not saved yet';
-
-    function doSaveNow() {
-      if (!backup) { alert('Backup module not loaded.'); return; }
-      backup.exportToFile().then(function (ok) {
-        if (ok) renderAccountActions(); // refresh "Saved Nm ago" line
-      }).catch(function (e) {
-        alert('Save failed: ' + (e && e.message ? e.message : e));
-      });
-    }
-    function doChooseFolder() {
-      backup.pickBackupFolder().then(function (dh) {
-        if (dh) alert('Backup folder set. The Save dialog will default to it next time.');
-      }).catch(function (e) {
-        alert('Could not set backup folder: ' + (e && e.message ? e.message : e));
-      });
-    }
-
-    // Resume isn't surfaced here anymore — it lives on each game's home
-    // screen (Approach 4). The hub stays a pure picker; the kid sees a
-    // Continue/New choice once they pick a game.
-    const menuItems = [
-      el('button', { type: 'button', class: 'hub__quick-item', onclick: doSaveNow }, '💾 Save now'),
-      el('button', { type: 'button', class: 'hub__quick-item', onclick: function () { loadInput.click(); } }, '📥 Import backup file…'),
-    ];
-    if (backup && backup.supportsDirectoryPicker()) {
-      menuItems.push(el('button', { type: 'button', class: 'hub__quick-item', onclick: doChooseFolder }, '📁 Choose folder'));
-    }
-    menuItems.push(el('a', { class: 'hub__quick-item', href: '#/parent' }, '👨‍👧 Parent / Data Page'));
-
-    const details = el('details', { class: 'hub__quick-menu' },
-      el('summary', { class: 'hub__quick-summary', title: lastExport ? new Date(lastExport).toLocaleString() : 'No saved file yet on this device.' },
-        el('span', { class: 'hub__quick-icon', 'aria-hidden': 'true' }, '💾'),
-        el('span', { class: 'hub__quick-status' }, statusText),
-        el('span', { class: 'hub__quick-caret', 'aria-hidden': 'true' }, '▾'),
-      ),
-      el('div', { class: 'hub__quick-pop' }, menuItems),
-      loadInput,
+    slot.append(
+      el('a', { class: 'hub__parent-link', href: '#/parent' }, '👨‍👧 Parent page')
     );
-    // Close on outside click — small UX nicety.
-    document.addEventListener('click', function onDoc(ev) {
-      if (!details.open) return;
-      if (details.contains(ev.target)) return;
-      details.open = false;
-    });
-
-    slot.append(details);
   }
 
   function renderGame(slug) {
@@ -413,6 +287,9 @@
   }
 
   function boot() {
+    // Start silent background snapshots (Quiet Backup). GAMES is already on
+    // window.KLS.GAMES by now, so buildEnvelope can discover every game's keys.
+    if (window.KLS.backup && window.KLS.backup.initSnapshots) window.KLS.backup.initSnapshots();
     // First-visit gate: ensure there's an active profile before showing anything.
     profileUI.ensureProfileOrPick(function () {
       route();
