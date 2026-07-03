@@ -168,6 +168,12 @@ shows "Reconnect folder…". Never a popup, never anything on the hub.
 > writes into the app folder automatically in any browser with no folder-picker.
 > The File System Access folder mirror below is the **fallback** when no server
 > is running. See `docs/superpowers/specs/2026-07-03-auto-save-server-decision.md`.
+>
+> **Update (2026-07-03, save-my-game):** the on-disk folder is renamed
+> `saves/` → **`saved_status/`**, and a **💾 Save my game** button downloads
+> `saved_status/kls-save-*.json` so the pure double-click (`file://`) case can
+> produce a save file (into Downloads) with no launcher. See
+> `docs/superpowers/specs/2026-07-03-save-my-game-download-design.md`.
 
 - After each autosave snapshot (throttled to at most one folder write / 3 min,
   plus one on `pagehide`), and immediately on manual **Save to folder now**

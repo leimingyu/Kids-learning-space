@@ -13,8 +13,8 @@ Endpoints (same-origin, localhost only):
       lets the page detect it is running under this server.
   POST /__kls_save__   ← a kls.backup envelope (JSON) → writes:
       <app folder>/kls-backup-latest.json
-      <app folder>/saves/kls-save-<YYYYMMDD-HHmmss>.json   (newest 30 kept)
-      → {"ok": true, "file": "saves/…", "count": <N>}
+      <app folder>/saved_status/kls-save-<YYYYMMDD-HHmmss>.json   (newest 30 kept)
+      → {"ok": true, "file": "saved_status/…", "count": <N>}
 
 Security: binds to 127.0.0.1 only. The write endpoint accepts only a valid
 `kls.backup` JSON envelope, caps the body size, and writes fixed server-chosen
@@ -29,7 +29,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 # The app folder is the parent of this tools/ directory.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SAVES_DIR = os.path.join(ROOT, 'saves')
+SAVES_DIR = os.path.join(ROOT, 'saved_status')
 HISTORY_KEEP = 30
 MAX_BODY = 8 * 1024 * 1024  # 8 MB — a backup envelope is tens of KB
 PING_PATH = '/__kls_ping__'
@@ -104,7 +104,7 @@ class Handler(SimpleHTTPRequestHandler):
         except OSError as exc:
             self._send_json(500, {'ok': False, 'error': str(exc)})
             return
-        self._send_json(200, {'ok': True, 'file': 'saves/%s' % name, 'count': _prune_history()})
+        self._send_json(200, {'ok': True, 'file': 'saved_status/%s' % name, 'count': _prune_history()})
 
     def log_message(self, *args):
         pass  # keep the launcher window quiet

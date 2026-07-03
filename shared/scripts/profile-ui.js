@@ -468,7 +468,7 @@
       row.append(
         el('p', { class: 'parent-backup__status' },
           '📁 Saving to this app’s folder' + (st.folder ? ' (' + st.folder + ')' : '')
-          + ' · saves/ has ' + n + ' file' + (n === 1 ? '' : 's')),
+          + ' · saved_status/ has ' + n + ' file' + (n === 1 ? '' : 's')),
         el('p', { class: 'parent-page__note' },
           'Every autosave and the button below write into the folder automatically — no folder-picker needed.'),
         el('div', { class: 'btn-row' }, saveBtn),
@@ -513,7 +513,7 @@
       } }, '💾 Save to folder now');
       row.append(
         el('p', { class: 'parent-page__note' },
-          'Folder connected · ' + st.name + ' · saves/ has ' + hist + ' file' + (hist === 1 ? '' : 's')
+          'Folder connected · ' + st.name + ' · saved_status/ has ' + hist + ' file' + (hist === 1 ? '' : 's')
           + (st.lastMirrorAt ? ' · updated ' + fmtRel(st.lastMirrorAt) : '')),
         el('div', { class: 'btn-row' }, saveBtn),
       );
@@ -526,6 +526,20 @@
       backupCard.append(el('h2', { class: 'parent-page__section' }, 'Backups'));
 
       if (!backup) { backupCard.append(el('p', {}, 'Backup module not loaded.')); return; }
+
+      // "Save my game" — works even when the app was opened by double-clicking
+      // index.html: downloads a saved_status/kls-save-<time>.json file.
+      if (backup.saveToDownload) {
+        const saveGameBtn = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
+          try { if (backup.saveToDownload() !== false) { saveGameBtn.textContent = '✅ Saved!'; setTimeout(function () { saveGameBtn.textContent = '💾 Save my game'; }, 1600); } }
+          catch (e) { alert('Save failed: ' + (e && e.message ? e.message : e)); }
+        } }, '💾 Save my game');
+        backupCard.append(
+          el('div', { class: 'btn-row' }, saveGameBtn),
+          el('p', { class: 'parent-page__note' },
+            'Saves a file into a “saved_status” folder. In Chrome/Edge it appears in Downloads/saved_status/; other browsers put it straight in Downloads. Restore it later with “Import a file…”. (Your progress also auto-saves in this browser.)'),
+        );
+      }
 
       if (!available) {
         backupCard.append(el('p', {}, 'Automatic backups aren’t available in this browser. You can still export and import a file below.'));

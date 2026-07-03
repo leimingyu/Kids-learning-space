@@ -374,6 +374,25 @@
     return true;
   }
 
+  /**
+   * "Save my game" for the pure double-click (file://) case: download the full
+   * backup as saved_status/kls-save-<stamp>.json. In Chrome/Edge this creates a
+   * `saved_status` subfolder in Downloads; other browsers flatten the name.
+   * Always uses the plain download path (no Save-As picker) so it works on
+   * file:// and needs no folder grant. Returns true if a file was produced.
+   */
+  function saveToDownload() {
+    const envelope = buildEnvelope();
+    if (envelopeIsEmpty(envelope)) {
+      const ok = window.confirm("There's nothing to save yet. Save an empty file anyway?");
+      if (!ok) return false;
+    }
+    const text = JSON.stringify(envelope, null, 2);
+    downloadText(savedStatusDownloadName(new Date()), text);
+    try { localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString()); } catch (e) { /* ignore */ }
+    return true;
+  }
+
   function getLastExportedAt() {
     try { return localStorage.getItem(LAST_EXPORT_KEY) || null; } catch (e) { return null; }
   }
@@ -547,7 +566,7 @@
   const FOLDER_RECONNECT_KEY = 'kls.backup.folderNeedsReconnect';
   const MIRROR_THROTTLE_MS = 3 * 60 * 1000;  // ≤ 1 folder write / 3 min (autosave)
   const MIRROR_HISTORY_KEEP = 30;            // newest N history files kept in saves/
-  const SAVES_SUBDIR = 'saves';
+  const SAVES_SUBDIR = 'saved_status';
 
   /** 'YYYYMMDD-HHmmss' local timestamp for a save-history filename. */
   function stampForFilename(d) {
@@ -555,6 +574,9 @@
       + '-' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
   }
   function historyFilename(d) { return 'kls-save-' + stampForFilename(d) + '.json'; }
+  /** Download name that lands in a `saved_status` folder (Chrome creates the
+   *  subfolder under Downloads; other browsers flatten it to the basename). */
+  function savedStatusDownloadName(d) { return SAVES_SUBDIR + '/' + historyFilename(d); }
 
   /** Of the kls-save-*.json names, return the oldest beyond `keep` to delete. */
   function selectHistoryToPrune(names, keep) {
@@ -982,6 +1004,7 @@
   window.KLS = window.KLS || {};
   window.KLS.backup = {
     exportToFile: exportToFile,
+    saveToDownload: saveToDownload,
     importFromFile: importFromFile,
     getLastExportedAt: getLastExportedAt,
     pickBackupFolder: pickBackupFolder,
@@ -1006,6 +1029,7 @@
       buildEnvelope: buildEnvelope,
       stampForFilename: stampForFilename,
       historyFilename: historyFilename,
+      savedStatusDownloadName: savedStatusDownloadName,
       selectHistoryToPrune: selectHistoryToPrune,
       writeHistoryToFolder: writeHistoryToFolder,
     },

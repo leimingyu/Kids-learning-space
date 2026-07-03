@@ -225,9 +225,30 @@
     const slot = qs('#hub-account-actions');
     if (!slot) return;
     slot.innerHTML = '';
+    const backup = window.KLS && window.KLS.backup;
+    const saveBtn = el('button', {
+      type: 'button',
+      class: 'btn btn-secondary btn-tiny',
+      title: 'Download a save file (into a saved_status folder)',
+      onclick: function () {
+        if (!backup || !backup.saveToDownload) { alert('Backup module not loaded.'); return; }
+        try {
+          if (backup.saveToDownload() !== false) flashSavedGame(saveBtn);
+        } catch (e) { alert('Save failed: ' + (e && e.message ? e.message : e)); }
+      },
+    }, '💾 Save my game');
     slot.append(
+      saveBtn,
       el('a', { class: 'hub__parent-link', href: '#/parent' }, '👨‍👧 Parent page')
     );
+  }
+
+  /** Brief "Saved ✓" confirmation on the Save button. */
+  function flashSavedGame(btn) {
+    const prev = btn.textContent;
+    btn.textContent = '✅ Saved!';
+    btn.disabled = true;
+    setTimeout(function () { btn.textContent = prev; btn.disabled = false; }, 1600);
   }
 
   function renderGame(slug) {

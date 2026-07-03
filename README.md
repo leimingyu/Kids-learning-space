@@ -46,22 +46,27 @@ saved and you can still Export a file manually. For fully automatic backups in
 **any** browser, run the local server above (`http://localhost`) instead of
 opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 
-### Saving the history to a folder on disk
+### Saving your game to a file
 
-Launch the app with a **launcher** (`start-mac.command` / `start-windows.bat`).
-They start a tiny local server (`tools/kls_server.py`) that writes your save
-history straight into this app's folder — **automatically, in any browser, with
-no folder-picker**:
+Everyday progress **auto-saves in the browser** (survives closing/reopening and
+restarts). To keep a portable copy, click **💾 Save my game** (on the hub, or
+Parent page → Backups). It downloads a `saved_status/kls-save-<timestamp>.json`
+file:
 
-- `kls-backup-latest.json` — the newest full backup.
-- `saves/kls-save-<timestamp>.json` — one file per save (newest 30 kept).
+- In **Chrome/Edge** it appears in `Downloads/saved_status/`.
+- In Firefox/Safari it lands directly in Downloads (named `saved_status-…json`).
 
-Every autosave writes there, and **Parent page → Backups → 💾 Save now** forces
-one immediately. Any of those files restores via **Import a file…**. Requires
-Python 3 (used only to run the local server). If Python is missing, the launcher
-opens the app as a file and folder-saving is unavailable — but progress and
-**Export a file…** still work, and Chrome/Edge users can fall back to **Choose
-folder…** (the File System Access API).
+Restore it later with **Import a file…**. This works even when you just
+double-click `index.html` — no launcher needed.
+
+> **Why not straight into a folder next to the game?** A page opened by
+> double-clicking `index.html` runs as `file://`, and browsers forbid it from
+> writing to a chosen folder — the best it can do is a download. For an actual
+> `saved_status/` folder **next to the game**, written automatically, run the
+> **launcher** (`start-mac.command` / `start-windows.bat`); it starts a tiny
+> local server (`tools/kls_server.py`, needs Python 3) that writes
+> `kls-backup-latest.json` + `saved_status/kls-save-*.json` (newest 30) into
+> this folder in any browser.
 
 ## What's where
 

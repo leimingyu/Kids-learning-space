@@ -17,3 +17,4 @@ Thumbs.db
 # device-specific user data, never commit
 kls-backup-*.json
 /saves/
+/saved_status/
