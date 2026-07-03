@@ -2,7 +2,9 @@
 
 A static, no-build, no-framework, `file://`-friendly hub of four math learning
 games for kids in grades 2–5. Pure vanilla HTML / CSS / JS — no npm, no
-bundler, no server required.
+bundler, no server required. **Fully self-contained and offline** — fonts are
+bundled, and nothing is fetched from the network at runtime. Runs the same on
+macOS and Windows.
 
 > Pip the Fox 🦊 hosts the hub. Tiles show each game with a topic tag, stars
 > earned, and last-played time. Click in, play, win — confetti, and "Played
@@ -19,15 +21,30 @@ bundler, no server required.
 
 ## Run
 
-Double-click `index.html`, or serve locally:
+Pick whichever is easiest — no install, works offline:
 
-```bash
-python3 -m http.server 8000
-# open http://localhost:8000
-```
+- **Double-click a launcher** — `start-mac.command` (macOS) or `start-windows.bat`
+  (Windows). Each opens `index.html` in your default browser.
+- **Double-click `index.html`** directly.
+- **Serve locally** (see the backup note below):
+
+  ```bash
+  python3 -m http.server 8000
+  # open http://localhost:8000
+  ```
 
 That's it. Requires a modern browser (Chrome 111+, Safari 15.4+, Firefox 113+)
 because tokens use `oklch()` and components use `:focus-visible`.
+
+### A note on backups when opening from a file
+
+Progress and the **Export a file…** backup work in every browser, whether you
+open via a launcher (`file://`) or a local server. The *silent, automatic*
+snapshots use IndexedDB: on `file://` they work in **Chrome / Edge**, but
+Firefox and Safari disable IndexedDB for `file://` — there, progress is still
+saved and you can still Export a file manually. For fully automatic backups in
+**any** browser, run the local server above (`http://localhost`) instead of
+opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
 
 ## What's where
 
@@ -35,10 +52,14 @@ because tokens use `oklch()` and components use `:focus-visible`.
 /
 ├── index.html              Hub landing + iframe stage
 ├── design-system.html      Living component documentation
+├── start-mac.command       Double-click launcher (macOS)
+├── start-windows.bat       Double-click launcher (Windows)
 ├── README.md
 ├── ARCHITECTURE.md         Decisions: iframe, chrome, progress, routing
 ├── shared/
+│   ├── fonts/              Bundled Fredoka + Nunito woff2 (OFL) — self-hosted
 │   ├── styles/
+│   │   ├── fonts.css       @font-face for the bundled fonts (no CDN)
 │   │   ├── tokens.css      OKLCH palette, spacing, type, motion, dark mode
 │   │   └── components.css  Buttons, tiles, chrome, modal, toast, progress
 │   ├── scripts/

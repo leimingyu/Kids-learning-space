@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Static, no-build, no-framework, `file://`-friendly site. Pure vanilla HTML/CSS/JS — no npm, no bundler, no server required. Browser baseline: Chrome 111+, Safari 15.4+, Firefox 113+ (`oklch()` + `:focus-visible`).
 
+**Self-contained / offline:** no runtime network dependency. Fonts (Fredoka + Nunito) are bundled under `shared/fonts/` (OFL) and wired via `shared/styles/fonts.css` — do NOT re-introduce a `fonts.googleapis.com` `<link>`. Games already use system-font stacks. Double-click launchers exist for both OSes (`start-mac.command`, `start-windows.bat`); `.gitattributes` keeps the `.bat` CRLF and marks `*.woff2` binary. Silent auto-backup (IndexedDB) needs Chrome/Edge on `file://` or any browser over `http://localhost`; progress + manual Export work everywhere.
+
 ## Commands
 
 Run locally (either works):
