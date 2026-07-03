@@ -59,6 +59,14 @@ file:
 Restore it later with **Import a file…**. This works even when you just
 double-click `index.html` — no launcher needed.
 
+**To make saves land in this game's own folder (no launcher):** because a
+double-clicked page can't choose a folder, the file goes to your browser's
+download location. Point that at this folder once — in Chrome/Edge:
+**Settings → Downloads → Location →** choose the `Kids-learning-space` folder
+(and turn off *"Ask where to save each file"*). Now every **Save my game**
+writes to `Kids-learning-space/saved_status/`, right next to the game. (Firefox
+and Safari don't create the subfolder — the file just goes to your downloads.)
+
 > **Why not straight into a folder next to the game?** A page opened by
 > double-clicking `index.html` runs as `file://`, and browsers forbid it from
 > writing to a chosen folder — the best it can do is a download. For an actual

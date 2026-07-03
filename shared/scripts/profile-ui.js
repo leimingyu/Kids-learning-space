@@ -537,7 +537,16 @@
         backupCard.append(
           el('div', { class: 'btn-row' }, saveGameBtn),
           el('p', { class: 'parent-page__note' },
-            'Saves a file into a “saved_status” folder. In Chrome/Edge it appears in Downloads/saved_status/; other browsers put it straight in Downloads. Restore it later with “Import a file…”. (Your progress also auto-saves in this browser.)'),
+            'Saves a file into a “saved_status” folder, then restore it later with “Import a file…”. (Your progress also auto-saves in this browser.)'),
+          el('details', { class: 'parent-backup__tip' },
+            el('summary', {}, 'Want saves to land in this game’s own folder?'),
+            el('p', { class: 'parent-page__note' },
+              'Because a double-clicked page can’t choose a folder, the file goes to your browser’s download location, inside a “saved_status” subfolder (Chrome/Edge). ' +
+              'To make that be right next to the game, set your browser’s download folder to this Kids-learning-space folder: ' +
+              'in Chrome/Edge, Settings → Downloads → Location → choose the Kids-learning-space folder (and turn off “Ask where to save each file”). ' +
+              'Then every “Save my game” writes to Kids-learning-space/saved_status/ — no launcher needed. ' +
+              'Firefox/Safari don’t create the subfolder; there the file just goes to your downloads.'),
+          ),
         );
       }
 
