@@ -1185,13 +1185,48 @@
     if (feedback.kind === "neutral") dom.feedback.classList.add("feedback--neutral");
   }
 
+  // Place-value coloring. The quotient slots and dividend digits share one
+  // column grid, so column `i` of a `cols`-wide dividend is the place value
+  // (cols-1-i): 0 = ones, 1 = tens, 2 = hundreds … The same pv-* class on the
+  // quotient slot and the dividend digit lines them up by place, making "the 9
+  // sits above the 5 because both are tens" visible instead of memorized.
+  // Colors cycle every 5 places for very large dividends; the legend below
+  // always names the true place.
+  const PLACE_NAMES = ["ones", "tens", "hundreds", "thousands", "ten-thousands", "hundred-thousands", "millions"];
+  function placeClass(colIndex, cols) {
+    return "pv-" + ((cols - 1 - colIndex) % 5);
+  }
+  function placeName(colIndex, cols) {
+    const place = cols - 1 - colIndex;
+    return PLACE_NAMES[place] || ("10^" + place);
+  }
+  /** Build the color-keyed legend that names each place (left → right = highest
+   *  place → ones), matching the board's columns. */
+  function renderPlaceLegend(e) {
+    const host = document.getElementById("placeLegend");
+    if (!host) return;
+    host.innerHTML = "";
+    if (!e) { host.hidden = true; return; }
+    const cols = e.dividendDigits.length;
+    host.hidden = false;
+    for (let i = 0; i < cols; i++) {
+      const chip = document.createElement("span");
+      chip.className = "placeChip " + placeClass(i, cols);
+      const dot = document.createElement("i");
+      dot.className = "placeChip__dot";
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(placeName(i, cols)));
+      host.appendChild(chip);
+    }
+  }
+
   function renderQuotientSlots(e, done) {
     dom.quotientSlots.innerHTML = "";
     dom.quotientSlots.style.setProperty("--digit-cols", String(e.dividendDigits.length));
     const editingThisSlot = !done && e.phase === "divide" && app.mode !== "demo";
     for (let i = 0; i < e.quotientDigits.length; i++) {
       const slot = document.createElement("div");
-      slot.className = "digitCell slot";
+      slot.className = "digitCell slot " + placeClass(i, e.dividendDigits.length);
       const v = e.quotientDigits[i];
       const isActiveSlot = i === e.activeQuotientIndex && !done;
       if (v !== null) slot.classList.add("slot--filled");
@@ -1215,7 +1250,7 @@
     const inBringDown = !done && e.phase === "bringDown" && nextIndex < e.dividendDigits.length;
     for (let i = 0; i < e.dividendDigits.length; i++) {
       const d = document.createElement("div");
-      d.className = "digitCell digit";
+      d.className = "digitCell digit " + placeClass(i, e.dividendDigits.length);
       d.textContent = String(e.dividendDigits[i]);
       if (!done && i >= e.activeStartIndex && i <= e.activeEndIndex) d.classList.add("digit--active");
       if (!done && i === nextIndex) {
@@ -1417,6 +1452,8 @@
       dom.exampleBtn.hidden = true;
       renderCycleRing(null, false);
       renderTimesTable(null, false);
+      renderPlaceLegend(null);
+      dom.body.setAttribute("data-input", "off");
       dom.stepPrompt.classList.remove("stepPrompt--zeroQ");
       return;
     }
@@ -1465,6 +1502,11 @@
     renderWorkRows(e, done);
     renderCycleRing(e, done);
     renderTimesTable(e, done);
+    renderPlaceLegend(e);
+    // Input affordances (keypad + "type here" help) only make sense when the
+    // kid is actually entering a digit — not while watching a demo or after the
+    // problem is solved. CSS keys off this attribute.
+    dom.body.setAttribute("data-input", !done && app.mode !== "demo" ? "on" : "off");
     // Arrow positioning depends on layout — defer to next frame so the rows
     // just appended above have their final bounding rects.
     requestAnimationFrame(() => renderBringDownArrow(e, done));
