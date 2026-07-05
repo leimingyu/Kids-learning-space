@@ -562,52 +562,23 @@
 
     #btn-skip.skip-hidden { display: none !important; }
 
-    .congrats-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(45, 52, 54, 0.35);
-      backdrop-filter: blur(3px);
-    }
-
-    .congrats-overlay.show {
-      display: flex;
-      animation: fadeIn 0.25s ease;
-    }
-
-    .congrats-pop {
-      max-width: 90%;
-      padding: 28px 36px;
-      border-radius: 28px;
-      background: linear-gradient(165deg, #fff9e6 0%, #d4edda 50%, #fff 100%);
-      border: 4px solid #28a745;
-      box-shadow: 0 16px 48px rgba(39, 174, 96, 0.35), 0 0 0 4px #fff;
-      text-align: center;
-      animation: congratsPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .congrats-pop .congrats-title {
-      font-size: clamp(1.5rem, 5vw, 2.1rem);
-      font-weight: 800;
-      color: #155724;
-      line-height: 1.3;
-      margin: 0;
-    }
-
-    .congrats-pop .congrats-sub {
-      margin: 12px 0 0;
+    /* Inline celebration: the solved story stays visible so the kid can
+       re-read it while the worked steps sink in (consolidation moment). */
+    .feedback.correct .correct-recap {
+      margin: 10px auto 4px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border: 2px dashed #28a745;
+      border-radius: 12px;
       font-size: 1.15rem;
-      font-weight: 700;
-      color: #2d3436;
+      width: fit-content;
+      max-width: 100%;
     }
 
-    @keyframes congratsPopIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+    .feedback.correct .btn-next-inline {
+      margin-top: 12px;
+      padding: 14px 28px;
+      font-size: 1.2rem;
     }
 
     @keyframes celebratePop {
@@ -617,6 +588,10 @@
     }
 
     .feedback.correct.celebrate { animation: celebratePop 0.45s ease, fadeIn 0.35s ease; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .feedback.correct.celebrate { animation: none; }
+    }
 
     .feedback-lead { margin: 0 0 8px; font-weight: 800; font-size: 1.08rem; }
 
@@ -1365,6 +1340,7 @@
           <button type="button" class="btn btn-secondary hide-easy-only" id="btn-picture" aria-pressed="false">Show Picture</button>
           <button type="button" class="btn btn-secondary" id="btn-skip">Next Question</button>
           <button type="button" class="btn btn-secondary" id="btn-mute" aria-pressed="false">🔊 Sound On</button>
+          <button type="button" class="btn btn-secondary" id="btn-autonext" aria-pressed="false">⏩ Auto-next: Off</button>
           <button type="button" class="btn btn-secondary" id="btn-exit-game">Exit Game</button>
         </div>
       </div>
@@ -1394,13 +1370,6 @@
       </aside>
     </div>
 
-    <div id="congrats-overlay" class="congrats-overlay" aria-hidden="true" role="dialog" aria-labelledby="congrats-message">
-      <div class="congrats-pop">
-        <p class="congrats-title" id="congrats-message"></p>
-        <p class="congrats-sub">Press Enter or wait — next story is on the way!</p>
-        <button type="button" class="btn btn-primary" id="btn-next-story" style="margin-top:14px;">Next Story →</button>
-      </div>
-    </div>
   </div>
 
   <!-- Summary -->
@@ -2992,6 +2961,22 @@
     }
   }
 
+  // Auto-next is a device-level preference (like mute) — deliberately NOT
+  // profile-scoped. Default OFF: the kid controls the pace after a correct
+  // answer; opting in restores a (gentler, 4s) auto-advance.
+  var AUTONEXT_KEY = "wordProblemAdventure_autonext";
+  function isAutoNext() {
+    try { return localStorage.getItem(AUTONEXT_KEY) === "1"; } catch (e) { return false; }
+  }
+  function setAutoNext(on) {
+    try { localStorage.setItem(AUTONEXT_KEY, on ? "1" : "0"); } catch (e) { /* ignore */ }
+    var btn = document.getElementById("btn-autonext");
+    if (btn) {
+      btn.textContent = on ? "⏩ Auto-next: On" : "⏩ Auto-next: Off";
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+  }
+
   function playTone(freq, duration, type) {
     if (isMuted()) return;
     try {
@@ -3149,7 +3134,7 @@
     el.className = "answer-state-banner state-" + state;
     const messages = {
       waiting: "Your turn — read the story and type your answer.",
-      correct: "You got it! 🎉 Next story coming up…",
+      correct: "You got it! 🎉 Check the steps, then press Next Story.",
       hint: "Not quite — here’s a clue. Try a new answer in the box.",
       explain: "Read the steps below, then try again."
     };
@@ -3187,17 +3172,8 @@
     if (sub) sub.disabled = !enabled;
   }
 
-  function hideCongratsOverlay() {
-    const overlay = document.getElementById("congrats-overlay");
-    if (overlay) {
-      overlay.classList.remove("show");
-      overlay.setAttribute("aria-hidden", "true");
-    }
-  }
-
   function renderQuestion() {
     clearAdvanceTimer();
-    hideCongratsOverlay();
     const q = currentQuestion();
     if (!q) {
       endSession(true);
@@ -3253,34 +3229,36 @@
 
   function showFeedbackCorrect() {
     const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
+    const q = currentQuestion();
     const fb = document.getElementById("feedback");
-    fb.className = "feedback";
-    fb.innerHTML = "";
-    const titleEl = document.getElementById("congrats-message");
-    if (titleEl) titleEl.textContent = msg;
-    const overlay = document.getElementById("congrats-overlay");
-    if (overlay) {
-      overlay.classList.add("show");
-      overlay.setAttribute("aria-hidden", "false");
-      // When reduced-motion is on, swap the auto-advance hint for an explicit Next prompt.
-      var sub = overlay.querySelector(".congrats-sub");
-      if (sub) {
-        sub.textContent = prefersReducedMotion()
-          ? "Press Enter when you're ready for the next story."
-          : "Press Enter or wait — next story is on the way!";
-      }
+    // Celebrate BESIDE the problem, not over it: the story and the worked
+    // steps stay visible, and the kid decides when to move on.
+    fb.className = "feedback correct celebrate show";
+    fb.innerHTML =
+      '<p class="feedback-lead">' + escapeHtml(msg) + "</p>" +
+      (q && q.explain
+        ? '<div class="correct-recap">' + formatExplain(escapeHtml(q.explain)) + "</div>"
+        : "") +
+      '<button type="button" class="btn btn-primary btn-next-inline" id="btn-next-inline">Next Story →</button>';
+    var nextBtn = document.getElementById("btn-next-inline");
+    if (nextBtn) {
+      nextBtn.addEventListener("click", function () {
+        clearAdvanceTimer();
+        goNextQuestion();
+      });
+      // Focus the Next button so Enter/Space works for keyboard users.
+      nextBtn.focus();
     }
     playCorrectSound();
     setAnswerStateBanner("correct");
     setAnsweringControlsEnabled(false);
     document.getElementById("btn-skip").classList.add("skip-hidden");
-    // Focus the Next button so Enter/Space works for keyboard users.
-    var nextBtn = document.getElementById("btn-next-story");
-    if (nextBtn) nextBtn.focus();
-    if (!prefersReducedMotion()) {
+    // Auto-advance is opt-in (device preference) and never runs under
+    // prefers-reduced-motion; 4s leaves time to re-read the recap.
+    if (isAutoNext() && !prefersReducedMotion()) {
       advanceTimer = setTimeout(function () {
         goNextQuestion();
-      }, 2000);
+      }, 4000);
     }
   }
 
@@ -4175,7 +4153,6 @@
 
   function endSession(completedAll) {
     clearAdvanceTimer();
-    hideCongratsOverlay();
     if (isPracticeMode) { endPracticeSession(completedAll); return; }
     if (isDailyChallenge) { endDailyChallengeSession(completedAll); return; }
     const acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : 0;
@@ -4492,10 +4469,10 @@
   });
   document.getElementById("btn-exit-game").addEventListener("click", exitToSummary);
   setMuted(isMuted()); // sync button label on load
-  document.getElementById("btn-next-story").addEventListener("click", function () {
-    clearAdvanceTimer();
-    goNextQuestion();
+  document.getElementById("btn-autonext").addEventListener("click", function () {
+    setAutoNext(!isAutoNext());
   });
+  setAutoNext(isAutoNext()); // sync button label on load
 
   // Global Enter handler for the post-correct overlay (input is disabled then, so
   // its own keydown listener can't fire). Only acts when the game screen is active.
