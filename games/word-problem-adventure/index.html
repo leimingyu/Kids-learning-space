@@ -1228,7 +1228,7 @@
   <!-- Practice picker -->
   <div id="screen-practice-picker" class="screen">
     <h1>Practice by Type</h1>
-    <p class="practice-intro">Pick a question type. Answer every question — order is shuffled each time. Missed ones come back next visit until you get them right.</p>
+    <p class="practice-intro">Pick a question type. Each practice is a short quest of up to 10 stories — play again for new ones. Missed stories come back until you get them right.</p>
     <div id="practice-grid" class="practice-grid"></div>
     <div class="btn-row">
       <button type="button" class="btn btn-muted" id="btn-practice-home">Back to Welcome</button>
@@ -2424,6 +2424,9 @@
       runsCompleted: 0,
       lastPlayedAt: null,
       wrongIds: [],
+      // Ids already served in past quests — used to rotate through the pool
+      // so "Play again" brings new stories before repeating old ones.
+      seenIds: [],
     };
   }
 
@@ -2435,6 +2438,10 @@
       var s = Object.assign(defaultPracticeState(), bucket || {});
       // Drop any wrongIds that no longer exist in the bank.
       s.wrongIds = (s.wrongIds || []).filter(function (id) {
+        var q = getQuestionById(id);
+        return q && q.problemType === type;
+      });
+      s.seenIds = (Array.isArray(s.seenIds) ? s.seenIds : []).filter(function (id) {
         var q = getQuestionById(id);
         return q && q.problemType === type;
       });
@@ -2454,6 +2461,7 @@
         runsCompleted:  state.runsCompleted  | 0,
         lastPlayedAt:   state.lastPlayedAt || null,
         wrongIds:       Array.isArray(state.wrongIds) ? state.wrongIds.slice() : [],
+        seenIds:        Array.isArray(state.seenIds) ? state.seenIds.slice() : [],
       };
       localStorage.setItem(storageKey(), JSON.stringify(p));
     } catch (e) { /* ignore */ }
@@ -3674,9 +3682,12 @@
           '<div class="practice-card__progress-fill" style="width:' + pctFill + '%;"></div>' +
         '</div>' +
         '<div class="practice-card__actions">' +
-          '<button type="button" class="btn btn-primary" data-action="all">Practice all</button>' +
+          '<button type="button" class="btn btn-primary" data-action="all">🎯 Quest: ' +
+            Math.min(10, pool.length) + ' stories</button>' +
           '<button type="button" class="btn btn-review"' + (wrongs > 0 ? '' : ' disabled') +
-            ' data-action="review">Review wrong (' + wrongs + ')</button>' +
+            ' data-action="review">' +
+            (wrongs > 0 ? 'Review wrong (' + wrongs + ')' : 'All caught up! 🎉') +
+          '</button>' +
         '</div>';
 
       // Bind buttons (delegating via dataset to keep handlers tidy).
@@ -3691,6 +3702,37 @@
 
       grid.append(card);
     });
+  }
+
+  /** Practice runs are short, completable "quests" — a 100+ question pool
+   *  with a best score that only saves on full completion is unfinishable
+   *  for a kid. Quests draw weighted: saved wrongs first, then stories the
+   *  kid hasn't met in past quests, then the rest. */
+  var PRACTICE_RUN_CAP = 10;
+
+  function buildPracticeQuest(type, pool) {
+    var state = getPracticeState(type);
+    var cap = Math.min(PRACTICE_RUN_CAP, pool.length);
+    var wrongSet = {};
+    state.wrongIds.forEach(function (id) { wrongSet[id] = true; });
+    var seenSet = {};
+    state.seenIds.forEach(function (id) { seenSet[id] = true; });
+    var wrongs = shuffle(pool.filter(function (q) { return wrongSet[q.id]; }));
+    var unseen = shuffle(pool.filter(function (q) { return !wrongSet[q.id] && !seenSet[q.id]; }));
+    var rest   = shuffle(pool.filter(function (q) { return !wrongSet[q.id] && seenSet[q.id]; }));
+    // Up to 3 tricky ones lead the mix; fresh stories fill most of the run.
+    var queue = wrongs.slice(0, 3).concat(unseen, rest, wrongs.slice(3)).slice(0, cap);
+    // Rotate the "seen" cursor; once the whole pool has been met, start over.
+    var newSeen = state.seenIds.slice();
+    queue.forEach(function (q) {
+      if (newSeen.indexOf(q.id) === -1) newSeen.push(q.id);
+    });
+    if (newSeen.length >= pool.length) {
+      newSeen = queue.map(function (q) { return q.id; });
+    }
+    state.seenIds = newSeen;
+    savePracticeState(type, state);
+    return shuffle(queue);
   }
 
   /** Initialize a practice run and switch to the question screen. */
@@ -3709,14 +3751,16 @@
         .map(function (id) { return getQuestionById(id); })
         .filter(function (q) { return q && q.problemType === type; });
       if (!queue.length) {
-        // Nothing to review — fall back to "all".
+        // Nothing to review — fall back to a regular quest.
         mode = "all";
-        queue = pool.slice();
+        queue = buildPracticeQuest(type, pool);
+      } else {
+        // Review stays completable too: oldest saved wrongs first, capped.
+        queue = shuffle(queue.slice(0, PRACTICE_RUN_CAP));
       }
     } else {
-      queue = pool.slice();
+      queue = buildPracticeQuest(type, pool);
     }
-    queue = shuffle(queue);
 
     isPracticeMode = true;
     practiceType = type;
@@ -3762,11 +3806,14 @@
     var pct = total > 0 ? Math.round((firstTryCorrect / total) * 100) : 0;
     var stars = practiceStarsFor(firstTryCorrect, total);
 
-    // Update saved best (only for "all" runs that actually played the full pool).
+    // Every completed quest is graded — best score is best percentage across
+    // (uniform, capped) runs, so it's actually reachable.
     var state = getPracticeState(type);
-    var wasFullAllRun = (practiceMode === "all") && completedAll && (total === sessionQueue.length);
-    if (wasFullAllRun) {
-      if (firstTryCorrect > state.bestRunCorrect || total > state.bestRunTotal) {
+    var wasCompletedQuest = (practiceMode === "all") && completedAll && (total === sessionQueue.length);
+    if (wasCompletedQuest) {
+      var newPct = total > 0 ? firstTryCorrect / total : 0;
+      var oldPct = state.bestRunTotal > 0 ? state.bestRunCorrect / state.bestRunTotal : -1;
+      if (newPct > oldPct) {
         state.bestRunCorrect = firstTryCorrect;
         state.bestRunTotal   = total;
       }
@@ -3815,7 +3862,7 @@
     var bridge = (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded()) ? window.KLS.bridge : null;
     if (bridge) bridge.played();
 
-    if (wasFullAllRun) {
+    if (wasCompletedQuest) {
       var slug = slugifyType(type);
       var firstCompletionId = "wpa-practice-completed-" + slug;
       if (!practiceHasSticker(firstCompletionId)) {
@@ -3844,6 +3891,14 @@
     } else {
       rewardsEl.style.display = "none";
       rewardsEl.innerHTML = "";
+    }
+
+    // Quests rotate content, so "again" genuinely means new stories.
+    var againBtn = document.getElementById("btn-practice-again");
+    if (againBtn) {
+      againBtn.textContent = practiceMode === "review"
+        ? "Review again"
+        : "🔁 Play again — new stories!";
     }
 
     showScreen("screen-practice-summary");
