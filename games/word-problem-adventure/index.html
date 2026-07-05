@@ -580,6 +580,29 @@
     .answer-state-banner.state-asking { background: #f3e8ff; border-color: #a855f7; color: #6b21a8; }
     .answer-state-banner.state-warmup { background: #e8f5e9; border-color: #66bb6a; color: #2e7d32; }
 
+    /* Numberless warm-up: hidden numbers must read as a deliberate game move,
+       not a rendering glitch — a "?" mystery pill instead of a bare ▢ square.
+       While the warm-up is active, the answer box and hint/picture buttons
+       disappear entirely (nothing to type yet; dead buttons erode trust). */
+    .question-text .hidden-number {
+      display: inline-block;
+      min-width: 1.5em;
+      padding: 0 6px;
+      background: #f3e8ff;
+      border: 2px dashed #a855f7;
+      border-radius: 10px;
+      color: #7c3aed;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .question-area.warmup-active .input-row,
+    .question-area.warmup-active #btn-hint,
+    .question-area.warmup-active #btn-picture {
+      display: none !important;
+    }
+
     /* "What is the question asking?" chooser — the metacognitive step weak
        solvers skip (Polya: understand the problem before computing). */
     .intent-choices {
@@ -3517,6 +3540,7 @@
 
   function renderQuestion() {
     clearAdvanceTimer();
+    setWarmupActive(false);
     const q = currentQuestion();
     if (!q) {
       endSession(true);
@@ -3625,11 +3649,27 @@
     return !warmupSeen(q.problemType);
   }
 
+  function setWarmupActive(on) {
+    var area = document.querySelector(".question-area");
+    if (area) area.classList.toggle("warmup-active", !!on);
+  }
+
   function startNumberlessWarmup(q) {
     var slowDown = pendingMissWarmup;
     pendingMissWarmup = false;
     // Hide the numbers so the situation — not the digits — gets read first.
-    document.getElementById("question-text").innerHTML = buildStoryHtml(blankNumbers(q.text));
+    // The blanks render as dashed "?" mystery pills (a bare ▢ square looks
+    // like a broken glyph, not a game move). blankNumbers() introduced the ▢
+    // marker, so it can't collide with real story text; buildStoryHtml has
+    // already escaped everything else.
+    document.getElementById("question-text").innerHTML =
+      buildStoryHtml(blankNumbers(q.text)).replace(
+        /▢/g,
+        '<span class="hidden-number" aria-label="hidden number">?</span>'
+      );
+    // No answer to type yet — take the answer box and hint buttons away
+    // entirely instead of leaving them dead on screen.
+    setWarmupActive(true);
     var catKey = WARMUP_CATEGORY_BY_TYPE[q.problemType];
     var others = shuffle(Object.keys(WARMUP_CATEGORIES).filter(function (k) { return k !== catKey; })).slice(0, 2);
     var options = shuffle([{ key: catKey, correct: true }].concat(
@@ -3640,8 +3680,8 @@
     fb.innerHTML =
       '<p class="feedback-lead" id="warmup-lead">' +
       (slowDown
-        ? "🌱 Let’s slow down. The numbers are hiding — what is HAPPENING in the story?"
-        : "🌱 New kind of story! The numbers are hiding — what is HAPPENING in the story?") +
+        ? "🌱 Let’s slow down! The numbers are hiding in the <strong>?</strong> boxes. Pick what is HAPPENING, and they’ll pop back out:"
+        : "🌱 New kind of story! The numbers are hiding in the <strong>?</strong> boxes. Pick what is HAPPENING, and they’ll pop back out:") +
       "</p>" +
       '<div class="intent-choices">' +
       options.map(function (o) {
@@ -3658,6 +3698,7 @@
           markWarmupSeen(q.problemType);
           // Reveal the numbers and hand over the answer box.
           document.getElementById("question-text").innerHTML = buildStoryHtml(q.text);
+          setWarmupActive(false);
           fb.className = "feedback";
           fb.innerHTML = "";
           setAnswerStateBanner("waiting");
