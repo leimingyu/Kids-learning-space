@@ -578,30 +578,6 @@
     .answer-state-banner.state-hint { background: #fff8e1; border-color: #ffc107; color: #856404; }
     .answer-state-banner.state-explain { background: #e3f2fd; border-color: #4dabf7; color: #1565c0; }
     .answer-state-banner.state-asking { background: #f3e8ff; border-color: #a855f7; color: #6b21a8; }
-    .answer-state-banner.state-warmup { background: #e8f5e9; border-color: #66bb6a; color: #2e7d32; }
-
-    /* Numberless warm-up: hidden numbers must read as a deliberate game move,
-       not a rendering glitch — a "?" mystery pill instead of a bare ▢ square.
-       While the warm-up is active, the answer box and hint/picture buttons
-       disappear entirely (nothing to type yet; dead buttons erode trust). */
-    .question-text .hidden-number {
-      display: inline-block;
-      min-width: 1.5em;
-      padding: 0 6px;
-      background: #f3e8ff;
-      border: 2px dashed #a855f7;
-      border-radius: 10px;
-      color: #7c3aed;
-      font-weight: 800;
-      text-align: center;
-      line-height: 1.35;
-    }
-
-    .question-area.warmup-active .input-row,
-    .question-area.warmup-active #btn-hint,
-    .question-area.warmup-active #btn-picture {
-      display: none !important;
-    }
 
     /* "What is the question asking?" chooser — the metacognitive step weak
        solvers skip (Polya: understand the problem before computing). */
@@ -3255,7 +3231,7 @@
    *  solve counts as "with help" (not first-try) — same rule as a wrong submit,
    *  so help-seeking is priced consistently instead of silently free. */
   let hintUsedOnQuestion = false;
-  /** @type {"waiting"|"correct"|"hint"|"explain"|"asking"|"warmup"} */
+  /** @type {"waiting"|"correct"|"hint"|"explain"|"asking"} */
   let answerState = "waiting";
   let pictureVisible = false;
   let audioCtx = null;
@@ -3471,8 +3447,7 @@
       correct: "You got it! 🎉 Check the steps, then press Next Story.",
       hint: "Not quite — here’s a clue. Try a new answer in the box.",
       explain: "Read the steps below, then try again.",
-      asking: "First: pick what the question is asking. Then try again!",
-      warmup: "Numberless warm-up — what is happening in this story?"
+      asking: "First: pick what the question is asking. Then try again!"
     };
     el.textContent = messages[state] || messages.waiting;
   }
@@ -3540,7 +3515,6 @@
 
   function renderQuestion() {
     clearAdvanceTimer();
-    setWarmupActive(false);
     const q = currentQuestion();
     if (!q) {
       endSession(true);
@@ -3577,141 +3551,8 @@
     updateProgress();
     updateSidePanel();
     setLevelBadge();
-    if (shouldWarmup(q)) {
-      startNumberlessWarmup(q);
-    } else {
-      setAnsweringControlsEnabled(true);
-      document.getElementById("answer-input").focus();
-    }
-  }
-
-  // ── Numberless warm-up ─────────────────────────────────────────────────────
-  // Numberless word problems (Bushart's routine) force modeling the SITUATION
-  // before number-grabbing. Shown the first time a profile meets a problem
-  // type, and again after two missed questions in a row (slow-down moment).
-  var WARMUP_CATEGORIES = {
-    grow:    "Things come together — the amount grows 📈",
-    shrink:  "Some go away — the amount shrinks 📉",
-    compare: "Two amounts are compared ⚖️",
-    split:   "Things are split into equal groups ➗",
-    mystery: "A number in the story is hidden 🕵️",
-    convert: "An amount changes into different units 📏",
-    time:    "Time is passing ⏰",
-    multi:   "Two things happen, one after another 🪜",
-  };
-
-  var WARMUP_CATEGORY_BY_TYPE = {
-    "Part–Part–Whole": "grow",
-    "Join": "grow",
-    "Equal Groups": "grow",
-    "Separate": "shrink",
-    "Compare": "compare",
-    "Inverse Compare": "compare",
-    "Two-Step Compare": "compare",
-    "Sharing": "split",
-    "Fraction of a Set": "split",
-    "Remainder Interpretation": "split",
-    "Unknown": "mystery",
-    "Change Unknown": "mystery",
-    "Money / Measurement Conversion": "convert",
-    "Elapsed Time": "time",
-    "Multi-step": "multi",
-  };
-
-  /** Misses (first wrong submits) on consecutive questions this session. */
-  let sessionConsecutiveMisses = 0;
-  /** Set when 2 misses in a row queue a slow-down warm-up for the next question. */
-  let pendingMissWarmup = false;
-
-  function blankNumbers(text) {
-    return String(text).replace(/\d+(?::\d+)?/g, "▢");
-  }
-
-  function warmupSeen(type) {
-    try {
-      var p = loadPersisted();
-      return !!(p.warmupSeenTypes && p.warmupSeenTypes[type]);
-    } catch (e) { return true; }
-  }
-
-  function markWarmupSeen(type) {
-    try {
-      var p = loadPersisted();
-      if (!p.warmupSeenTypes || typeof p.warmupSeenTypes !== "object") p.warmupSeenTypes = {};
-      p.warmupSeenTypes[type] = true;
-      localStorage.setItem(storageKey(), JSON.stringify(p));
-    } catch (e) { /* ignore */ }
-  }
-
-  function shouldWarmup(q) {
-    if (!q || !q.problemType || !WARMUP_CATEGORY_BY_TYPE[q.problemType]) return false;
-    if (pendingMissWarmup) return true;
-    return !warmupSeen(q.problemType);
-  }
-
-  function setWarmupActive(on) {
-    var area = document.querySelector(".question-area");
-    if (area) area.classList.toggle("warmup-active", !!on);
-  }
-
-  function startNumberlessWarmup(q) {
-    var slowDown = pendingMissWarmup;
-    pendingMissWarmup = false;
-    // Hide the numbers so the situation — not the digits — gets read first.
-    // The blanks render as dashed "?" mystery pills (a bare ▢ square looks
-    // like a broken glyph, not a game move). blankNumbers() introduced the ▢
-    // marker, so it can't collide with real story text; buildStoryHtml has
-    // already escaped everything else.
-    document.getElementById("question-text").innerHTML =
-      buildStoryHtml(blankNumbers(q.text)).replace(
-        /▢/g,
-        '<span class="hidden-number" aria-label="hidden number">?</span>'
-      );
-    // No answer to type yet — take the answer box and hint buttons away
-    // entirely instead of leaving them dead on screen.
-    setWarmupActive(true);
-    var catKey = WARMUP_CATEGORY_BY_TYPE[q.problemType];
-    var others = shuffle(Object.keys(WARMUP_CATEGORIES).filter(function (k) { return k !== catKey; })).slice(0, 2);
-    var options = shuffle([{ key: catKey, correct: true }].concat(
-      others.map(function (k) { return { key: k, correct: false }; })
-    ));
-    var fb = document.getElementById("feedback");
-    fb.className = "feedback hint show";
-    fb.innerHTML =
-      '<p class="feedback-lead" id="warmup-lead">' +
-      (slowDown
-        ? "🌱 Let’s slow down! The numbers are hiding in the <strong>?</strong> boxes. Pick what is HAPPENING, and they’ll pop back out:"
-        : "🌱 New kind of story! The numbers are hiding in the <strong>?</strong> boxes. Pick what is HAPPENING, and they’ll pop back out:") +
-      "</p>" +
-      '<div class="intent-choices">' +
-      options.map(function (o) {
-        return '<button type="button" class="intent-btn" data-correct="' + (o.correct ? "1" : "0") + '">' +
-          escapeHtml(WARMUP_CATEGORIES[o.key]) + "</button>";
-      }).join("") +
-      "</div>";
-    setAnswerStateBanner("warmup");
-    setAnsweringControlsEnabled(false);
-    var btns = fb.querySelectorAll(".intent-btn");
-    btns.forEach(function (b) {
-      b.addEventListener("click", function () {
-        if (b.getAttribute("data-correct") === "1") {
-          markWarmupSeen(q.problemType);
-          // Reveal the numbers and hand over the answer box.
-          document.getElementById("question-text").innerHTML = buildStoryHtml(q.text);
-          setWarmupActive(false);
-          fb.className = "feedback";
-          fb.innerHTML = "";
-          setAnswerStateBanner("waiting");
-          setAnsweringControlsEnabled(true);
-          document.getElementById("answer-input").focus();
-        } else {
-          b.disabled = true;
-          var lead = document.getElementById("warmup-lead");
-          if (lead) lead.textContent = "Look again — read the story slowly. What is happening?";
-        }
-      });
-    });
-    if (btns[0]) btns[0].focus();
+    setAnsweringControlsEnabled(true);
+    document.getElementById("answer-input").focus();
   }
 
   function goNextQuestion() {
@@ -4006,7 +3847,6 @@
         firstTryCorrect += 1;
         streak += 1;
         sessionBestStreak = Math.max(sessionBestStreak, streak);
-        sessionConsecutiveMisses = 0;
         // First-try correct clears this id from the wrong-list (any mode).
         var typeForRemove = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
         if (typeForRemove && q.id) {
@@ -4037,13 +3877,6 @@
 
     if (wrongSubmitsOnQuestion === 0) {
       wrongSubmitsOnQuestion = 1;
-      // Two missed questions in a row → the next story opens with a
-      // numberless slow-down warm-up.
-      sessionConsecutiveMisses += 1;
-      if (sessionConsecutiveMisses >= 2) {
-        pendingMissWarmup = true;
-        sessionConsecutiveMisses = 0;
-      }
       // First wrong submit on this question — save to wrong-list right away so a
       // mid-session quit (or a kid who gives up and skips) still preserves it.
       // Always-on (any mode), per the cross-game MISTAKES_AND_PRACTICE spec.
@@ -4073,9 +3906,6 @@
 
   function showHintManual() {
     if (answerState === "correct") return;
-    // During the numberless warm-up the numbers are hidden — a hint (or the
-    // picture) would leak them. The warm-up choices are the way through.
-    if (answerState === "warmup") return;
     const q = currentQuestion();
     if (!q) return;
     // Asking for a clue is always allowed — but it visibly counts as help,
@@ -4088,7 +3918,6 @@
 
   function togglePicture() {
     if (selectedLevel !== "easy") return;
-    if (answerState === "warmup") return;
     const vb = document.getElementById("visual-box");
     const btn = document.getElementById("btn-picture");
     pictureVisible = !pictureVisible;
@@ -4441,8 +4270,6 @@
     attemptedCount = 0;
     streak = 0;
     sessionBestStreak = 0;
-    sessionConsecutiveMisses = 0;
-    pendingMissWarmup = false;
     wrongSubmitsOnQuestion = 0;
     hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
@@ -4619,8 +4446,6 @@
     attemptedCount = 0;
     streak = 0;
     sessionBestStreak = 0;
-    sessionConsecutiveMisses = 0;
-    pendingMissWarmup = false;
     wrongSubmitsOnQuestion = 0;
     hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
@@ -4771,8 +4596,6 @@
     attemptedCount = 0;
     streak = 0;
     sessionBestStreak = 0;
-    sessionConsecutiveMisses = 0;
-    pendingMissWarmup = false;
     wrongSubmitsOnQuestion = 0;
     hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
@@ -5383,8 +5206,6 @@
     attemptedCount = 0;
     streak = 0;
     sessionBestStreak = 0;
-    sessionConsecutiveMisses = 0;
-    pendingMissWarmup = false;
     wrongSubmitsOnQuestion = 0;
     hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
