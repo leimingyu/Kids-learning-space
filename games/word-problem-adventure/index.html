@@ -1528,13 +1528,41 @@
       return WRONGS_KEY_BASE;
     }
   }
+  /** One unresolved-mistake record. Resolved mistakes are REMOVED from the
+   *  store (flavor A of the cross-game spec); the record keeps enough to
+   *  re-present the question (qid — banks are static) plus what the spec
+   *  minimum asks for: the kid's actual answers, attempts, and timestamps.
+   *  errorTags carry the misconception diagnosis (see diagnoseWrongAnswer). */
+  function makeWrongRecord(qid, yourAnswer, errorTag) {
+    var now = new Date().toISOString();
+    return {
+      qid: qid,
+      missCount: 1,
+      yourAnswers: (yourAnswer === null || yourAnswer === undefined) ? [] : [yourAnswer],
+      errorTags: errorTag ? [errorTag] : [],
+      firstMissedAt: now,
+      lastMissedAt: now,
+    };
+  }
   function loadWrongsStore() {
+    // v2 shape: { v: 2, byType: { [type]: [record] } }.
+    // v1 stored bare qid strings — upgrade lazily so old profiles keep
+    // their saved wrongs (missCount defaults to 1, timestamps to "now").
     try {
       var raw = localStorage.getItem(wrongsKey());
-      if (!raw) return { byType: {} };
+      if (!raw) return { v: 2, byType: {} };
       var parsed = JSON.parse(raw);
-      return { byType: (parsed && parsed.byType && typeof parsed.byType === "object") ? parsed.byType : {} };
-    } catch (e) { return { byType: {} }; }
+      var byType = (parsed && parsed.byType && typeof parsed.byType === "object") ? parsed.byType : {};
+      var out = {};
+      Object.keys(byType).forEach(function (t) {
+        var arr = Array.isArray(byType[t]) ? byType[t] : [];
+        out[t] = arr.map(function (entry) {
+          if (entry && typeof entry === "object" && entry.qid) return entry;
+          return makeWrongRecord(String(entry), null, null);
+        });
+      });
+      return { v: 2, byType: out };
+    } catch (e) { return { v: 2, byType: {} }; }
   }
   function saveWrongsStore(store) {
     try { localStorage.setItem(wrongsKey(), JSON.stringify(store)); } catch (e) { /* ignore */ }
@@ -1542,25 +1570,48 @@
   function resetWrongsStore() {
     try { localStorage.removeItem(wrongsKey()); } catch (e) { /* ignore */ }
   }
-  /** Mirror a wrong-id into the new key, scoped by problem type. */
-  function mirrorWrongToWrongsStore(type, qid) {
+  /** Record a miss in the wrongs key, scoped by problem type.
+   *  detail (optional): { yourAnswer, errorTag, newMiss } — newMiss
+   *  increments missCount (one per question-miss EVENT; extra submits on
+   *  the same question only append their answer). */
+  function mirrorWrongToWrongsStore(type, qid, detail) {
     if (!type || !qid) return;
+    detail = detail || {};
     var store = loadWrongsStore();
     if (!store.byType[type]) store.byType[type] = [];
-    if (store.byType[type].indexOf(qid) === -1) {
-      store.byType[type].push(qid);
-      saveWrongsStore(store);
+    var rec = null;
+    for (var i = 0; i < store.byType[type].length; i++) {
+      if (store.byType[type][i].qid === qid) { rec = store.byType[type][i]; break; }
     }
+    if (!rec) {
+      store.byType[type].push(makeWrongRecord(qid,
+        (typeof detail.yourAnswer === "number") ? detail.yourAnswer : null,
+        detail.errorTag || null));
+    } else {
+      if (detail.newMiss) rec.missCount = (rec.missCount || 1) + 1;
+      rec.lastMissedAt = new Date().toISOString();
+      if (typeof detail.yourAnswer === "number") {
+        rec.yourAnswers = (rec.yourAnswers || []).concat(detail.yourAnswer).slice(-5);
+      }
+      if (detail.errorTag) {
+        var tags = rec.errorTags || [];
+        if (tags.indexOf(detail.errorTag) === -1) tags.push(detail.errorTag);
+        rec.errorTags = tags.slice(-5);
+      }
+    }
+    saveWrongsStore(store);
     try { updatePracticeAffordances(); } catch (e) { /* defined later — boot-time safety */ }
   }
   function mirrorRemoveFromWrongsStore(type, qid) {
     if (!type || !qid) return;
     var store = loadWrongsStore();
     if (!store.byType[type]) return;
-    var i = store.byType[type].indexOf(qid);
-    if (i !== -1) {
-      store.byType[type].splice(i, 1);
-      saveWrongsStore(store);
+    for (var i = 0; i < store.byType[type].length; i++) {
+      if (store.byType[type][i].qid === qid) {
+        store.byType[type].splice(i, 1);
+        saveWrongsStore(store);
+        break;
+      }
     }
     try { updatePracticeAffordances(); } catch (e) { /* defined later — boot-time safety */ }
   }
@@ -2583,14 +2634,14 @@
     } catch (e) { /* ignore */ }
   }
 
-  function addPracticeWrong(type, qid) {
+  function addPracticeWrong(type, qid, detail) {
     var s = getPracticeState(type);
     if (s.wrongIds.indexOf(qid) === -1) {
       s.wrongIds.push(qid);
       savePracticeState(type, s);
     }
     // Mirror to the dedicated wrongs key so backup and spec compliance work.
-    mirrorWrongToWrongsStore(type, qid);
+    mirrorWrongToWrongsStore(type, qid, detail);
   }
 
   function removePracticeWrong(type, qid) {
@@ -2940,9 +2991,12 @@
       var found = 0;
       Object.keys(p.practice).forEach(function (type) {
         var ids = p.practice[type] && Array.isArray(p.practice[type].wrongIds) ? p.practice[type].wrongIds : [];
-        if (ids.length) { byType[type] = ids.slice(); found += ids.length; }
+        if (ids.length) {
+          byType[type] = ids.map(function (id) { return makeWrongRecord(id, null, null); });
+          found += ids.length;
+        }
       });
-      if (found > 0) saveWrongsStore({ byType: byType });
+      if (found > 0) saveWrongsStore({ v: 2, byType: byType });
     } catch (e) { /* ignore */ }
   }
   // Run the migration once per profile-binding. Standalone fires immediately;
@@ -3477,15 +3531,20 @@
     }
   }
 
-  function showFeedbackHint(q) {
+  function showFeedbackHint(q, diagnosis) {
     const fb = document.getElementById("feedback");
     var hintBody = q.hint;
     if (selectedLevel === "hard" && q.band === 3) {
       hintBody = "Think about what the story is asking before you pick an operation. " + q.hint;
     }
+    // When we recognized WHICH mistake was made, the lead names it
+    // (feedback that names the gap beats a generic "try again").
+    var lead = diagnosis
+      ? escapeHtml(diagnosis.message)
+      : "Not quite, try again! 💪";
     fb.className = "feedback hint show";
     fb.innerHTML =
-      '<p class="feedback-lead">Not quite, try again! 💪</p>' +
+      '<p class="feedback-lead">' + lead + "</p>" +
       "<p><strong>Hint:</strong> " +
       highlightKeywords(hintBody, q.hintKeywords) +
       "</p>";
@@ -3509,6 +3568,103 @@
     const n = parseInt(String(val).trim(), 10);
     if (!Number.isFinite(n) || n < 0) return NaN;
     return n;
+  }
+
+  // ── Misconception diagnosis ────────────────────────────────────────────────
+  // Every question's `visual` compactly encodes its arithmetic ("📦18−9",
+  // "🧮5×7−11", "17÷6→ceil", "49 mod 9"). Parse it back into operands so a
+  // wrong answer can be matched against known misconception foils — added
+  // instead of subtracted, stopped after step one, quotient/remainder mix-up —
+  // and the feedback can NAME the mistake instead of "try again".
+
+  /** @returns {{nums: number[], ops: string[]}|null} */
+  function parseVisualEquation(q) {
+    var s = String((q && q.visual) || "");
+    if (!s) return null;
+    // Shapes we can't safely read: mystery equations ("?×8=61"), clock ranges
+    // ("4:10→4:55" — but the "17÷6→ceil" remainder form is fine), and
+    // two-step compare ("18+7±5"). Stripping those would merge digits.
+    if (s.indexOf("→") !== -1 && s.indexOf("ceil") === -1) return null;
+    if (/[?=:±]/.test(s)) return null;
+    s = s.replace(/−/g, "-").replace(/×/g, "*").replace(/÷/g, "/").replace(/mod/g, "%");
+    s = s.replace(/[^0-9*/%+\-]/g, "");
+    var m = /^(\d+)([*/%+\-])(\d+)(?:([+\-])(\d+))?$/.exec(s);
+    if (!m) return null;
+    var nums = [parseInt(m[1], 10), parseInt(m[3], 10)];
+    var ops = [m[2]];
+    if (m[4]) { ops.push(m[4]); nums.push(parseInt(m[5], 10)); }
+    return { nums: nums, ops: ops };
+  }
+
+  /** @returns {{tag: string, message: string}|null} */
+  function diagnoseWrongAnswer(q, entry) {
+    if (!q || !Number.isFinite(entry) || entry === q.answer) return null;
+    var eq = parseVisualEquation(q);
+    var isInverse = q.problemType === "Inverse Compare";
+    if (eq && eq.nums.length === 2) {
+      var a = eq.nums[0], b = eq.nums[1], op = eq.ops[0];
+      if (op === "+" && entry === Math.abs(a - b)) {
+        return isInverse
+          ? { tag: "inverse-trap", message: "That's the trap! Read again WHO has fewer — here you need to ADD." }
+          : { tag: "op-swap", message: "You took away — but this story puts amounts together. Try adding " + a + " and " + b + "." };
+      }
+      if (op === "-" && entry === a + b) {
+        return isInverse
+          ? { tag: "inverse-trap", message: "That's the trap! The clue word is about the other kid — here you need to TAKE AWAY." }
+          : { tag: "op-swap", message: "You added — but this story takes some away. Try subtracting." };
+      }
+      if (op === "*") {
+        if (entry === a + b) {
+          return { tag: "op-swap", message: "You added the two numbers — but the story has equal groups. Try multiplying " + a + " × " + b + "." };
+        }
+        if (entry === a * (b - 1) || entry === a * (b + 1) || entry === (a - 1) * b || entry === (a + 1) * b) {
+          return { tag: "fact-slip", message: "Almost! Check the fact " + a + " × " + b + " one more time." };
+        }
+      }
+      if (op === "/" && b > 0) {
+        var q0 = Math.floor(a / b), r = a % b;
+        if (q.answer === q0 + 1 && entry === q0) {
+          return { tag: "remainder-round-up", message: "So close — the leftovers need a spot too! Add one more group." };
+        }
+        if (q.answer === q0 && entry === q0 + 1 && r > 0) {
+          return { tag: "remainder-round-down", message: "Careful — count only the FULL groups here." };
+        }
+        if (q.answer === r && (entry === q0 || entry === q0 + 1)) {
+          return { tag: "quotient-not-remainder", message: "That's how many groups — but the question asks what's LEFT OVER." };
+        }
+        if ((q.answer === q0 || q.answer === q0 + 1) && entry === r && r > 0) {
+          return { tag: "remainder-not-quotient", message: "That's the leftover — but the question asks how many GROUPS." };
+        }
+        if (entry === a * b) {
+          return { tag: "op-swap", message: "You multiplied — but this story splits into equal shares. Try dividing." };
+        }
+      }
+      if (op === "%" && b > 0) {
+        var qq = Math.floor(a / b);
+        if (q.answer === a % b && (entry === qq || entry === qq + 1)) {
+          return { tag: "quotient-not-remainder", message: "That's how many groups — but the question asks what's LEFT OVER." };
+        }
+      }
+    }
+    if (eq && eq.nums.length === 3) {
+      var s1 = eq.ops[0] === "*" ? eq.nums[0] * eq.nums[1]
+        : eq.ops[0] === "/" ? (eq.nums[1] > 0 && eq.nums[0] % eq.nums[1] === 0 ? eq.nums[0] / eq.nums[1] : NaN)
+        : eq.ops[0] === "+" ? eq.nums[0] + eq.nums[1]
+        : eq.nums[0] - eq.nums[1];
+      if (Number.isFinite(s1)) {
+        if (entry === s1) {
+          return { tag: "first-step-only", message: "Great start — " + s1 + " is just step one! Read the last sentence and do the final step." };
+        }
+        var flipped = eq.ops[1] === "-" ? s1 + eq.nums[2] : s1 - eq.nums[2];
+        if (entry === flipped) {
+          return { tag: "second-step-swap", message: "Step one is right! Look at the last step again — does the story add or take away?" };
+        }
+      }
+    }
+    if (Math.abs(entry - q.answer) === 1) {
+      return { tag: "off-by-one", message: "So close — you're just 1 away! Count that last step again." };
+    }
+    return null;
   }
 
   function submitAnswer() {
@@ -3562,18 +3718,32 @@
     updateSidePanel();
     playWrongSound();
 
+    var diagnosis = diagnoseWrongAnswer(q, ans);
+    var typeForWrong = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
+
     if (wrongSubmitsOnQuestion === 0) {
       wrongSubmitsOnQuestion = 1;
       // First wrong submit on this question — save to wrong-list right away so a
       // mid-session quit (or a kid who gives up and skips) still preserves it.
       // Always-on (any mode), per the cross-game MISTAKES_AND_PRACTICE spec.
-      var typeForFirstWrong = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
-      if (typeForFirstWrong && q.id) {
-        addPracticeWrong(typeForFirstWrong, q.id);
+      if (typeForWrong && q.id) {
+        addPracticeWrong(typeForWrong, q.id, {
+          yourAnswer: ans,
+          errorTag: diagnosis ? diagnosis.tag : null,
+          newMiss: true,
+        });
       }
-      showFeedbackHint(q);
+      showFeedbackHint(q, diagnosis);
     } else {
       wrongSubmitsOnQuestion = 2;
+      // Extra submits enrich the record (answer + diagnosis) but do NOT
+      // count as a new miss — one missCount per question-miss event.
+      if (typeForWrong && q.id) {
+        addPracticeWrong(typeForWrong, q.id, {
+          yourAnswer: ans,
+          errorTag: diagnosis ? diagnosis.tag : null,
+        });
+      }
       showFeedbackExplain(q);
     }
   }
