@@ -877,6 +877,52 @@
     .lesson-hero__stars { font-size: 2.4rem; letter-spacing: 6px; margin: 8px 0; }
     .lesson-hero__sub   { color: var(--muted); font-size: 1rem; }
 
+    /* Pip's one-line story beat on a cleared lesson. */
+    .lesson-hero__beat {
+      margin-top: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #2d3436;
+    }
+
+    /* Boss treasure chest: pops open to reveal the actual sticker that was
+       just sent to the hub shelf — the reward economy the kid can finally see. */
+    .treasure {
+      margin: 14px auto 0;
+      max-width: 340px;
+      padding: 14px 18px;
+      background: linear-gradient(165deg, #fff9e6 0%, #ffe9a8 100%);
+      border: 3px solid #f6b73c;
+      border-radius: 16px;
+      animation: chestPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .treasure__chest { font-size: 2.6rem; line-height: 1; }
+
+    .treasure__label {
+      font-weight: 800;
+      color: #8a5a00;
+      margin-top: 6px;
+    }
+
+    .treasure__sub {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    @keyframes chestPop {
+      0% { transform: scale(0.4) rotate(-6deg); opacity: 0; }
+      65% { transform: scale(1.08) rotate(2deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .treasure { animation: none; }
+    }
+
+    .unit-emoji { font-size: 2.2rem; line-height: 1; margin-left: auto; }
+
     /* ─── Practice-by-Type picker ──────────────────────────────────────── */
     .practice-intro {
       max-width: 720px;
@@ -3115,10 +3161,12 @@
   // Each lesson pulls a fixed number of questions from a filtered slice of the
   // pool (problemTypes + optional band). Bosses pull 8 questions, mixed types.
   // ───────────────────────────────────────────────────────────────────────────
+  // The adventure crosses three lands: Meadow → Town → Mountain. Unit ids are
+  // load-bearing (hub stickers, lesson keys); titles/emoji are display-only.
   const UNITS = [
-    { id: "u1", title: "Number Beginnings", subtitle: "Joining and adding stories",   level: "easy",   color: "#74b9ff" },
-    { id: "u2", title: "Story Detective",   subtitle: "Take away, compare, mystery",  level: "medium", color: "#fdcb6e" },
-    { id: "u3", title: "Master Solver",     subtitle: "Multi-step, share, time",      level: "hard",   color: "#ff7675" },
+    { id: "u1", title: "Sunny Meadow",    subtitle: "Joining and adding stories",  level: "easy",   color: "#74b9ff", emoji: "🌼" },
+    { id: "u2", title: "Riverside Town",  subtitle: "Take away, compare, mystery", level: "medium", color: "#fdcb6e", emoji: "🏘️" },
+    { id: "u3", title: "Star Mountain",   subtitle: "Multi-step, share, time",     level: "hard",   color: "#ff7675", emoji: "⛰️" },
   ];
 
   /**
@@ -3134,21 +3182,21 @@
     { id: "u1l3", unitId: "u1", title: "Bigger numbers",         emoji: "🧱", level: "easy",   filter: { types: ["Part–Part–Whole", "Join"], band: 2 }, length: 5 },
     { id: "u1l4", unitId: "u1", title: "Taking away",            emoji: "📦", level: "easy",   filter: { types: ["Separate"], band: 3 },         length: 5 },
     { id: "u1l5", unitId: "u1", title: "Story clocks",           emoji: "⏰", level: "easy",   filter: { types: ["Elapsed Time"] },              length: 5 },
-    { id: "u1l6", unitId: "u1", title: "Number Beginnings Boss", emoji: "🏆", level: "easy",   filter: { types: ["Part–Part–Whole", "Join", "Separate"] }, length: 8, boss: true },
+    { id: "u1l6", unitId: "u1", title: "Meadow Boss",            emoji: "🏆", level: "easy",   filter: { types: ["Part–Part–Whole", "Join", "Separate"] }, length: 8, boss: true },
     // Unit 2 — Medium
     { id: "u2l1", unitId: "u2", title: "Subtract to find left",  emoji: "🍊", level: "medium", filter: { types: ["Separate"], band: 1 },         length: 5 },
     { id: "u2l2", unitId: "u2", title: "How many more?",         emoji: "📏", level: "medium", filter: { types: ["Compare"], band: 1 },          length: 5 },
     { id: "u2l3", unitId: "u2", title: "Find the start",         emoji: "🔍", level: "medium", filter: { types: ["Change Unknown", "Unknown"] }, length: 5 },
     { id: "u2l4", unitId: "u2", title: "Money & cents",          emoji: "💰", level: "medium", filter: { types: ["Money / Measurement Conversion"] }, length: 5 },
     { id: "u2l5", unitId: "u2", title: "Two-step stories",       emoji: "🧮", level: "medium", filter: { types: ["Multi-step"] },                length: 5 },
-    { id: "u2l6", unitId: "u2", title: "Story Detective Boss",   emoji: "🏆", level: "medium", filter: { types: ["Separate", "Compare", "Change Unknown", "Money / Measurement Conversion"] }, length: 8, boss: true },
+    { id: "u2l6", unitId: "u2", title: "Town Boss",              emoji: "🏆", level: "medium", filter: { types: ["Separate", "Compare", "Change Unknown", "Money / Measurement Conversion"] }, length: 8, boss: true },
     // Unit 3 — Hard
     { id: "u3l1", unitId: "u3", title: "Share fairly",           emoji: "🍕", level: "hard",   filter: { types: ["Sharing"] },                   length: 5 },
     { id: "u3l2", unitId: "u3", title: "Leftovers",              emoji: "🧁", level: "hard",   filter: { types: ["Remainder Interpretation"] },  length: 5 },
     { id: "u3l3", unitId: "u3", title: "Two-step compare",       emoji: "🏃", level: "hard",   filter: { types: ["Two-Step Compare"] },          length: 5 },
     { id: "u3l4", unitId: "u3", title: "Fractions of a set",     emoji: "🥧", level: "hard",   filter: { types: ["Fraction of a Set"] },         length: 5 },
     { id: "u3l5", unitId: "u3", title: "Multi-step master",      emoji: "🧮", level: "hard",   filter: { types: ["Multi-step"] },                length: 5 },
-    { id: "u3l6", unitId: "u3", title: "Master Solver Boss",     emoji: "👑", level: "hard",   filter: { types: ["Sharing", "Remainder Interpretation", "Two-Step Compare", "Fraction of a Set", "Multi-step"] }, length: 8, boss: true },
+    { id: "u3l6", unitId: "u3", title: "Mountain Boss",          emoji: "👑", level: "hard",   filter: { types: ["Sharing", "Remainder Interpretation", "Two-Step Compare", "Fraction of a Set", "Multi-step"] }, length: 8, boss: true },
   ];
 
   function lessonById(id) {
@@ -4042,7 +4090,51 @@
     encore:   ["Try again for more stars!", "One more time?"],
   };
 
+  // One story beat per cleared lesson — the throughline that makes the
+  // Adventure an actual adventure. Shown on the cleared-lesson summary AND
+  // in Pip's bubble at the next map node (Cordova & Lepper: narrative
+  // contextualization drives engagement).
+  var STORY_BEATS = {
+    u1l1: "The meadow gate is open — follow the flower path! 🌼",
+    u1l2: "New chicks joined our parade — onward!",
+    u1l3: "We built a block bridge across the creek!",
+    u1l4: "Picnic packed — up the sunny hill!",
+    u1l5: "Right on time — the clock tower chimed for us!",
+    u1l6: "The Meadow cheered — the road to Riverside Town is open! 🏘️",
+    u2l1: "We crossed the river into town!",
+    u2l2: "The market stalls are counting on us!",
+    u2l3: "We found the hidden number in the clock shop!",
+    u2l4: "The baker paid us in shiny coins!",
+    u2l5: "Two bridges, one path — we solved the town maze!",
+    u2l6: "The Town waved goodbye — Star Mountain is calling! ⛰️",
+    u3l1: "We shared the climbing supplies — fair and square!",
+    u3l2: "Leftover pebbles marked our trail up!",
+    u3l3: "Halfway up — we spotted the eagle's ledge!",
+    u3l4: "A fraction of the stars already twinkle above us!",
+    u3l5: "The summit path took two big steps — we made it!",
+    u3l6: "👑 The whole land calls you Master Solver!",
+  };
+
+  // Bosses are framed as helping a character, not just "a big level".
+  var BOSS_INTROS = {
+    u1l6: "Help Mama Duck lead her ducklings across! 💪",
+    u2l6: "The Baker needs you to count the big harvest!",
+    u3l6: "The Star Keeper asks for one final quest! 👑",
+  };
+
   function pipMessageFor(lesson, state) {
+    // Boss nodes introduce their character quest.
+    if (lesson.boss && BOSS_INTROS[lesson.id]) return BOSS_INTROS[lesson.id];
+    // Fresh node right after a cleared lesson → tell that lesson's story beat.
+    if (state.attempts === 0 && !state.stars) {
+      var idx = LESSONS.findIndex(function (l) { return l.id === lesson.id; });
+      if (idx > 0) {
+        var prev = LESSONS[idx - 1];
+        if (getLessonState(prev.id).stars >= 1 && STORY_BEATS[prev.id]) {
+          return STORY_BEATS[prev.id];
+        }
+      }
+    }
     var pool;
     if (lesson.boss) pool = PIP_MESSAGES.boss;
     else if (state.stars > 0) pool = PIP_MESSAGES.encore;
@@ -4076,6 +4168,7 @@
           '<div class="unit-title">' + escapeHtml(unit.title) + '</div>' +
           '<div class="unit-sub">' + escapeHtml(unit.subtitle) + '</div>' +
         '</div>' +
+        '<div class="unit-emoji" aria-hidden="true">' + (unit.emoji || "") + '</div>' +
         '<div class="unit-progress">' + doneCount + ' / ' + lessons.length + '</div>';
 
       var unitWrap = document.createElement("div");
@@ -4916,6 +5009,27 @@
             '</div>' +
           '</div>';
       } else {
+        // Story beat: what just happened on the map, in Pip's voice.
+        var beat = (lessonStars >= 1 && STORY_BEATS[activeLesson.id])
+          ? '<div class="lesson-hero__beat">🦊 “' + escapeHtml(STORY_BEATS[activeLesson.id]) + '”</div>'
+          : "";
+        // Boss clears open a treasure chest revealing the ACTUAL sticker that
+        // just went to the hub shelf — the reward the kid never used to see.
+        var treasure = "";
+        if (activeLesson.boss && lessonStars >= 1) {
+          var unitForBoss = null;
+          for (var u = 0; u < UNITS.length; u++) {
+            if (UNITS[u].id === activeLesson.unitId) { unitForBoss = UNITS[u]; break; }
+          }
+          var placeEmoji = unitForBoss ? unitForBoss.emoji : "🏆";
+          var placeName = unitForBoss ? unitForBoss.title : "Boss";
+          treasure =
+            '<div class="treasure" role="status">' +
+              '<div class="treasure__chest" aria-hidden="true">🧰✨</div>' +
+              '<div class="treasure__label">' + placeEmoji + " " + escapeHtml(placeName) + " Boss Medal!</div>" +
+              '<div class="treasure__sub">Sticker earned — it’s on your hub sticker shelf.</div>' +
+            "</div>";
+        }
         lessonHero.innerHTML =
           '<div class="lesson-hero__inner">' +
             '<div class="lesson-hero__title">' +
@@ -4928,6 +5042,8 @@
               escapeHtml(activeLesson.title) +
               (lessonStars < 1 ? ' — get at least 40% on first try to earn a star.' : '') +
             '</div>' +
+            beat +
+            treasure +
           '</div>';
       }
     }
