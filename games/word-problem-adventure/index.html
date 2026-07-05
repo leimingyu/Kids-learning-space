@@ -293,10 +293,36 @@
 
     .question-text {
       font-size: clamp(1.25rem, 3.5vw, 1.65rem);
-      line-height: 1.5;
-      font-weight: 700;
+      line-height: 1.6;
+      font-weight: 600;
       margin: 16px 0 20px;
       min-height: 4.5em;
+    }
+
+    /* Early readers track line-by-line: one sentence per line, and the question
+       sentence — the only part that says what to DO — gets its own tinted strip. */
+    .question-text .story-sentence {
+      display: block;
+      margin: 4px auto;
+      max-width: 34em;
+    }
+
+    .question-text .story-question {
+      font-weight: 800;
+      font-size: 1.08em;
+      background: #fff3cd;
+      border: 2px solid #ffd54f;
+      border-radius: 12px;
+      padding: 8px 16px;
+      margin: 12px auto 4px;
+      width: fit-content;
+    }
+
+    .question-text .story-note {
+      font-size: 0.82em;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 6px;
     }
 
     .visual-box {
@@ -3037,6 +3063,43 @@
     return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   }
 
+  /** Split a story into sentences. Segments end at . ! or ? (plus an optional
+   *  closing paren, so "(No overlap.)" stays whole); any leftover text without
+   *  end punctuation (e.g. "(3×8 + 8×5)") becomes its own final segment. */
+  function splitStorySentences(text) {
+    var t = String(text || "").trim();
+    var parts = [];
+    var re = /[^.!?]+[.!?]+\)?/g;
+    var m;
+    var consumed = 0;
+    while ((m = re.exec(t)) !== null) {
+      var seg = m[0].trim();
+      if (seg) parts.push(seg);
+      consumed = re.lastIndex;
+    }
+    var rest = t.slice(consumed).trim();
+    if (rest) parts.push(rest);
+    if (!parts.length) parts.push(t);
+    return parts;
+  }
+
+  /** Render the story one sentence per line. The last sentence ending in "?"
+   *  is the question — it gets a tinted strip; anything after it (a
+   *  parenthetical note) renders smaller and muted. */
+  function buildStoryHtml(text) {
+    var parts = splitStorySentences(text);
+    var qIdx = -1;
+    for (var i = parts.length - 1; i >= 0; i--) {
+      if (/\?\)?$/.test(parts[i])) { qIdx = i; break; }
+    }
+    return parts.map(function (s, i) {
+      var cls = "story-sentence";
+      if (i === qIdx) cls += " story-question";
+      else if (qIdx !== -1 && i > qIdx) cls += " story-note";
+      return '<span class="' + cls + '">' + escapeHtml(s) + "</span>";
+    }).join("");
+  }
+
   function currentQuestion() {
     return sessionQueue[questionIndex];
   }
@@ -3147,7 +3210,7 @@
     wrongSubmitsOnQuestion = 0;
     pictureVisible = false;
     setAnswerStateBanner("waiting");
-    document.getElementById("question-text").textContent = q.text;
+    document.getElementById("question-text").innerHTML = buildStoryHtml(q.text);
     setProblemTypeLabel(q);
     const vb = document.getElementById("visual-box");
     var visHtml = q.visual ? q.visual : "";
