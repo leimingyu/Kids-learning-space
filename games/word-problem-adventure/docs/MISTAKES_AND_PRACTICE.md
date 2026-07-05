@@ -17,11 +17,25 @@ cross-game spec. This file documents this game's implementation.
 - Main state: `wordProblemAdventure_v1` (carries per-type `wrongIds`
   inline so the existing practice-grid UI keeps working unchanged).
 - Wrongs (spec-compliant authoritative store):
-  `wordProblemAdventure_wrongs_v1` with shape `{ byType: { [type]: [qid] } }`.
+  `wordProblemAdventure_wrongs_v1` with shape
+  `{ v: 2, byType: { [type]: [record] } }` where each record is
+  `{ qid, missCount, yourAnswers[≤5], errorTags[≤5], firstMissedAt,
+  lastMissedAt }`. Resolved mistakes are removed (spec flavor A).
+  The old id-string shape (`[qid]`) upgrades lazily in
+  `loadWrongsStore()` — old profiles keep their saved wrongs.
+- `errorTags` come from `diagnoseWrongAnswer()` (index.html), which
+  parses each question's `visual` equation back into operands and
+  matches the kid's wrong answer against misconception foils:
+  `op-swap`, `inverse-trap`, `first-step-only`, `second-step-swap`,
+  `fact-slip`, `quotient-not-remainder`, `remainder-not-quotient`,
+  `remainder-round-up/-down`, `off-by-one`. The same diagnosis drives
+  the first-wrong feedback lead ("You added — but this story takes
+  some away") instead of a generic "try again".
 - Every `addPracticeWrong` / `removePracticeWrong` mirrors to the new key.
 - On boot AND on profile-ready / setProfile messages, a one-time
   migration runs: if the new key is empty for this profile, the inline
-  per-type `wrongIds` are copied across. Subsequent loads are no-ops.
+  per-type `wrongIds` are copied across (as v2 records). Subsequent
+  loads are no-ops.
 
 ## Entry points
 
