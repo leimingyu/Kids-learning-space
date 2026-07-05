@@ -245,6 +245,44 @@
       margin-top: 4px;
     }
 
+    /* Live star meter: makes the (previously hidden) grading rule visible —
+       stars come from first-try solves, banked only when the lesson finishes. */
+    .star-meter {
+      text-align: center;
+      background: #fffbe8;
+      border: 2px solid #ffd54f;
+      border-radius: 12px;
+      padding: 6px 12px;
+      min-width: 120px;
+    }
+
+    .star-meter__stars {
+      display: block;
+      font-size: 1.25rem;
+      letter-spacing: 3px;
+      line-height: 1.2;
+    }
+
+    .star-meter__label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    /* Per-answer chip: teaches the rule ("first try" vs "with help") without shame. */
+    .answer-chip {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .answer-chip.first-try { background: #fff3cd; border: 2px solid #ffd54f; color: #856404; }
+    .answer-chip.with-help { background: #e7f1ff; border: 2px solid #74b9ff; color: #0984e3; }
+
     .game-layout {
       display: grid;
       gap: 16px;
@@ -1309,6 +1347,10 @@
         <span id="question-counter-main">Question 1 of 1</span>
         <span class="pool-hint" id="question-counter-pool"></span>
       </div>
+      <div class="star-meter" id="star-meter" title="Stars come from stories you solve by yourself, on the first try. Finish the whole lesson to keep them!">
+        <span class="star-meter__stars" aria-hidden="true">☆☆☆</span>
+        <span class="star-meter__label">solve by yourself to earn stars</span>
+      </div>
     </div>
 
     <div class="game-layout">
@@ -1336,7 +1378,7 @@
         <div id="feedback" class="feedback" role="status"></div>
 
         <div class="controls-lower">
-          <button type="button" class="btn btn-secondary" id="btn-hint">Show Hint</button>
+          <button type="button" class="btn btn-secondary" id="btn-hint" title="A clue counts as help — the story won't count as a first-try solve.">💡 Hint (counts as help)</button>
           <button type="button" class="btn btn-secondary hide-easy-only" id="btn-picture" aria-pressed="false">Show Picture</button>
           <button type="button" class="btn btn-secondary" id="btn-skip">Next Question</button>
           <button type="button" class="btn btn-secondary" id="btn-mute" aria-pressed="false">🔊 Sound On</button>
@@ -2921,6 +2963,10 @@
   let sessionBestStreak = 0;
   /** Wrong submits on current question: 0 = none yet, 1 = showed hint after first wrong, 2+ = explanation */
   let wrongSubmitsOnQuestion = 0;
+  /** True once the kid pressed "Show Hint" on the current question. A hinted
+   *  solve counts as "with help" (not first-try) — same rule as a wrong submit,
+   *  so help-seeking is priced consistently instead of silently free. */
+  let hintUsedOnQuestion = false;
   /** @type {"waiting"|"correct"|"hint"|"explain"} */
   let answerState = "waiting";
   let pictureVisible = false;
@@ -3152,6 +3198,36 @@
     const starsEl = document.getElementById("streak-stars");
     const starCount = Math.min(5, Math.floor(sessionBestStreak / 3));
     starsEl.textContent = starCount > 0 ? "⭐".repeat(starCount) : "—";
+    updateStarMeter();
+  }
+
+  /** Live star meter in the game top bar. Shows the stars the current
+   *  first-try accuracy is on track for, so the grading rule is observable
+   *  instead of a surprise at the summary. Hidden in Daily Challenge, which
+   *  is pass/fail (70% any-try), not starred. */
+  function updateStarMeter() {
+    var el = document.getElementById("star-meter");
+    if (!el) return;
+    if (isDailyChallenge) { el.style.display = "none"; return; }
+    el.style.display = "";
+    var starsEl = el.querySelector(".star-meter__stars");
+    var labelEl = el.querySelector(".star-meter__label");
+    var acc = questionsCompleted > 0 ? Math.round((firstTryCorrect / questionsCompleted) * 100) : 0;
+    var stars = isPracticeMode
+      ? practiceStarsFor(firstTryCorrect, questionsCompleted)
+      : starsForAccuracy(acc, questionsCompleted);
+    var glyphs = "";
+    for (var i = 1; i <= 3; i++) glyphs += i <= stars ? "⭐" : "☆";
+    if (starsEl) starsEl.textContent = glyphs;
+    if (labelEl) {
+      if (questionsCompleted === 0) {
+        labelEl.textContent = "solve by yourself to earn stars";
+      } else if (!isPracticeMode && questionsCompleted < 3) {
+        labelEl.textContent = "stars unlock after 3 stories";
+      } else {
+        labelEl.textContent = "first-try " + acc + "%";
+      }
+    }
   }
 
   function setLevelBadge() {
@@ -3184,6 +3260,7 @@
     if (isDailyChallenge && q.sessionLevel) selectedLevel = q.sessionLevel;
     recordShownQuestionId(q);
     wrongSubmitsOnQuestion = 0;
+    hintUsedOnQuestion = false;
     pictureVisible = false;
     setAnswerStateBanner("waiting");
     document.getElementById("question-text").innerHTML = buildStoryHtml(q.text);
@@ -3227,14 +3304,20 @@
     } catch (e) { return false; }
   }
 
-  function showFeedbackCorrect() {
+  function showFeedbackCorrect(firstTry) {
     const msg = SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)];
     const q = currentQuestion();
     const fb = document.getElementById("feedback");
+    // The chip teaches the grading rule: first-try solves fill the stars,
+    // solves with help still count as progress — visible, never punitive.
+    const chip = firstTry
+      ? '<span class="answer-chip first-try">First try! ⭐</span>'
+      : '<span class="answer-chip with-help">Solved with help 💪</span>';
     // Celebrate BESIDE the problem, not over it: the story and the worked
     // steps stay visible, and the kid decides when to move on.
     fb.className = "feedback correct celebrate show";
     fb.innerHTML =
+      chip +
       '<p class="feedback-lead">' + escapeHtml(msg) + "</p>" +
       (q && q.explain
         ? '<div class="correct-recap">' + formatExplain(escapeHtml(q.explain)) + "</div>"
@@ -3319,7 +3402,7 @@
     attemptedCount += 1;
 
     if (ans === q.answer) {
-      var firstTry = wrongSubmitsOnQuestion === 0;
+      var firstTry = wrongSubmitsOnQuestion === 0 && !hintUsedOnQuestion;
       questionsCompleted += 1;
       correctCount += 1;
       if (selectedLevel) {
@@ -3347,7 +3430,7 @@
       var pt = q.problemType || "Other";
       typeCorrect[pt] = (typeCorrect[pt] || 0) + 1;
       updateSidePanel();
-      showFeedbackCorrect();
+      showFeedbackCorrect(firstTry);
       return;
     }
 
@@ -3375,6 +3458,9 @@
     if (answerState === "correct") return;
     const q = currentQuestion();
     if (!q) return;
+    // Asking for a clue is always allowed — but it visibly counts as help,
+    // exactly like a wrong first submit. No hidden free hints.
+    hintUsedOnQuestion = true;
     showFeedbackHint(q);
   }
 
@@ -3652,6 +3738,7 @@
     streak = 0;
     sessionBestStreak = 0;
     wrongSubmitsOnQuestion = 0;
+    hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
     typeCorrect = {};
 
@@ -3816,6 +3903,7 @@
     streak = 0;
     sessionBestStreak = 0;
     wrongSubmitsOnQuestion = 0;
+    hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
     typeCorrect = {};
     showScreen("screen-game");
@@ -3965,6 +4053,7 @@
     streak = 0;
     sessionBestStreak = 0;
     wrongSubmitsOnQuestion = 0;
+    hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
     typeCorrect = {};
     showScreen("screen-game");
@@ -4225,26 +4314,34 @@
     var lessonHero = document.getElementById("lesson-hero");
     if (lessonHero) lessonHero.innerHTML = "";
     if (activeLesson && lessonHero) {
-      var lessonStars = starsForAccuracy(acc, questionsCompleted);
-      recordLessonResult(activeLesson.id, lessonStars);
-      var nextLesson = null;
-      var idx = LESSONS.findIndex(function (l) { return l.id === activeLesson.id; });
-      for (var k = idx + 1; k < LESSONS.length; k++) {
-        if (isLessonUnlocked(LESSONS[k].id) || lessonStars >= 1) { nextLesson = LESSONS[k]; break; }
+      // Stars are only graded (and banked) when the lesson was actually
+      // finished — exiting after a hot start must not unlock the next lesson.
+      var lessonStars = completedAll ? starsForAccuracy(acc, questionsCompleted) : 0;
+      if (completedAll) recordLessonResult(activeLesson.id, lessonStars);
+      if (!completedAll) {
+        lessonHero.innerHTML =
+          '<div class="lesson-hero__inner">' +
+            '<div class="lesson-hero__title">Lesson paused</div>' +
+            '<div class="lesson-hero__sub">' +
+              escapeHtml(activeLesson.title) +
+              ' — no stars this time. Finish all the stories in a lesson to earn stars!' +
+            '</div>' +
+          '</div>';
+      } else {
+        lessonHero.innerHTML =
+          '<div class="lesson-hero__inner">' +
+            '<div class="lesson-hero__title">' +
+              (lessonStars >= 1 ? 'Lesson cleared!' : 'Lesson complete') +
+            '</div>' +
+            '<div class="lesson-hero__stars" aria-label="' + lessonStars + ' of 3 stars">' +
+              makeStarRow(lessonStars).replace(/⭐/g, '<span style="color:#f6b73c">⭐</span>') +
+            '</div>' +
+            '<div class="lesson-hero__sub">' +
+              escapeHtml(activeLesson.title) +
+              (lessonStars < 1 ? ' — get at least 40% on first try to earn a star.' : '') +
+            '</div>' +
+          '</div>';
       }
-      lessonHero.innerHTML =
-        '<div class="lesson-hero__inner">' +
-          '<div class="lesson-hero__title">' +
-            (lessonStars >= 1 ? 'Lesson cleared!' : 'Lesson complete') +
-          '</div>' +
-          '<div class="lesson-hero__stars" aria-label="' + lessonStars + ' of 3 stars">' +
-            makeStarRow(lessonStars).replace(/⭐/g, '<span style="color:#f6b73c">⭐</span>') +
-          '</div>' +
-          '<div class="lesson-hero__sub">' +
-            escapeHtml(activeLesson.title) +
-            (lessonStars < 1 ? ' — get at least 40% on first try to earn a star.' : '') +
-          '</div>' +
-        '</div>';
     }
 
     postSessionToHub(completedAll, acc);
@@ -4252,6 +4349,19 @@
   }
 
   function exitToSummary() {
+    // Leaving a lesson early is fine — but it can't bank stars (that made the
+    // unlock ladder gameable: 3 first-try corrects then Exit = 3 stars). Tell
+    // the kid gently before they lose the run.
+    var midLesson = activeLesson && !isPracticeMode && !isDailyChallenge &&
+      sessionQueue.length > 0 && questionsCompleted < sessionQueue.length;
+    if (midLesson) {
+      var left = sessionQueue.length - questionsCompleted;
+      if (!window.confirm(
+        "Leave this lesson early?\n\n" +
+        "Stars are only earned when you finish all " + sessionQueue.length + " stories — " +
+        left + " to go. Your tricky questions are saved either way."
+      )) return;
+    }
     endSession(false);
   }
 
@@ -4277,7 +4387,9 @@
       accuracy: acc,
       bestStreak: sessionBestStreak,
     });
-    var stars = starsForAccuracy(acc, questionsCompleted);
+    // Same completion gate as recordLessonResult: an abandoned session posts
+    // its stats but never banks stars with the hub.
+    var stars = completedAll ? starsForAccuracy(acc, questionsCompleted) : 0;
     if (stars > 0) bridge.stars(hubLevel, stars);
     // Whole-unit completion sticker: when a boss is cleared with ≥1 star.
     if (activeLesson && activeLesson.boss && stars >= 1) {
@@ -4345,7 +4457,7 @@
     return {
       v: 1,
       screen: findActiveScreenId(),
-      mode: isPracticeMode ? "practice" : isDailyMode ? "daily" : "journey",
+      mode: isPracticeMode ? "practice" : isDailyChallenge ? "daily" : "journey",
       practiceType: practiceType || null,
       selectedLevel: selectedLevel || null,
       selectedSessionLabel: selectedSessionLabel || "",
@@ -4527,6 +4639,7 @@
     streak = 0;
     sessionBestStreak = 0;
     wrongSubmitsOnQuestion = 0;
+    hintUsedOnQuestion = false;
     levelStats = { easy: { attempted: 0, correct: 0 }, medium: { attempted: 0, correct: 0 }, hard: { attempted: 0, correct: 0 } };
     typeCorrect = {};
     // Tell the hub to drop its own per-game record for the active profile.
