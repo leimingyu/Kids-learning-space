@@ -577,6 +577,44 @@
     .answer-state-banner.state-correct { background: #d4edda; border-color: #28a745; color: #155724; }
     .answer-state-banner.state-hint { background: #fff8e1; border-color: #ffc107; color: #856404; }
     .answer-state-banner.state-explain { background: #e3f2fd; border-color: #4dabf7; color: #1565c0; }
+    .answer-state-banner.state-asking { background: #f3e8ff; border-color: #a855f7; color: #6b21a8; }
+
+    /* "What is the question asking?" chooser — the metacognitive step weak
+       solvers skip (Polya: understand the problem before computing). */
+    .intent-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .intent-btn {
+      display: block;
+      width: 100%;
+      max-width: 420px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      background: #fff;
+      border: 2px solid #a855f7;
+      border-radius: 12px;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .intent-btn:hover:not(:disabled) { background: #f3e8ff; }
+
+    .intent-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.35);
+    }
+
+    .intent-btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+      text-decoration: line-through;
+    }
 
     .problem-type-label {
       display: inline-block;
@@ -3145,7 +3183,7 @@
    *  solve counts as "with help" (not first-try) — same rule as a wrong submit,
    *  so help-seeking is priced consistently instead of silently free. */
   let hintUsedOnQuestion = false;
-  /** @type {"waiting"|"correct"|"hint"|"explain"} */
+  /** @type {"waiting"|"correct"|"hint"|"explain"|"asking"} */
   let answerState = "waiting";
   let pictureVisible = false;
   let audioCtx = null;
@@ -3360,7 +3398,8 @@
       waiting: "Your turn — read the story and type your answer.",
       correct: "You got it! 🎉 Check the steps, then press Next Story.",
       hint: "Not quite — here’s a clue. Try a new answer in the box.",
-      explain: "Read the steps below, then try again."
+      explain: "Read the steps below, then try again.",
+      asking: "First: pick what the question is asking. Then try again!"
     };
     el.textContent = messages[state] || messages.waiting;
   }
@@ -3552,6 +3591,73 @@
     refocusAnswerInput();
   }
 
+  // ── "What is the question asking?" — metacognitive step ───────────────────
+  // Weak solvers grab numbers and compute without deciding what the question
+  // wants (Polya's "understand the problem"). After a first wrong answer, the
+  // kid picks the question's intent from three choices before the clue and the
+  // answer box come back. Per-schema stems; two contrasting distractors each.
+  var QUESTION_INTENTS = {
+    "Part–Part–Whole": { correct: "How many are there in all?", wrong: ["How many are left?", "How many more does one group have?"] },
+    "Join": { correct: "How many are there now, after more came?", wrong: ["How many went away?", "How many more does one group have?"] },
+    "Separate": { correct: "How many are left?", wrong: ["How many are there in all?", "What is the mystery number?"] },
+    "Change Unknown": { correct: "How many joined or left in the middle of the story?", wrong: ["How many are there in all?", "How many are left at the end?"] },
+    "Unknown": { correct: "What number did the story start with (the mystery number)?", wrong: ["How many are there in all?", "How many are left?"] },
+    "Compare": { correct: "How many more (or fewer) does one have?", wrong: ["How many are there in all?", "How many are left?"] },
+    "Inverse Compare": { correct: "How many does the OTHER person have?", wrong: ["How many do they have all together?", "How many more does the first person have?"] },
+    "Money / Measurement Conversion": { correct: "How much is that in the other unit (cents, inches, minutes)?", wrong: ["How many are left?", "How many more does one have?"] },
+    "Multi-step": { correct: "The final amount — after MORE than one step", wrong: ["Just the first step's answer", "How many more does one have?"] },
+    "Elapsed Time": { correct: "How much time passed (or when does it end)?", wrong: ["How many are there in all?", "What is the mystery number?"] },
+    "Sharing": { correct: "How many in each equal share (or how many groups)?", wrong: ["How many are there in all?", "How many more does one have?"] },
+    "Remainder Interpretation": { correct: "After making equal groups — what about the leftovers?", wrong: ["How many are there in all?", "How many more does one have?"] },
+    "Two-Step Compare": { correct: "How many, after comparing step by step?", wrong: ["How many do they have all together?", "What is the mystery number?"] },
+    "Fraction of a Set": { correct: "How many is that PART of the group?", wrong: ["How many are in the whole group?", "How many are left after taking away?"] },
+    "Equal Groups": { correct: "How many in all the equal groups together?", wrong: ["How many groups are there?", "How many are left?"] },
+  };
+
+  function showQuestionIntentChooser(q, diagnosis) {
+    var intents = QUESTION_INTENTS[q.problemType];
+    if (!intents) {
+      // Unknown schema — fall straight through to the clue.
+      showFeedbackHint(q, diagnosis);
+      return;
+    }
+    var options = shuffle([
+      { label: intents.correct, correct: true },
+      { label: intents.wrong[0], correct: false },
+      { label: intents.wrong[1], correct: false },
+    ]);
+    var fb = document.getElementById("feedback");
+    fb.className = "feedback hint show";
+    fb.innerHTML =
+      '<p class="feedback-lead" id="intent-lead">Let’s zoom in 🔍 What is the question asking?</p>' +
+      '<div class="intent-choices">' +
+      options.map(function (o) {
+        return '<button type="button" class="intent-btn" data-correct="' + (o.correct ? "1" : "0") + '">' +
+          escapeHtml(o.label) + "</button>";
+      }).join("") +
+      "</div>";
+    setAnswerStateBanner("asking");
+    setAnsweringControlsEnabled(false);
+    var btns = fb.querySelectorAll(".intent-btn");
+    btns.forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.getAttribute("data-correct") === "1") {
+          // Got it — hand back the answer box with the clue.
+          setAnsweringControlsEnabled(true);
+          showFeedbackHint(q, diagnosis);
+        } else {
+          b.disabled = true;
+          var lead = document.getElementById("intent-lead");
+          if (lead) lead.textContent = "Not that one — read the question in the yellow strip again, then pick. 💛";
+          // Intent confusion is a diagnosis of its own — remember it.
+          var t = (isPracticeMode && practiceType) ? practiceType : (q.problemType || null);
+          if (t && q.id) mirrorWrongToWrongsStore(t, q.id, { errorTag: "intent-confusion" });
+        }
+      });
+    });
+    if (btns[0]) btns[0].focus();
+  }
+
   function showFeedbackExplain(q) {
     const fb = document.getElementById("feedback");
     fb.className = "feedback explain show";
@@ -3733,7 +3839,9 @@
           newMiss: true,
         });
       }
-      showFeedbackHint(q, diagnosis);
+      // Metacognitive step first: identify what the question asks, THEN the
+      // clue and the answer box come back.
+      showQuestionIntentChooser(q, diagnosis);
     } else {
       wrongSubmitsOnQuestion = 2;
       // Extra submits enrich the record (answer + diagnosis) but do NOT
@@ -3755,6 +3863,8 @@
     // Asking for a clue is always allowed — but it visibly counts as help,
     // exactly like a wrong first submit. No hidden free hints.
     hintUsedOnQuestion = true;
+    // Escape hatch out of the question-intent chooser: hand the input back.
+    if (answerState === "asking") setAnsweringControlsEnabled(true);
     showFeedbackHint(q);
   }
 
