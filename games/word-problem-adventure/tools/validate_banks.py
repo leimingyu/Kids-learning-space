@@ -56,6 +56,8 @@ REQUIRED_TYPES = {
     "Compare",
     "Sharing",
     "Change Unknown",
+    "Inverse Compare",
+    "Equal Groups",
 }
 LEGACY_PREFIXES = {
     "easy": re.compile(r"^e\d{3}$"),
