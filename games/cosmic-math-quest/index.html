@@ -466,6 +466,23 @@
       box-shadow: 0 0 0 3px rgba(126, 255, 179, 0.25);
     }
 
+    /* Remainder input — appears only for grade 4/5 long-division questions */
+    .r-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .r-wrap[hidden] { display: none; }
+    .r-label {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent-warm);
+    }
+    #answer-input-r {
+      width: 110px;
+      max-width: 110px;
+    }
+
     .btn-check {
       min-width: 200px;
       min-height: 56px;
@@ -1175,6 +1192,10 @@
         <div class="answer-stack" id="answer-area">
           <label class="sr-only" for="answer-input">Your answer</label>
           <input type="text" inputmode="numeric" pattern="[0-9-]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
+          <span class="r-wrap" id="answer-r-wrap" hidden>
+            <label class="r-label" for="answer-input-r">R</label>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" id="answer-input-r" autocomplete="off" enterkeyhint="done" aria-label="Remainder" />
+          </span>
           <button type="button" class="btn btn-secondary btn-check" id="btn-submit-answer">Check</button>
         </div>
 
@@ -1664,6 +1685,10 @@
           prompt: q.prompt,
           subtitle: q.subtitle || '',
           answer: q.answer,
+          answerR: q.answerR != null ? q.answerR : null,
+          grade: q.grade != null ? q.grade : null,
+          format: q.format || null,
+          promptSub: q.promptSub || '',
           result: q.result,
           operation: q.operation,
           type: q.type,
@@ -1683,6 +1708,10 @@
         prompt: q.prompt,
         subtitle: q.subtitle || '',
         answer: q.answer,
+        answerR: q.answerR != null ? q.answerR : null,
+        grade: q.grade != null ? q.grade : null,
+        format: q.format || null,
+        promptSub: q.promptSub || '',
         result: q.result,
         operation: q.operation,
         type: q.type,
@@ -1702,6 +1731,10 @@
       prompt: snap.prompt,
       subtitle: snap.subtitle || '',
       answer: snap.answer,
+      answerR: snap.answerR != null ? snap.answerR : null,
+      grade: snap.grade != null ? snap.grade : null,
+      format: snap.format || null,
+      promptSub: snap.promptSub || '',
       result: snap.result != null ? snap.result : snap.answer,
       operation: snap.operation,
       type: snap.type,
@@ -3498,6 +3531,13 @@
   // ========== WRONG-ANSWER HELP ==========
   function wrongExplainParagraph(q) {
     var m = q.meta || {};
+    if (q.answerR != null) {
+      if (m.dividend != null && m.divisor != null) {
+        return m.dividend + ' ÷ ' + m.divisor + ' = ' + q.answer + ' R ' + q.answerR +
+          ', because ' + m.divisor + ' × ' + q.answer + ' + ' + q.answerR + ' = ' + m.dividend + '.';
+      }
+      return 'Divide, then write what is left over: the answer is ' + q.answer + ' R ' + q.answerR + '.';
+    }
     switch (q.type) {
       case 'basic':
         if (q.operation === 'multiply') {
@@ -3819,7 +3859,8 @@
       confettiBurst();
     } else {
       fb.className = 'feedback gentle';
-      fb.textContent = pick(GENTLE_PHRASES) + ' The answer is ' + q.answer + '.';
+      var answerText = q.answerR != null ? q.answer + ' R ' + q.answerR : String(q.answer);
+      fb.textContent = pick(GENTLE_PHRASES) + ' The answer is ' + answerText + '.';
       const explain = document.createElement('div');
       explain.className = 'feedback-explain';
       explain.textContent = wrongExplainParagraph(q);
@@ -3837,6 +3878,8 @@
 
   function setAnswerControlsEnabled(on) {
     document.getElementById('answer-input').disabled = !on;
+    var r = document.getElementById('answer-input-r');
+    if (r) r.disabled = !on;
     document.getElementById('btn-submit-answer').disabled = !on;
   }
 
@@ -3861,6 +3904,11 @@
     }
 
     document.getElementById('answer-input').value = '';
+    var rWrap = document.getElementById('answer-r-wrap');
+    var rInput = document.getElementById('answer-input-r');
+    var needsR = q && q.answerR != null;
+    if (rWrap) rWrap.hidden = !needsR;
+    if (rInput) rInput.value = '';
     setAnswerControlsEnabled(true);
     document.getElementById('btn-hint').disabled = false;
 
@@ -3887,9 +3935,25 @@
       return;
     }
 
+    // Remainder questions (grade 4/5 long division) need BOTH boxes.
+    const needsR = q.answerR != null;
+    let rnum = 0;
+    if (needsR) {
+      const rawR = document.getElementById('answer-input-r').value.trim();
+      if (!/^\d+$/.test(rawR)) {
+        document.getElementById('feedback').textContent =
+          rawR === ''
+            ? 'Type the answer AND the remainder in the R box, then tap Check.'
+            : 'Use digits only in the R box, then tap Check.';
+        document.getElementById('feedback').className = 'feedback neutral';
+        return;
+      }
+      rnum = parseInt(rawR, 10);
+    }
+
     GameState.answered = true;
     GameState.totalAnswered++;
-    const ok = num === q.answer;
+    const ok = num === q.answer && (!needsR || rnum === q.answerR);
 
     let pointsLine = '';
     if (ok) {
@@ -3916,7 +3980,7 @@
       if (!GameState.isReviewMode) {
         GameState.mistakeSeenThisRound = true;
       }
-      recordWrongAnswer(q, num);
+      recordWrongAnswer(q, needsR ? String(num) + ' R ' + String(rnum) : num);
       if (!GameState.isReviewMode) handleLifeLost();
     }
 
@@ -4437,6 +4501,10 @@
   });
 
   document.getElementById('answer-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') handleSubmitAnswer();
+  });
+
+  document.getElementById('answer-input-r').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') handleSubmitAnswer();
   });
 
