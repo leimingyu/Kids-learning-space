@@ -348,6 +348,277 @@
     });
   };
 
+  // ---------- Grade 4 ----------
+  BUILDERS.g4_multidigit = function (tier) {
+    var a, d;
+    if (tier <= -1) {
+      a = randInt(12, 30);
+      d = randInt(2, 4);
+    } else if (tier >= 1) {
+      a = randInt(102, 399);
+      d = randInt(3, 9);
+    } else {
+      a = randInt(21, 99);
+      d = randInt(3, 9);
+    }
+    var prod = a * d;
+    var ones = a % 10;
+    var tens = a - ones;
+    return makeQuestion({
+      format: 'g4_multidigit',
+      type: 'basic',
+      operation: 'multiply',
+      prompt: a + ' × ' + d + ' = ?',
+      answer: prod,
+      key: 'g4:md:' + a + 'x' + d,
+      meta: { a: a, b: d, prod: prod, baseFact: { a: a, b: d, op: 'mul' } },
+      visualSpec: null,
+      hintEasy: 'Break ' + a + ' into ' + tens + ' and ' + ones + '. Multiply each part by ' + d + ', then add them.',
+      hintMed: tens + ' × ' + d + ' first, then ' + ones + ' × ' + d + '.',
+      hintHard: 'Add the two partial products.'
+    });
+  };
+
+  BUILDERS.g4_longdiv = function (tier) {
+    var d = randInt(3, 9);
+    var q, r;
+    if (tier <= -1) {
+      // exact only, 2-digit dividend
+      q = randInt(Math.ceil(10 / d) + 1, Math.floor(99 / d));
+      r = 0;
+    } else if (tier >= 1) {
+      // 3-digit dividend, remainders allowed
+      q = randInt(Math.ceil(100 / d) + 1, Math.floor(900 / d));
+      r = Math.random() < 0.6 ? randInt(1, d - 1) : 0;
+    } else {
+      // 2-digit dividend, remainders allowed
+      q = randInt(Math.ceil(10 / d) + 1, Math.floor(90 / d));
+      r = Math.random() < 0.5 ? randInt(1, d - 1) : 0;
+    }
+    var dividend = d * q + r;
+    return makeQuestion({
+      format: 'g4_longdiv',
+      type: 'basic',
+      operation: 'divide',
+      prompt: dividend + ' ÷ ' + d + ' = ?',
+      promptSub: r > 0 ? 'This one has a remainder — put it in the R box.' : null,
+      answer: q,
+      answerR: r > 0 ? r : null,
+      key: 'g4:ld:' + dividend + '/' + d,
+      meta: { dividend: dividend, divisor: d, quotient: q, baseFact: { a: d, b: q, op: 'div' } },
+      visualSpec: null,
+      hintEasy: 'How many whole ' + d + 's fit into ' + dividend + '?',
+      hintMed: 'Find the biggest multiple of ' + d + ' that fits, then count what is left over.',
+      hintHard: r > 0 ? 'Check: divisor × answer, then add the leftover to reach ' + dividend + '.' : '? × ' + d + ' = ' + dividend + '.'
+    });
+  };
+
+  var NAMES = ['Maya', 'Leo', 'Zara', 'Kai', 'Nina', 'Omar'];
+
+  var G4_WORD2_TEMPLATES = [
+    function () {
+      var a = randInt(3, 9), b = randInt(4, 9), c = randInt(2, 10);
+      return {
+        prompt: pick(NAMES) + ' buys ' + a + ' packs of ' + b + ' trading cards, then gives ' + c + ' cards to a friend. How many cards are left?',
+        answer: a * b - c,
+        meta: { a: a, b: b, c: c, steps: 'mul_sub', baseFact: { a: a, b: b, op: 'mul' } },
+        hintFact: a + ' × ' + b + ' first, then take away ' + c
+      };
+    },
+    function () {
+      var a = randInt(3, 9), b = randInt(4, 9), c = randInt(3, 20);
+      return {
+        prompt: 'A library has ' + a + ' shelves with ' + b + ' books on each shelf. Then ' + c + ' more books arrive. How many books are there now?',
+        answer: a * b + c,
+        meta: { a: a, b: b, c: c, steps: 'mul_add', baseFact: { a: a, b: b, op: 'mul' } },
+        hintFact: a + ' × ' + b + ' first, then add ' + c
+      };
+    },
+    function () {
+      var d = randInt(2, 6), teams = randInt(3, 8), k = randInt(2, 6);
+      var n = d * teams;
+      return {
+        prompt: n + ' students split into teams of ' + d + '. Each team gets ' + k + ' cones for practice. How many cones are needed?',
+        answer: teams * k,
+        meta: { d: d, teams: teams, k: k, steps: 'div_mul', baseFact: null },
+        hintFact: n + ' ÷ ' + d + ' teams first, then × ' + k
+      };
+    },
+    function () {
+      var a = randInt(4, 9), b = randInt(3, 9), c = randInt(2, 10);
+      return {
+        prompt: pick(NAMES) + ' saves ' + b + ' coins every day for ' + a + ' days, then spends ' + c + ' coins on a snack. How many coins are left?',
+        answer: a * b - c,
+        meta: { a: a, b: b, c: c, steps: 'mul_sub', baseFact: { a: a, b: b, op: 'mul' } },
+        hintFact: a + ' × ' + b + ' first, then take away ' + c
+      };
+    },
+    function () {
+      var d = randInt(3, 6), boxes = randInt(5, 9), c = randInt(2, 3);
+      var n = d * boxes;
+      return {
+        prompt: 'A baker makes ' + n + ' muffins and packs them into boxes of ' + d + '. She sells ' + c + ' full boxes. How many boxes are left?',
+        answer: boxes - c,
+        meta: { d: d, boxes: boxes, c: c, steps: 'div_sub', baseFact: { a: d, b: boxes, op: 'div' } },
+        hintFact: n + ' ÷ ' + d + ' boxes first, then take away ' + c
+      };
+    },
+    function () {
+      var a = randInt(4, 9), b = randInt(5, 9), c = randInt(2, 8);
+      return {
+        prompt: a + ' rows of ' + b + ' chairs are set up for the show. ' + c + ' chairs are broken and removed. How many chairs are left?',
+        answer: a * b - c,
+        meta: { a: a, b: b, c: c, steps: 'mul_sub', baseFact: { a: a, b: b, op: 'mul' } },
+        hintFact: a + ' × ' + b + ' first, then take away ' + c
+      };
+    }
+  ];
+
+  BUILDERS.g4_word2 = function (tier) {
+    // word templates stay at table-fact sizes at every tier
+    var idx = randInt(0, G4_WORD2_TEMPLATES.length - 1);
+    var t = G4_WORD2_TEMPLATES[idx]();
+    t.meta.template = idx;
+    return makeQuestion({
+      format: 'g4_word2',
+      type: 'word',
+      operation: t.meta.steps.indexOf('div') === 0 ? 'divide' : 'multiply',
+      prompt: t.prompt,
+      answer: t.answer,
+      key: 'g4:w2:t' + idx + ':' + t.answer + ':' + (t.meta.a || t.meta.d) + 'v' + (t.meta.b || t.meta.boxes || t.meta.teams),
+      meta: t.meta,
+      visualSpec: null,
+      hintEasy: 'Two steps: ' + t.hintFact + '.',
+      hintMed: 'Find the total first, then do the second step.',
+      hintHard: t.hintFact + '.'
+    });
+  };
+
+  /** Table-fact pair for G4 inverse/reasoning, factors to 12, biased by tier. */
+  function g4Pair(tier) {
+    var lo = tier <= -1 ? 3 : tier >= 1 ? 7 : 4;
+    var hi = tier <= -1 ? 8 : 12;
+    return { a: randInt(lo, hi), b: randInt(lo, hi) };
+  }
+
+  BUILDERS.g4_invreason = function (tier) {
+    var kind = pick(['inv_mult', 'inv_div', 'compare', 'tf', 'compare_div', 'tf_div']);
+    var p = g4Pair(tier);
+    var a = p.a, b = p.b, prod = a * b;
+
+    if (kind === 'inv_mult') {
+      return makeQuestion({
+        format: 'g4_invreason', type: 'inverse', operation: 'multiply',
+        prompt: 'If ' + prod + ' ÷ ' + a + ' = ' + b + ', what is ' + a + ' × ' + b + '?',
+        answer: prod,
+        key: 'g4:ir:im:' + a + 'x' + b,
+        meta: { a: a, b: b, prod: prod, dividend: prod, divisor: a, quotient: b, baseFact: { a: a, b: b, op: 'mul' } },
+        visualSpec: null,
+        hintEasy: 'Think about the matching multiply fact.',
+        hintMed: a + ' × ' + b + ' = ?',
+        hintHard: 'Inverse facts match: divide and multiply.'
+      });
+    }
+    if (kind === 'inv_div') {
+      return makeQuestion({
+        format: 'g4_invreason', type: 'inverse', operation: 'divide',
+        prompt: prod + ' ÷ ' + a + ' = ?',
+        promptSub: 'If ' + a + ' × ' + b + ' = ' + prod,
+        answer: b,
+        key: 'g4:ir:id:' + prod + '/' + a,
+        meta: { a: a, b: b, prod: prod, dividend: prod, divisor: a, quotient: b, baseFact: { a: a, b: b, op: 'div' } },
+        visualSpec: null,
+        hintEasy: 'Think: ' + a + ' × ? = ' + prod + '.',
+        hintMed: 'Undo the multiply.',
+        hintHard: prod + ' ÷ ' + a + '.'
+      });
+    }
+    if (kind === 'compare') {
+      var p2 = g4Pair(tier), guard = 0;
+      while (p2.a * p2.b === prod && guard < 30) { p2 = g4Pair(tier); guard++; }
+      if (p2.a * p2.b === prod) p2 = { a: a + 1, b: b };
+      var prod2 = p2.a * p2.b;
+      return makeQuestion({
+        format: 'g4_invreason', type: 'reasoning', operation: 'multiply',
+        prompt: 'Which is larger: ' + a + ' × ' + b + ' or ' + p2.a + ' × ' + p2.b + '? Type the larger value only.',
+        answer: Math.max(prod, prod2),
+        key: 'g4:ir:rc:' + a + 'x' + b + 'v' + p2.a + 'x' + p2.b,
+        meta: { a: a, b: b, prod: prod, c: p2.a, d: p2.b, prod2: prod2, reasoning: 'compare', baseFact: null },
+        visualSpec: null,
+        hintEasy: 'Figure each side, then pick the bigger total.',
+        hintMed: a + ' × ' + b + ' = ' + prod + '. ' + p2.a + ' × ' + p2.b + ' = ' + prod2 + '.',
+        hintHard: 'Compare ' + prod + ' and ' + prod2 + '.'
+      });
+    }
+    if (kind === 'tf') {
+      var wrong = prod + pick([-5, -4, -3, -2, 2, 3, 4, 5, 6]);
+      return makeQuestion({
+        format: 'g4_invreason', type: 'reasoning', operation: 'multiply',
+        prompt: 'Is ' + a + ' × ' + b + ' = ' + wrong + '? Type 1 for yes, 0 for no.',
+        answer: 0,
+        key: 'g4:ir:tf:' + a + 'x' + b + ':' + wrong,
+        meta: { a: a, b: b, prod: prod, shown: wrong, reasoning: 'tf', baseFact: { a: a, b: b, op: 'mul' } },
+        visualSpec: null,
+        hintEasy: 'What is ' + a + ' × ' + b + ' really?',
+        hintMed: a + ' × ' + b + ' = ' + prod + ', not ' + wrong + '.',
+        hintHard: 'Check the product.'
+      });
+    }
+    if (kind === 'compare_div') {
+      var p3 = g4Pair(tier), guard2 = 0;
+      while (p3.b === b && guard2 < 30) { p3 = g4Pair(tier); guard2++; }
+      if (p3.b === b) p3 = { a: p3.a, b: b === 12 ? 11 : b + 1 };
+      var d1 = a * b, d2 = p3.a * p3.b;
+      return makeQuestion({
+        format: 'g4_invreason', type: 'reasoning', operation: 'divide',
+        prompt: 'Which is larger: ' + d1 + ' ÷ ' + a + ' or ' + d2 + ' ÷ ' + p3.a + '? Type the larger value only.',
+        answer: Math.max(b, p3.b),
+        key: 'g4:ir:rdc:' + d1 + '/' + a + 'v' + d2 + '/' + p3.a,
+        meta: { dividend: d1, divisor: a, quotient: b, dividend2: d2, divisor2: p3.a, quotient2: p3.b, reasoning: 'compare_div', baseFact: null },
+        visualSpec: null,
+        hintEasy: 'Solve both division facts and compare the answers.',
+        hintMed: d1 + ' ÷ ' + a + ' = ' + b + '. ' + d2 + ' ÷ ' + p3.a + ' = ' + p3.b + '.',
+        hintHard: 'Compare ' + b + ' and ' + p3.b + '.'
+      });
+    }
+    // tf_div
+    var wrongQ = b + pick([-3, -2, -1, 1, 2, 3]);
+    if (wrongQ === b || wrongQ < 1) wrongQ = b + 1;
+    return makeQuestion({
+      format: 'g4_invreason', type: 'reasoning', operation: 'divide',
+      prompt: 'Is ' + prod + ' ÷ ' + a + ' = ' + wrongQ + '? Type 1 for yes, 0 for no.',
+      answer: 0,
+      key: 'g4:ir:rdt:' + prod + '/' + a + ':' + wrongQ,
+      meta: { dividend: prod, divisor: a, quotient: b, shown: wrongQ, reasoning: 'tf_div', baseFact: { a: a, b: b, op: 'div' } },
+      visualSpec: null,
+      hintEasy: 'Work out the division fact first.',
+      hintMed: prod + ' ÷ ' + a + ' = ' + b + ', not ' + wrongQ + '.',
+      hintHard: 'Check the quotient.'
+    });
+  };
+
+  BUILDERS.g4_warmup = function (tier) {
+    var anchor = Math.random() < 0.7 ? pick([11, 12]) : randInt(6, 12);
+    var other = tier <= -1 ? randInt(2, 6) : tier >= 1 ? randInt(6, 12) : randInt(2, 9);
+    var flip = Math.random() < 0.5;
+    var a = flip ? anchor : other;
+    var b = flip ? other : anchor;
+    var prod = a * b;
+    return makeQuestion({
+      format: 'g4_warmup',
+      type: 'basic',
+      operation: 'multiply',
+      prompt: a + ' × ' + b + ' = ?',
+      answer: prod,
+      key: 'g4:wu:' + a + 'x' + b,
+      meta: { a: a, b: b, prod: prod, baseFact: { a: a, b: b, op: 'mul' } },
+      visualSpec: visArray(a, b),
+      hintEasy: 'For 11s, the digit repeats: 11 × 4 = 44. For 12s, do ×10 and ×2, then add them.',
+      hintMed: 'Use a ×10 fact you know, then adjust.',
+      hintHard: 'Recall ' + a + ' × ' + b + '.'
+    });
+  };
+
   // ---------- generation entry ----------
   // Permissive stub — replaced with real band rules in Task 5.
   function validateBandQuestion(q, grade) {

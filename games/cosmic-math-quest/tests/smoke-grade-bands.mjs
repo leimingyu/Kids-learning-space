@@ -138,3 +138,80 @@ for (const fmt of ['g2_recall', 'g2_picture', 'g2_sharing', 'g3_recall', 'g3_mis
 }
 
 console.log('smoke-grade-bands: Task 2 OK');
+
+// ---------- Task 3: G4 generators ----------
+
+// g4_multidigit: 2-digit × 1-digit at tier -1/0, 3-digit × 1-digit at tier +1
+for (let i = 0; i < 50; i++) {
+  const q0 = gen('g4_multidigit', 0);
+  assert.ok(q0.meta.a >= 10 && q0.meta.a <= 99, `tier 0 wants a 2-digit factor: ${q0.prompt}`);
+  assert.ok(q0.meta.b >= 2 && q0.meta.b <= 9);
+  assert.strictEqual(q0.answer, q0.meta.a * q0.meta.b);
+  assert.deepStrictEqual(q0.meta.baseFact, { a: q0.meta.a, b: q0.meta.b, op: 'mul' });
+  const q1 = gen('g4_multidigit', 1);
+  assert.ok(q1.meta.a >= 100 && q1.meta.a <= 999, `tier +1 wants a 3-digit factor: ${q1.prompt}`);
+}
+
+// g4_longdiv: 1-digit divisors 3-9; exact-only at tier -1 with 2-digit dividends
+for (let i = 0; i < 80; i++) {
+  const qm = gen('g4_longdiv', -1);
+  assert.strictEqual(qm.answerR, null, `tier -1 long division must be exact: ${qm.prompt}`);
+  assert.strictEqual(qm.meta.divisor * qm.answer, qm.meta.dividend);
+  assert.ok(qm.meta.dividend >= 10 && qm.meta.dividend <= 99);
+  assert.ok(qm.meta.divisor >= 3 && qm.meta.divisor <= 9);
+}
+// tier 0/+1: remainders appear and satisfy divisor*quotient+r === dividend with 0 < r < divisor
+let sawRemainder = false;
+for (let i = 0; i < 120; i++) {
+  const q = gen('g4_longdiv', i % 2 === 0 ? 0 : 1);
+  const { dividend, divisor } = q.meta;
+  assert.ok(divisor >= 3 && divisor <= 9);
+  if (q.answerR != null) {
+    sawRemainder = true;
+    assert.ok(q.answerR > 0 && q.answerR < divisor, `0 < r < divisor: ${q.prompt}`);
+    assert.strictEqual(divisor * q.answer + q.answerR, dividend, `remainder identity: ${q.prompt}`);
+    assert.strictEqual(q.meta.remainder, true, 'meta.remainder flags the R-box');
+  } else {
+    assert.strictEqual(divisor * q.answer, dividend);
+  }
+}
+assert.ok(sawRemainder, 'tier 0/+1 long division should produce remainders sometimes');
+
+// g4_word2: template variety (>= 4 distinct across 80 draws), sane integer answers
+const w2Templates = new Set();
+for (let i = 0; i < 80; i++) {
+  const q = gen('g4_word2', 0);
+  assert.strictEqual(q.type, 'word');
+  assert.ok(Number.isInteger(q.answer) && q.answer >= 2, `word answer sane: ${q.prompt} -> ${q.answer}`);
+  assert.ok(!q.prompt.includes('+') && !/\d\s*-\s*\d/.test(q.prompt), `no +/- symbols in word prompts: ${q.prompt}`);
+  w2Templates.add(q.meta.template);
+}
+assert.ok(w2Templates.size >= 4, `expected >= 4 distinct two-step templates, saw ${w2Templates.size}`);
+
+// g4_invreason: inverse + reasoning variety; tf answers are 0/1; compare answers = larger value
+const irKinds = new Set();
+for (let i = 0; i < 120; i++) {
+  const q = gen('g4_invreason', 0);
+  irKinds.add(q.meta.reasoning || 'inverse');
+  if (q.meta.reasoning === 'tf' || q.meta.reasoning === 'tf_div') {
+    assert.ok(q.answer === 0 || q.answer === 1);
+  }
+  if (q.meta.reasoning === 'compare') {
+    assert.strictEqual(q.answer, Math.max(q.meta.prod, q.meta.prod2));
+  }
+  if (q.meta.reasoning === 'compare_div') {
+    assert.strictEqual(q.answer, Math.max(q.meta.quotient, q.meta.quotient2));
+  }
+}
+assert.ok(irKinds.size >= 3, `inverse/reasoning variety: saw ${[...irKinds].join(',')}`);
+
+// g4_warmup: recall weighted to 11s/12s
+let elevenTwelve = 0;
+for (let i = 0; i < 100; i++) {
+  const q = gen('g4_warmup', 0);
+  assert.strictEqual(q.level, 'easy');
+  if (q.meta.a === 11 || q.meta.a === 12 || q.meta.b === 11 || q.meta.b === 12) elevenTwelve++;
+}
+assert.ok(elevenTwelve >= 50, `warmup should hit 11s/12s most of the time (saw ${elevenTwelve}/100)`);
+
+console.log('smoke-grade-bands: Task 3 OK');
