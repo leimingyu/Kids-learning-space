@@ -4319,7 +4319,7 @@
       {
         id: 'perfect',
         test: function () {
-          return GameState.correctCount === ROUND_SIZE;
+          return GameState.playMode === 'mission' && GameState.correctCount === ROUND_SIZE;
         },
       },
       {
@@ -4349,7 +4349,8 @@
       {
         id: 'focus_mode',
         test: function () {
-          return GameState.hintsUsedThisRound === 0 && GameState.totalAnswered === ROUND_SIZE;
+          return GameState.playMode === 'mission' &&
+            GameState.hintsUsedThisRound === 0 && GameState.totalAnswered === ROUND_SIZE;
         },
       },
     ];
@@ -4437,6 +4438,7 @@
     saveWrongAnswerHistory();
     updatePracticeButtons();
     GameState.reviewJustCompleted = false;
+    evaluateMissionBadges(stars);
     saveProgress(progress);
     if (victory) bossVictoryCelebration();
     showNormalResultsStats();
@@ -4757,6 +4759,8 @@
       practice_star: '🎯 Practice Star',
       daily_learner: '📅 Daily Learner',
       focus_mode: '🧭 Focus Mode',
+      boss_slayer: 'Boss Slayer 🎯',
+      lightning_streak: 'Lightning Streak ⚡',
     };
     if (!progress.badges.length) {
       list.innerHTML = '<span class="badge-pill">Fly a mission to earn your first badge!</span>';

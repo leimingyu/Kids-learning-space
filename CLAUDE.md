@@ -31,6 +31,12 @@ Smoke tests (no browser; each `eval`s a source file into a faked `window`):
 # Cosmic Math Quest learning-intelligence: fact-family / weak-family aggregation
 node games/cosmic-math-quest/tests/smoke-learning-intelligence.mjs
 
+# Fix-It practice set priority (due > recent > most-missed)
+node games/cosmic-math-quest/tests/smoke-fixit-priority.mjs
+
+# Grade-band recipes and generators
+node games/cosmic-math-quest/tests/smoke-grade-bands.mjs
+
 # Quiet Backup snapshot helpers: summarize / dedupe / thinning / period-grouping
 node tests/smoke-backup-snapshots.mjs
 
