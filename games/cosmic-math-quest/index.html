@@ -4245,6 +4245,7 @@
     if (victory && progress.badges.indexOf('boss_slayer') === -1) {
       progress.badges.push('boss_slayer');
     }
+    GameState.lastPlayMode = GameState.playMode;
     GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
     wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
     saveWrongAnswerHistory();
