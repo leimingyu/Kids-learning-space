@@ -1005,6 +1005,7 @@
     }
 
     .grade-chip-row { display: flex; justify-content: center; margin-bottom: 0.75rem; }
+    .grade-chip-row[hidden] { display: none; }
     .grade-chip {
       font-family: inherit;
       font-size: 0.95rem;
@@ -1092,6 +1093,7 @@
 
     /* ===== Lightning timer ===== */
     .lightning-timer-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+    .lightning-timer-row[hidden] { display: none; }
     #lightning-timer-num { font-weight: 800; min-width: 3.5ch; }
     .lightning-timer-track {
       flex: 1; height: 10px; border-radius: 999px;
@@ -1112,6 +1114,7 @@
       border-radius: 999px; font-size: 0.8rem; font-weight: 700;
       background: rgba(9, 132, 227, 0.14); color: #0984e3;
     }
+    .weavein-chip[hidden] { display: none; }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1245,7 +1248,7 @@
 
         <div class="answer-stack" id="answer-area">
           <label class="sr-only" for="answer-input">Your answer</label>
-          <input type="text" inputmode="numeric" pattern="[0-9-]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
+          <input type="text" inputmode="numeric" pattern="-?[0-9]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
           <span class="r-wrap" id="answer-r-wrap" hidden>
             <label class="r-label" for="answer-input-r">R</label>
             <input type="text" inputmode="numeric" pattern="[0-9]*" id="answer-input-r" autocomplete="off" enterkeyhint="done" aria-label="Remainder" />
@@ -1273,7 +1276,7 @@
         <p id="results-rating" style="text-align:center;font-size:1.15rem;margin:0 0 1rem;"></p>
         <div class="results-stats">
           <div class="stat-box"><div class="num" id="res-score">0</div><div class="lbl">Score</div></div>
-          <div class="stat-box"><div class="num" id="res-correct">0</div><div class="lbl">Correct / 10</div></div>
+          <div class="stat-box"><div class="num" id="res-correct">0</div><div class="lbl">Correct</div></div>
           <div class="stat-box"><div class="num" id="res-accuracy">0%</div><div class="lbl">Accuracy</div></div>
           <div class="stat-box"><div class="num" id="res-streak">0</div><div class="lbl">Longest streak</div></div>
           <div class="stat-box"><div class="num" id="res-stars">0</div><div class="lbl">Stars</div></div>
@@ -1707,6 +1710,9 @@
   }
 
   // ========== WRONG ANSWERS (persisted) — mistake records + mastery fields (agent 03) ==========
+  /** @type {ReadonlyArray<string>} */
+  var MASTERY_STAGES = ['new', 'practicing', 'stable', 'mastered'];
+
   var wrongAnswerStore = {
     schemaVersion: 1,
     sessionId: browserSessionId,
@@ -1835,9 +1841,6 @@
     };
   }
 
-  /** @type {ReadonlyArray<string>} */
-  var MASTERY_STAGES = ['new', 'practicing', 'stable', 'mastered'];
-
   function familyStringFromQuestion(q) {
     if (!q || typeof LearningIntel === 'undefined') return '';
     var ff = LearningIntel.getFactFamily(q);
@@ -1845,7 +1848,8 @@
   }
 
   function isValidMasteryStage(s) {
-    return typeof s === 'string' && MASTERY_STAGES.indexOf(s) !== -1;
+    var stages = MASTERY_STAGES || ['new', 'practicing', 'stable', 'mastered'];
+    return typeof s === 'string' && stages.indexOf(s) !== -1;
   }
 
   function inferMasteryStageFromLegacy(record) {
@@ -4668,7 +4672,7 @@
     var chip = document.getElementById('grade-chip');
     if (card) card.hidden = set && !gradeCardForcedOpen;
     if (chipRow) chipRow.hidden = !set;
-    if (chip && set) chip.textContent = '🌌 Grade ' + progress.grade + ' · change';
+    if (chip) chip.textContent = set ? '🌌 Grade ' + progress.grade + ' · change' : '';
     var tiles = document.querySelectorAll('.mode-tile');
     var i;
     for (i = 0; i < tiles.length; i++) {
