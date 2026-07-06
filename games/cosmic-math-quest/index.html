@@ -948,6 +948,98 @@
       opacity: 0.95;
     }
 
+    /* ===== Menu redesign: grade picker + mode tiles ===== */
+    .grade-card {
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      border-radius: 14px;
+      padding: 0.25rem 1rem 1rem;
+      margin-bottom: 1rem;
+      background: rgba(110, 181, 255, 0.08);
+    }
+
+    .grade-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .grade-btn {
+      flex: 1 1 0;
+      min-width: 64px;
+      min-height: 64px;
+      font-family: inherit;
+      font-size: 1.6rem;
+      font-weight: 800;
+      border-radius: 14px;
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+    }
+    .grade-btn:active { transform: scale(0.97); }
+    .grade-btn:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+    .grade-btn.selected {
+      background: rgba(126, 255, 179, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .grade-chip-row { display: flex; justify-content: center; margin-bottom: 0.75rem; }
+    .grade-chip {
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      border: 2px solid rgba(110, 181, 255, 0.4);
+      background: rgba(110, 181, 255, 0.15);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .grade-chip:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+
+    .mode-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .mode-tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 1rem 0.75rem;
+      min-height: 108px;
+      font-family: inherit;
+      color: var(--text);
+      background: linear-gradient(145deg, rgba(110, 181, 255, 0.14), rgba(124, 255, 179, 0.08));
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      transition: transform 0.12s, border-color 0.15s, filter 0.12s;
+    }
+    .mode-tile:active { transform: scale(0.97); }
+    .mode-tile:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+    .mode-tile[aria-disabled="true"] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
+    .mode-tile-emoji { font-size: 1.9rem; line-height: 1; }
+    .mode-tile-name { font-size: 1.15rem; font-weight: 800; }
+    .mode-tile-sub { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
+    .mode-tile-badge {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-warm);
+      color: #3a2a00;
+    }
+
     @media (min-width: 600px) {
       .status-bar { font-size: 1.05rem; }
     }
@@ -961,27 +1053,50 @@
     <!-- ========== MAIN MENU ========== -->
     <section id="screen-menu" class="screen active" aria-labelledby="menu-title">
       <div class="brand">
-        <h1>🚀 Cosmic Math Quest</h1>
+        <h1 id="menu-title">🚀 Cosmic Math Quest</h1>
         <p>A multiplication &amp; division adventure</p>
       </div>
       <div class="panel">
-        <div class="segment-label" id="menu-title">Choose level</div>
-        <div class="segment-group" role="group" aria-label="Difficulty level">
-          <button type="button" class="segment-btn selected" data-level="easy" aria-pressed="true">Easy</button>
-          <button type="button" class="segment-btn" data-level="medium" aria-pressed="false">Medium</button>
-          <button type="button" class="segment-btn" data-level="hard" aria-pressed="false">Hard</button>
+        <!-- One-time grade picker: visible until progress.grade is set,
+             and re-opened by the grade chip. NOT an interstitial — it lives
+             on the menu itself and never blocks a started round. -->
+        <div class="grade-card" id="grade-card" hidden>
+          <div class="segment-label" id="grade-card-title">Which grade are you in?</div>
+          <div class="grade-btn-row" role="group" aria-labelledby="grade-card-title">
+            <button type="button" class="grade-btn" data-grade="2">2</button>
+            <button type="button" class="grade-btn" data-grade="3">3</button>
+            <button type="button" class="grade-btn" data-grade="4">4</button>
+            <button type="button" class="grade-btn" data-grade="5">5</button>
+          </div>
         </div>
-        <div class="segment-label">Choose mode</div>
-        <div class="segment-group" role="group" aria-label="Game mode">
-          <button type="button" class="segment-btn selected" data-mode="multiply" aria-pressed="true">Multiplication</button>
-          <button type="button" class="segment-btn" data-mode="divide" aria-pressed="false">Division</button>
-          <button type="button" class="segment-btn" data-mode="mixed" aria-pressed="false">Mixed</button>
+        <div class="grade-chip-row" id="grade-chip-row" hidden>
+          <button type="button" class="grade-chip" id="grade-chip">🌌 Grade 3 · change</button>
+        </div>
+        <div class="mode-tile-grid" id="mode-tile-grid">
+          <button type="button" class="mode-tile" id="btn-tile-mission">
+            <span class="mode-tile-emoji" aria-hidden="true">🚀</span>
+            <span class="mode-tile-name">Mission</span>
+            <span class="mode-tile-sub">10 questions · hearts &amp; stars</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-boss" hidden>
+            <span class="mode-tile-emoji" aria-hidden="true">🎯</span>
+            <span class="mode-tile-name">Boss Battle</span>
+            <span class="mode-tile-sub">Bring the boss to 0 HP</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-lightning" hidden>
+            <span class="mode-tile-emoji" aria-hidden="true">⚡</span>
+            <span class="mode-tile-name">Lightning</span>
+            <span class="mode-tile-sub">90 seconds · beat your best</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-fixit">
+            <span class="mode-tile-emoji" aria-hidden="true">🔧</span>
+            <span class="mode-tile-name">Fix-It</span>
+            <span class="mode-tile-sub">Practice tricky questions</span>
+            <span class="mode-tile-badge" id="fixit-due-badge" hidden></span>
+          </button>
         </div>
         <div class="btn-row" id="cmq-resume-row" hidden>
           <button type="button" class="btn btn-primary cmq-resume" id="btn-cmq-resume">▶ Continue my last session</button>
-        </div>
-        <div class="btn-row">
-          <button type="button" class="btn btn-primary" id="btn-play">🆕 Play Mission</button>
         </div>
         <div class="segment-label">Things to Improve</div>
         <div class="btn-row mistake-actions">
@@ -1140,8 +1255,8 @@
     <div class="modal">
       <h2 id="how-heading">How to play</h2>
       <ul>
-        <li>Pick <strong>Easy</strong>, <strong>Medium</strong>, or <strong>Hard</strong>. Tap <strong>Show hint</strong> for help (pictures on Easy).</li>
-        <li>Choose <strong>Multiplication</strong>, <strong>Division</strong>, or <strong>Mix</strong>.</li>
+        <li>Pick your <strong>grade</strong> once — change it any time with the <strong>🌌 Grade</strong> chip.</li>
+        <li>Choose a tile: <strong>🚀 Mission</strong> to play, or <strong>🔧 Fix-It</strong> to practice tricky questions. Tap <strong>Show hint</strong> for help.</li>
         <li>Type your answer and press <strong>Check</strong> or Enter. Then press <strong>Next question</strong> when you’re ready.</li>
         <li>Each correct answer is <strong>+10</strong> points. Every <strong>3 in a row</strong> adds <strong>+5</strong> bonus!</li>
         <li>No timer — finish all 10 questions. Hearts are lives, and if they run out the mission pauses so you can try again or fix tricky questions.</li>
@@ -3685,7 +3800,10 @@
   function showScreen(name) {
     Object.values(screens).forEach(function (el) { el.classList.remove('active'); });
     screens[name].classList.add('active');
-    if (name === 'menu') updateMenuMistakeButtons();
+    if (name === 'menu') {
+      updateMenuMistakeButtons();
+      renderGradeUi();
+    }
     if (name === 'game') updateExitButtonLabel();
   }
 
@@ -4234,31 +4352,76 @@
   }
 
   // ========== MENU / EVENTS ==========
-  document.querySelectorAll('[data-level]').forEach(function (btn) {
+  // ---- Grade picker + mode tiles (menu redesign) ----
+  /** True when the chip re-opened the grade card over an already-set grade. */
+  var gradeCardForcedOpen = false;
+
+  function isGradeSet() {
+    var g = progress && progress.grade;
+    return g === 2 || g === 3 || g === 4 || g === 5;
+  }
+
+  /** Single source of truth for menu grade UI: card vs chip, tile enablement. */
+  function renderGradeUi() {
+    progress = ensureProgressShape(progress);
+    var set = isGradeSet();
+    var card = document.getElementById('grade-card');
+    var chipRow = document.getElementById('grade-chip-row');
+    var chip = document.getElementById('grade-chip');
+    if (card) card.hidden = set && !gradeCardForcedOpen;
+    if (chipRow) chipRow.hidden = !set;
+    if (chip && set) chip.textContent = '🌌 Grade ' + progress.grade + ' · change';
+    var tiles = document.querySelectorAll('.mode-tile');
+    var i;
+    for (i = 0; i < tiles.length; i++) {
+      tiles[i].setAttribute('aria-disabled', set ? 'false' : 'true');
+    }
+    var gbtns = document.querySelectorAll('.grade-btn');
+    var j;
+    for (j = 0; j < gbtns.length; j++) {
+      var g = parseInt(gbtns[j].getAttribute('data-grade'), 10);
+      gbtns[j].classList.toggle('selected', set && g === progress.grade);
+    }
+  }
+
+  document.querySelectorAll('.grade-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      document.querySelectorAll('[data-level]').forEach(function (b) {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-pressed', 'true');
-      GameState.level = btn.getAttribute('data-level');
+      var g = parseInt(btn.getAttribute('data-grade'), 10);
+      if (!(g >= 2 && g <= 5)) return;
+      progress = ensureProgressShape(progress);
+      progress.grade = g;
+      saveProgress(progress);
+      GameState.grade = g;
+      gradeCardForcedOpen = false;
+      renderGradeUi();
     });
   });
 
-  document.querySelectorAll('[data-mode]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('[data-mode]').forEach(function (b) {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-pressed', 'true');
-      GameState.mode = btn.getAttribute('data-mode');
-    });
+  document.getElementById('grade-chip').addEventListener('click', function () {
+    gradeCardForcedOpen = true;
+    renderGradeUi();
   });
 
-  document.getElementById('btn-play').addEventListener('click', startRound);
+  /** Tiles are inert until a grade is picked (they just re-open the card). */
+  function guardTile(handler) {
+    return function () {
+      if (!isGradeSet()) {
+        gradeCardForcedOpen = true;
+        renderGradeUi();
+        return;
+      }
+      handler();
+    };
+  }
+
+  document.getElementById('btn-tile-mission').addEventListener('click', guardTile(function () {
+    startRound();
+  }));
+  // Boss Battle / Lightning tiles ship hidden; chunk 3 unhides and wires them.
+  document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(function () {
+    // Temporary wiring (replaced in Task 11 by the combined Fix-It set):
+    safeStartWrongAnswerPractice(null, { emptyStateLocation: 'menu' });
+  }));
 
   document.getElementById('btn-menu-quickfix').addEventListener('click', function () {
     window.SmartPractice.start('quickfix', { emptyStateLocation: 'menu' });
@@ -4461,6 +4624,8 @@
   (function initWrongAnswersUi() {
     resetLatestPracticeStateOnLaunch();
     updatePracticeButtons();
+    GameState.grade = (progress && progress.grade) || null;
+    renderGradeUi();
   })();
 
   // ── Hub profile-scope integration ─────────────────────────────────────────
@@ -4474,6 +4639,9 @@
     wrongAnswerStore = loadWrongAnswerHistory();
     resetLatestPracticeStateOnLaunch();
     updatePracticeButtons();
+    GameState.grade = (progress && progress.grade) || null;
+    gradeCardForcedOpen = false;
+    renderGradeUi();
   }
 
   /** Wipe THIS profile's CMQ data (both scoped keys). Tell the hub to drop
@@ -4567,7 +4735,7 @@
       __cmq_showResumeRow(false);
       __cmq_doRestoreFromBlob(blob);
     });
-    var play = document.getElementById('btn-play');
+    var play = document.getElementById('btn-tile-mission');
     if (play) play.addEventListener('click', function () {
       if (__cmq_pendingResume) __cmq_clearPendingResume();
     }, true);
