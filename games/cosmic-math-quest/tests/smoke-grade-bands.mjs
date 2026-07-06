@@ -214,6 +214,21 @@ for (let i = 0; i < 100; i++) {
 }
 assert.ok(elevenTwelve >= 50, `warmup should hit 11s/12s most of the time (saw ${elevenTwelve}/100)`);
 
+// tf/tf_div must mix true and false statements (user-approved design change)
+{
+  const tfAnswers = new Set();
+  for (let i = 0; i < 400 && tfAnswers.size < 2; i++) {
+    const q = gen('g4_invreason', 0);
+    if (q.meta.reasoning === 'tf' || q.meta.reasoning === 'tf_div') {
+      tfAnswers.add(q.answer);
+      if (q.answer === 1) {
+        assert.strictEqual(q.meta.shown, q.meta.reasoning === 'tf' ? q.meta.prod : q.meta.quotient, `true statement must show the real value: ${q.prompt}`);
+      }
+    }
+  }
+  assert.deepStrictEqual([...tfAnswers].sort(), [0, 1], 'g4 T/F questions must mix true and false');
+}
+
 console.log('smoke-grade-bands: Task 3 OK');
 
 // ---------- Task 4: G5 generators ----------
@@ -303,6 +318,19 @@ for (let i = 0; i < 60; i++) {
     assert.strictEqual(q.meta.reasoning, 'tf');
     assert.ok(q.answer === 0 || q.answer === 1);
   }
+}
+
+// g5 tf must mix true and false statements (user-approved design change)
+{
+  const tfAnswers5 = new Set();
+  for (let i = 0; i < 400 && tfAnswers5.size < 2; i++) {
+    const q = gen('g5_reason', 0);
+    if (q.meta.reasoning === 'tf') {
+      tfAnswers5.add(q.answer);
+      if (q.answer === 1) assert.strictEqual(q.meta.shown, q.meta.prod, `true statement must show the real product: ${q.prompt}`);
+    }
+  }
+  assert.deepStrictEqual([...tfAnswers5].sort(), [0, 1], 'g5 T/F questions must mix true and false');
 }
 
 console.log('smoke-grade-bands: Task 4 OK');

@@ -551,16 +551,17 @@
       });
     }
     if (kind === 'tf') {
-      var wrong = prod + pick([-5, -4, -3, -2, 2, 3, 4, 5, 6]);
+      var tfTrue = Math.random() < 0.4;
+      var shown = tfTrue ? prod : prod + pick([-5, -4, -3, -2, 2, 3, 4, 5, 6]);
       return makeQuestion({
         format: 'g4_invreason', type: 'reasoning', operation: 'multiply',
-        prompt: 'Is ' + a + ' × ' + b + ' = ' + wrong + '? Type 1 for yes, 0 for no.',
-        answer: 0,
-        key: 'g4:ir:tf:' + a + 'x' + b + ':' + wrong,
-        meta: { a: a, b: b, prod: prod, shown: wrong, reasoning: 'tf', baseFact: { a: a, b: b, op: 'mul' } },
+        prompt: 'Is ' + a + ' × ' + b + ' = ' + shown + '? Type 1 for yes, 0 for no.',
+        answer: tfTrue ? 1 : 0,
+        key: 'g4:ir:tf:' + a + 'x' + b + ':' + shown,
+        meta: { a: a, b: b, prod: prod, shown: shown, reasoning: 'tf', baseFact: { a: a, b: b, op: 'mul' } },
         visualSpec: null,
         hintEasy: 'What is ' + a + ' × ' + b + ' really?',
-        hintMed: a + ' × ' + b + ' = ' + prod + ', not ' + wrong + '.',
+        hintMed: 'Work out ' + a + ' × ' + b + ', then compare it to ' + shown + '.',
         hintHard: 'Check the product.'
       });
     }
@@ -582,17 +583,19 @@
       });
     }
     // tf_div
-    var wrongQ = b + pick([-3, -2, -1, 1, 2, 3]);
-    if (wrongQ === b || wrongQ < 1) wrongQ = b + 1;
+    var tfDivTrue = Math.random() < 0.4;
+    var shownQ = b + pick([-3, -2, -1, 1, 2, 3]);
+    if (shownQ === b || shownQ < 1) shownQ = b + 1;
+    if (tfDivTrue) shownQ = b;
     return makeQuestion({
       format: 'g4_invreason', type: 'reasoning', operation: 'divide',
-      prompt: 'Is ' + prod + ' ÷ ' + a + ' = ' + wrongQ + '? Type 1 for yes, 0 for no.',
-      answer: 0,
-      key: 'g4:ir:rdt:' + prod + '/' + a + ':' + wrongQ,
-      meta: { dividend: prod, divisor: a, quotient: b, shown: wrongQ, reasoning: 'tf_div', baseFact: { a: a, b: b, op: 'div' } },
+      prompt: 'Is ' + prod + ' ÷ ' + a + ' = ' + shownQ + '? Type 1 for yes, 0 for no.',
+      answer: tfDivTrue ? 1 : 0,
+      key: 'g4:ir:rdt:' + prod + '/' + a + ':' + shownQ,
+      meta: { dividend: prod, divisor: a, quotient: b, shown: shownQ, reasoning: 'tf_div', baseFact: { a: a, b: b, op: 'div' } },
       visualSpec: null,
       hintEasy: 'Work out the division fact first.',
-      hintMed: prod + ' ÷ ' + a + ' = ' + b + ', not ' + wrongQ + '.',
+      hintMed: 'Find ' + prod + ' ÷ ' + a + ', then compare it to ' + shownQ + '.',
       hintHard: 'Check the quotient.'
     });
   };
@@ -882,19 +885,20 @@
     }
     var a = g5BigFactor(tier), d = randInt(3, 9);
     var prod = a * d;
-    var wrong = prod + pick([-30, -20, -10, 10, 20, 30]);
+    var tfTrue5 = Math.random() < 0.4;
+    var shown5 = tfTrue5 ? prod : prod + pick([-30, -20, -10, 10, 20, 30]);
     return makeQuestion({
       format: 'g5_reason',
       type: 'reasoning',
       operation: 'multiply',
-      prompt: 'Is ' + a + ' × ' + d + ' = ' + wrong + '? Type 1 for yes, 0 for no.',
-      answer: 0,
-      key: 'g5:rs:tf:' + a + 'x' + d + ':' + wrong,
-      meta: { a: a, b: d, prod: prod, shown: wrong, reasoning: 'tf', baseFact: { a: a, b: d, op: 'mul' } },
+      prompt: 'Is ' + a + ' × ' + d + ' = ' + shown5 + '? Type 1 for yes, 0 for no.',
+      answer: tfTrue5 ? 1 : 0,
+      key: 'g5:rs:tf:' + a + 'x' + d + ':' + shown5,
+      meta: { a: a, b: d, prod: prod, shown: shown5, reasoning: 'tf', baseFact: { a: a, b: d, op: 'mul' } },
       visualSpec: null,
       hintEasy: 'Work out ' + a + ' × ' + d + ' for real.',
       hintMed: 'Check the ones digit: what does ' + (a % 10) + ' × ' + d + ' end in?',
-      hintHard: a + ' × ' + d + ' = ' + prod + ', not ' + wrong + '.'
+      hintHard: 'Compare your product to ' + shown5 + '.'
     });
   };
 
