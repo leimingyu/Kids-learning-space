@@ -1066,6 +1066,29 @@
     @media (min-width: 600px) {
       .status-bar { font-size: 1.05rem; }
     }
+
+    /* ===== Boss Battle HP bar ===== */
+    .boss-hp-row { margin-top: 8px; }
+    .boss-hp-label { font-weight: 700; font-size: 0.95rem; }
+    .boss-hp-track {
+      margin-top: 4px; height: 14px; border-radius: 999px;
+      background: rgba(99, 110, 114, 0.25); overflow: hidden;
+    }
+    .boss-hp-fill {
+      height: 100%; width: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #e17055, #d63031);
+      transition: width 0.4s ease;
+    }
+    .boss-hp-fill.crit-flash { animation: bossCritPulse 0.5s ease; }
+    @keyframes bossCritPulse {
+      0% { filter: brightness(1); }
+      40% { filter: brightness(1.9); }
+      100% { filter: brightness(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .boss-hp-fill { transition: none; }
+      .boss-hp-fill.crit-flash { animation: none; }
+    }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1101,7 +1124,7 @@
             <span class="mode-tile-name">Mission</span>
             <span class="mode-tile-sub">10 questions · hearts &amp; stars</span>
           </button>
-          <button type="button" class="mode-tile" id="btn-tile-boss" hidden>
+          <button type="button" class="mode-tile" id="btn-tile-boss">
             <span class="mode-tile-emoji" aria-hidden="true">🎯</span>
             <span class="mode-tile-name">Boss Battle</span>
             <span class="mode-tile-sub">Bring the boss to 0 HP</span>
@@ -1176,6 +1199,12 @@
               </span>
               <span class="lives-note" id="hud-lives-note">Hearts = lives. If they are all gone, the mission pauses.</span>
             </span>
+          </div>
+          <div class="boss-hp-row" id="boss-hp-row" hidden>
+            <span class="boss-hp-label">👾 Boss HP: <strong id="boss-hp-num">10</strong> / 10</span>
+            <div class="boss-hp-track" aria-hidden="true">
+              <div class="boss-hp-fill" id="boss-hp-fill"></div>
+            </div>
           </div>
         </div>
 
@@ -1322,6 +1351,9 @@
   const POINTS_CORRECT = 10;
   const STREAK_BONUS_EVERY = 3;
   const STREAK_BONUS_POINTS = 5;
+  const BOSS_HP = 10;
+  const BOSS_MAX_QUESTIONS = 16;
+  const BOSS_CRIT_DAMAGE = 2;
   // Storage is scoped per hub-profile so each kid has their own progress.
   // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
   // bare base keys so opening this game directly from file:// keeps working.
@@ -1419,6 +1451,8 @@
     adaptiveStats: { correctThisRound: 0, wrongThisRound: 0 },
     /** Per-round format-token plan from GradeBands.buildRoundPlan. */
     bandPlan: null,
+    /** Boss Battle: remaining boss HP (null outside boss rounds). */
+    bossHp: null,
   };
 
   var focusAnswerTimer = null;
@@ -3800,6 +3834,44 @@
       : 'Hearts = lives. If they are all gone, the mission pauses.';
   }
 
+  /** Show/hide hearts row vs Boss HP row based on the active play mode. */
+  function updateModeHud() {
+    var livesWrap = document.getElementById('hud-lives-wrap');
+    var bossRow = document.getElementById('boss-hp-row');
+    var inBoss = GameState.playMode === 'boss' && !GameState.isReviewMode;
+    var hideHearts = !GameState.isReviewMode && GameState.playMode === 'boss';
+    if (livesWrap) livesWrap.style.display = hideHearts ? 'none' : '';
+    if (bossRow) bossRow.hidden = !inBoss;
+  }
+
+  function updateBossHpUI() {
+    var num = document.getElementById('boss-hp-num');
+    var fill = document.getElementById('boss-hp-fill');
+    if (!num || !fill) return;
+    var hp = typeof GameState.bossHp === 'number' ? GameState.bossHp : BOSS_HP;
+    num.textContent = String(hp);
+    fill.style.width = ((hp / BOSS_HP) * 100) + '%';
+  }
+
+  function flashBossCrit() {
+    var fill = document.getElementById('boss-hp-fill');
+    if (!fill) return;
+    fill.classList.remove('crit-flash');
+    void fill.offsetWidth; // restart the CSS animation
+    fill.classList.add('crit-flash');
+  }
+
+  function bossVictoryCelebration() {
+    confettiBurst();
+    setTimeout(confettiBurst, 350);
+    setTimeout(confettiBurst, 700);
+    try {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.celebrate) {
+        window.KLS.bridge.celebrate();
+      }
+    } catch (e) { /* standalone: no hub */ }
+  }
+
   function updateStatsUI() {
     document.getElementById('hud-score').textContent = String(GameState.score);
     const n = GameState.questionIndex + 1;
@@ -3810,6 +3882,7 @@
     document.getElementById('hud-total').textContent = String(GameState.totalAnswered);
     document.getElementById('hud-accuracy').textContent = accuracyPercent(GameState.correctCount, GameState.totalAnswered) + '%';
     updateLivesUI();
+    updateModeHud();
   }
 
   function animateLifeLost() {
@@ -4007,7 +4080,21 @@
         GameState.mistakeSeenThisRound = true;
       }
       recordWrongAnswer(q, needsR ? String(num) + ' R ' + String(rnum) : num);
-      if (!GameState.isReviewMode) handleLifeLost();
+      if (!GameState.isReviewMode && GameState.playMode === 'mission') handleLifeLost();
+    }
+
+    if (GameState.playMode === 'boss' && !GameState.isReviewMode) {
+      if (ok) {
+        var bossDmg = GameState.streak >= 3 ? BOSS_CRIT_DAMAGE : 1;
+        GameState.bossHp = Math.max(0, GameState.bossHp - bossDmg);
+        if (bossDmg >= BOSS_CRIT_DAMAGE) {
+          pointsLine += '  ·  ⚡ CRITICAL HIT!';
+          flashBossCrit();
+        }
+      } else {
+        GameState.bossHp = Math.min(BOSS_HP, GameState.bossHp + 1);
+      }
+      updateBossHpUI();
     }
 
     GameState.adaptiveStats.correctThisRound = GameState.correctCount;
@@ -4046,6 +4133,10 @@
 
   function goToNextQuestion() {
     if (!GameState.answered || GameState.isGameOver) return;
+    if (GameState.playMode === 'boss' && !GameState.isReviewMode && GameState.bossHp !== null && GameState.bossHp <= 0) {
+      endRound();
+      return;
+    }
     if (GameState.reviewCompletedAllCorrect) {
       GameState.reviewCompletedAllCorrect = false;
       wrapUpReviewSessionSuccess();
@@ -4063,7 +4154,7 @@
       endRound();
       return;
     }
-    if (!GameState.isReviewMode && GameState.questionIndex < ROUND_SIZE) {
+    if (!GameState.isReviewMode) {
       if (!GameState.roundQuestions[GameState.questionIndex]) {
         generateRoundQuestionAtIndex(GameState.questionIndex);
       }
@@ -4133,6 +4224,52 @@
     });
   }
 
+  function endBossRound() {
+    var victory = typeof GameState.bossHp === 'number' && GameState.bossHp <= 0;
+    progress = ensureProgressShape(progress);
+    if (GameState.mistakeSeenThisRound) {
+      progress.stats.streakRecoveryCount = Math.max(
+        progress.stats.streakRecoveryCount,
+        GameState.correctAfterFirstMistake
+      );
+    }
+    var stars = computeStarsForNormalRound();
+    progress.totalStars += stars;
+    progress.roundsPlayed += 1;
+    if (GameState.bestStreakThisRound > progress.bestStreakEver) {
+      progress.bestStreakEver = GameState.bestStreakThisRound;
+    }
+    var acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    progress.lastRoundAccuracy = acc;
+    recordPlayDateForMission();
+    if (victory && progress.badges.indexOf('boss_slayer') === -1) {
+      progress.badges.push('boss_slayer');
+    }
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    GameState.reviewJustCompleted = false;
+    saveProgress(progress);
+    if (victory) bossVictoryCelebration();
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent =
+      victory ? '🎉 Boss defeated!' : 'The boss escaped — next time!';
+    document.getElementById('results-stars').textContent = new Array(stars + 1).join('⭐');
+    document.getElementById('results-rating').textContent = victory
+      ? 'Amazing! Your math attacks took the boss down!'
+      : 'So close! The boss is already scared of your math.';
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent =
+      GameState.correctCount + ' / ' + GameState.totalAnswered;
+    document.getElementById('res-accuracy').textContent = acc + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = String(stars);
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
   function endRound() {
     if (GameState.isReviewMode) {
       GameState.isReviewMode = false;
@@ -4158,6 +4295,11 @@
       clearSaveStatus('results-save-status');
       showScreen('results');
       updateResultsExportButtons();
+      return;
+    }
+
+    if (GameState.playMode === 'boss') {
+      endBossRound();
       return;
     }
 
@@ -4248,13 +4390,26 @@
     GameState.currentRoundWrongAnswers = [];
     resetAdaptiveDifficultyState();
     GameState.roundMixOps = null;
-    // Format plan for the whole round (quota recipe for the grade, shuffled).
-    GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, ROUND_SIZE);
-    GameState.roundQuestions = new Array(ROUND_SIZE);
-    generateRoundQuestionAtIndex(0);
-    GameState.currentQuestion = GameState.roundQuestions[0];
+    GameState.bossHp = null;
+    if (playMode === 'boss') {
+      GameState.bossHp = BOSS_HP;
+      GameState.roundSize = BOSS_MAX_QUESTIONS;
+      // Recipe cycles past 10 slots inside buildRoundPlan (contract).
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, BOSS_MAX_QUESTIONS, {});
+      GameState.roundQuestions = new Array(BOSS_MAX_QUESTIONS);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('🎯 Boss Battle!');
+    } else {
+      // Format plan for the whole round (quota recipe for the grade, shuffled).
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, ROUND_SIZE);
+      GameState.roundQuestions = new Array(ROUND_SIZE);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('🛸 Mission in progress');
+    }
+    updateBossHpUI();
     setReviewBannerVisible(false);
-    setGameTitle('🛸 Mission in progress');
     setGameOverModalOpen(false);
     showNormalResultsStats();
     showScreen('game');
@@ -4328,7 +4483,10 @@
   document.getElementById('btn-tile-mission').addEventListener('click', guardTile(function () {
     startRound('mission');
   }));
-  // Boss Battle / Lightning tiles ship hidden; chunk 3 unhides and wires them.
+  document.getElementById('btn-tile-boss').addEventListener('click', guardTile(function () {
+    startRound('boss');
+  }));
+  // Lightning tile ships hidden; a later chunk unhides and wires it.
   document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(startFixItPractice));
 
   document.getElementById('btn-how').addEventListener('click', function () {
