@@ -1089,6 +1089,22 @@
       .boss-hp-fill { transition: none; }
       .boss-hp-fill.crit-flash { animation: none; }
     }
+
+    /* ===== Lightning timer ===== */
+    .lightning-timer-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+    #lightning-timer-num { font-weight: 800; min-width: 3.5ch; }
+    .lightning-timer-track {
+      flex: 1; height: 10px; border-radius: 999px;
+      background: rgba(9, 132, 227, 0.18); overflow: hidden;
+    }
+    .lightning-timer-fill {
+      height: 100%; width: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #74b9ff, #0984e3);
+      transition: width 1s linear;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lightning-timer-track { display: none; } /* number-only countdown */
+    }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1129,7 +1145,7 @@
             <span class="mode-tile-name">Boss Battle</span>
             <span class="mode-tile-sub">Bring the boss to 0 HP</span>
           </button>
-          <button type="button" class="mode-tile" id="btn-tile-lightning" hidden>
+          <button type="button" class="mode-tile" id="btn-tile-lightning">
             <span class="mode-tile-emoji" aria-hidden="true">⚡</span>
             <span class="mode-tile-name">Lightning</span>
             <span class="mode-tile-sub">90 seconds · beat your best</span>
@@ -1204,6 +1220,12 @@
             <span class="boss-hp-label">👾 Boss HP: <strong id="boss-hp-num">10</strong> / 10</span>
             <div class="boss-hp-track" aria-hidden="true">
               <div class="boss-hp-fill" id="boss-hp-fill"></div>
+            </div>
+          </div>
+          <div class="lightning-timer-row" id="lightning-timer-row" hidden>
+            <span id="lightning-timer-num" role="timer">90s</span>
+            <div class="lightning-timer-track" aria-hidden="true">
+              <div class="lightning-timer-fill" id="lightning-timer-fill"></div>
             </div>
           </div>
         </div>
@@ -1354,6 +1376,7 @@
   const BOSS_HP = 10;
   const BOSS_MAX_QUESTIONS = 16;
   const BOSS_CRIT_DAMAGE = 2;
+  const LIGHTNING_SECONDS = 90;
   // Storage is scoped per hub-profile so each kid has their own progress.
   // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
   // bare base keys so opening this game directly from file:// keeps working.
@@ -1453,6 +1476,9 @@
     bandPlan: null,
     /** Boss Battle: remaining boss HP (null outside boss rounds). */
     bossHp: null,
+    /** Lightning: live setInterval id (MUST be cleared on every exit path). */
+    lightningTimerId: null,
+    lightningSecondsLeft: 0,
   };
 
   var focusAnswerTimer = null;
@@ -2286,6 +2312,7 @@
    */
   function startWrongAnswerPractice(buffer, opts) {
     opts = opts || {};
+    clearLightningTimer();
     var buf = buffer || getLatestMistakesForPractice();
     var uniq = uniquePracticeRecordsFromBuffer(buf).filter(function (r) {
       return !r.resolved;
@@ -3834,14 +3861,17 @@
       : 'Hearts = lives. If they are all gone, the mission pauses.';
   }
 
-  /** Show/hide hearts row vs Boss HP row based on the active play mode. */
+  /** Show/hide hearts row vs Boss HP row vs Lightning timer per play mode. */
   function updateModeHud() {
     var livesWrap = document.getElementById('hud-lives-wrap');
     var bossRow = document.getElementById('boss-hp-row');
+    var timerRow = document.getElementById('lightning-timer-row');
     var inBoss = GameState.playMode === 'boss' && !GameState.isReviewMode;
-    var hideHearts = !GameState.isReviewMode && GameState.playMode === 'boss';
+    var inLightning = GameState.playMode === 'lightning' && !GameState.isReviewMode;
+    var hideHearts = inBoss || inLightning;
     if (livesWrap) livesWrap.style.display = hideHearts ? 'none' : '';
     if (bossRow) bossRow.hidden = !inBoss;
+    if (timerRow) timerRow.hidden = !inLightning;
   }
 
   function updateBossHpUI() {
@@ -3870,6 +3900,39 @@
         window.KLS.bridge.celebrate();
       }
     } catch (e) { /* standalone: no hub */ }
+  }
+
+  /** Stop the Lightning countdown. Safe to call when no timer is running. */
+  function clearLightningTimer() {
+    if (GameState.lightningTimerId != null) {
+      clearInterval(GameState.lightningTimerId);
+      GameState.lightningTimerId = null;
+    }
+  }
+
+  function updateLightningTimerUI() {
+    var num = document.getElementById('lightning-timer-num');
+    var fill = document.getElementById('lightning-timer-fill');
+    var s = Math.max(0, GameState.lightningSecondsLeft | 0);
+    if (num) num.textContent = s + 's';
+    if (fill) fill.style.width = ((s / LIGHTNING_SECONDS) * 100) + '%';
+  }
+
+  function startLightningTimer() {
+    clearLightningTimer();
+    GameState.lightningSecondsLeft = LIGHTNING_SECONDS;
+    updateLightningTimerUI();
+    GameState.lightningTimerId = setInterval(function () {
+      GameState.lightningSecondsLeft -= 1;
+      updateLightningTimerUI();
+      if (GameState.lightningSecondsLeft <= 0) {
+        clearLightningTimer();
+        // Mid-question expiry: the unanswered question was never graded
+        // (totalAnswered only moves inside handleSubmitAnswer), so it is
+        // simply discarded — not a graded commit.
+        endRound();
+      }
+    }, 1000);
   }
 
   function updateStatsUI() {
@@ -4224,6 +4287,58 @@
     });
   }
 
+  function endLightningRound() {
+    clearLightningTimer();
+    progress = ensureProgressShape(progress);
+    var g = GameState.grade;
+    var acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    var prevBest = Number(progress.bestLightningByGrade[g]) || 0;
+    var isNewBest = GameState.correctCount > prevBest;
+    if (isNewBest) {
+      progress.bestLightningByGrade[g] = GameState.correctCount;
+      if (prevBest > 0) {
+        progress.lightningBestBeats = (Number(progress.lightningBestBeats) || 0) + 1;
+      }
+    }
+    var stars = 0;
+    if (GameState.totalAnswered >= 5) stars += 1;               // played for real
+    if (isNewBest) stars += 1;                                   // beat your own best
+    if (GameState.totalAnswered > 0 && acc >= 90) stars += 1;    // sharp accuracy
+    progress.totalStars += stars;
+    progress.roundsPlayed += 1;
+    if (GameState.bestStreakThisRound > progress.bestStreakEver) {
+      progress.bestStreakEver = GameState.bestStreakThisRound;
+    }
+    recordPlayDateForMission();
+    if (progress.lightningBestBeats >= 2 && progress.badges.indexOf('lightning_streak') === -1) {
+      progress.badges.push('lightning_streak');
+    }
+    GameState.lastPlayMode = GameState.playMode;
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    GameState.reviewJustCompleted = false;
+    saveProgress(progress);
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent = '⚡ Lightning finished!';
+    document.getElementById('results-stars').textContent =
+      stars > 0 ? new Array(stars + 1).join('⭐') : '—';
+    document.getElementById('results-rating').textContent = isNewBest
+      ? 'New personal best: ' + GameState.correctCount + ' correct! ⚡'
+      : 'You got ' + GameState.correctCount + ' — your best is ' +
+        (progress.bestLightningByGrade[g] || 0) + '. Beat your own best!';
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent =
+      GameState.correctCount + ' / ' + GameState.totalAnswered;
+    document.getElementById('res-accuracy').textContent = acc + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = String(stars);
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
   function endBossRound() {
     var victory = typeof GameState.bossHp === 'number' && GameState.bossHp <= 0;
     progress = ensureProgressShape(progress);
@@ -4272,6 +4387,7 @@
   }
 
   function endRound() {
+    clearLightningTimer();
     if (GameState.isReviewMode) {
       GameState.isReviewMode = false;
       GameState.pendingReviewAdvance = false;
@@ -4301,6 +4417,11 @@
 
     if (GameState.playMode === 'boss') {
       endBossRound();
+      return;
+    }
+
+    if (GameState.playMode === 'lightning') {
+      endLightningRound();
       return;
     }
 
@@ -4357,6 +4478,7 @@
 
   /** @param {'mission'|'boss'|'lightning'} playMode - defaults to 'mission'. */
   function startRound(playMode) {
+    clearLightningTimer();
     progress = ensureProgressShape(progress);
     if (!hasGradeBands()) {
       window.alert('Oops — the question maker did not load. Please refresh the page.');
@@ -4401,6 +4523,14 @@
       generateRoundQuestionAtIndex(0);
       GameState.currentQuestion = GameState.roundQuestions[0];
       setGameTitle('🎯 Boss Battle!');
+    } else if (playMode === 'lightning') {
+      GameState.roundSize = 60;
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, 60, { fastOnly: true });
+      GameState.roundQuestions = new Array(60);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('⚡ Lightning Round!');
+      startLightningTimer();
     } else {
       // Format plan for the whole round (quota recipe for the grade, shuffled).
       GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, ROUND_SIZE);
@@ -4487,7 +4617,9 @@
   document.getElementById('btn-tile-boss').addEventListener('click', guardTile(function () {
     startRound('boss');
   }));
-  // Lightning tile ships hidden; a later chunk unhides and wires it.
+  document.getElementById('btn-tile-lightning').addEventListener('click', guardTile(function () {
+    startRound('lightning');
+  }));
   document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(startFixItPractice));
 
   document.getElementById('btn-how').addEventListener('click', function () {
@@ -4546,6 +4678,7 @@
       ? 'Exit practice and return to the main menu?'
       : 'Exit this mission? Your progress on this round will not be saved.';
     if (window.confirm(confirmText)) {
+      clearLightningTimer();
       if (GameState.isReviewMode) {
         GameState.isReviewMode = false;
         GameState.pendingReviewAdvance = false;
@@ -4718,6 +4851,7 @@
       window.KLS.bridge.resetProgress();
     }
     window.alert("All clear! Starting fresh. 🌟");
+    clearLightningTimer();
     showScreen('menu');
   }
 
@@ -4730,7 +4864,7 @@
   // Chrome-bar "🏠 Home" → return to the menu screen. Cancels any active
   // game/practice screen without resetting progress.
   window.__cmq_onGoHome = function () {
-    try { showScreen('menu'); } catch (e) { /* ignore */ }
+    try { clearLightningTimer(); showScreen('menu'); } catch (e) { /* ignore */ }
   };
 
   // Resume-blob contract — entry-context only. Captures which screen the
