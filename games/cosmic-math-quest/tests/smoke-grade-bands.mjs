@@ -215,3 +215,94 @@ for (let i = 0; i < 100; i++) {
 assert.ok(elevenTwelve >= 50, `warmup should hit 11s/12s most of the time (saw ${elevenTwelve}/100)`);
 
 console.log('smoke-grade-bands: Task 3 OK');
+
+// ---------- Task 4: G5 generators ----------
+
+// g5_bigmult: 2-digit × 2-digit at tier 0; 3-digit × 2-digit at tier +1; no baseFact
+for (let i = 0; i < 40; i++) {
+  const q0 = gen('g5_bigmult', 0);
+  assert.ok(q0.meta.a >= 10 && q0.meta.a <= 99 && q0.meta.b >= 10 && q0.meta.b <= 99, q0.prompt);
+  assert.strictEqual(q0.answer, q0.meta.a * q0.meta.b);
+  assert.strictEqual(q0.meta.baseFact, null);
+  const q1 = gen('g5_bigmult', 1);
+  assert.ok(q1.meta.a >= 100 && q1.meta.a <= 999, `tier +1 unlocks 3-digit: ${q1.prompt}`);
+}
+
+// g5_longdiv2: 2-digit divisors, remainder identity when present
+let ld2Rem = false;
+for (let i = 0; i < 120; i++) {
+  const q = gen('g5_longdiv2', 0);
+  assert.ok(q.meta.divisor >= 10 && q.meta.divisor <= 99, q.prompt);
+  if (q.answerR != null) {
+    ld2Rem = true;
+    assert.ok(q.answerR > 0 && q.answerR < q.meta.divisor);
+    assert.strictEqual(q.meta.divisor * q.answer + q.answerR, q.meta.dividend);
+    assert.strictEqual(q.meta.remainder, true);
+  } else {
+    assert.strictEqual(q.meta.divisor * q.answer, q.meta.dividend);
+  }
+}
+assert.ok(ld2Rem, 'some 2-digit long divisions should carry remainders');
+
+// g5_pattern: baseFact is the underlying table fact
+for (let i = 0; i < 80; i++) {
+  const q = gen('g5_pattern', i % 2 === 0 ? 0 : 1);
+  const bf = q.meta.baseFact;
+  assert.ok(bf && bf.a >= 2 && bf.a <= 12 && bf.b >= 2 && bf.b <= 12, `pattern must anchor a table fact: ${q.prompt}`);
+  if (q.operation === 'multiply') {
+    assert.strictEqual(bf.op, 'mul');
+    assert.strictEqual(q.meta.a, bf.a * 10, `first factor is the table fact ×10: ${q.prompt}`);
+    assert.ok(q.meta.b === bf.b || q.meta.b === bf.b * 10, `second factor is bf.b or bf.b×10: ${q.prompt}`);
+    assert.strictEqual(q.answer, q.meta.a * q.meta.b);
+  } else {
+    assert.strictEqual(bf.op, 'div');
+    assert.strictEqual(q.meta.divisor, bf.a * 10, `divisor is the table divisor ×10: ${q.prompt}`);
+    const scale = q.meta.dividend / (bf.a * bf.b);
+    assert.ok(scale === 10 || scale === 100, `dividend is the table fact ×10/×100: ${q.prompt}`);
+    assert.strictEqual(q.meta.divisor * q.answer, q.meta.dividend);
+  }
+}
+
+// g5_orderops: positive-integer answers; contains + or -; the mult/div part is a table fact
+const ooSigns = { plus: 0, minus: 0, lead: 0 };
+for (let i = 0; i < 150; i++) {
+  const q = gen('g5_orderops', i % 3 === 0 ? 1 : 0);
+  assert.strictEqual(q.operation, 'expr');
+  assert.ok(Number.isInteger(q.answer) && q.answer >= 1, `orderops answers are positive integers: ${q.prompt} -> ${q.answer}`);
+  const hasPlus = q.prompt.includes('+');
+  const hasMinus = /\d\s*-\s*\d/.test(q.prompt);
+  assert.ok(hasPlus !== hasMinus, `exactly one of +/-: ${q.prompt}`);
+  if (hasPlus) ooSigns.plus++;
+  if (hasMinus) ooSigns.minus++;
+  if (/^\d+\s*\+/.test(q.prompt)) ooSigns.lead++;
+  assert.ok(q.prompt.includes('×') || q.prompt.includes('÷'), `mult/div part always present: ${q.prompt}`);
+  const bf = q.meta.baseFact;
+  assert.ok(bf && bf.a >= 2 && bf.a <= 12 && bf.b >= 2 && bf.b <= 12, 'orderops anchors a table fact');
+  const expected = q.meta.form === 'plus' ? q.meta.termVal + q.meta.c : q.meta.termVal - q.meta.c;
+  assert.strictEqual(q.answer, expected, `answer recomputes from meta: ${q.prompt}`);
+}
+assert.ok(ooSigns.plus > 0 && ooSigns.minus > 0, 'both + and - forms appear');
+
+// g5_word: multi-step templates, variety, symbol-free prompts
+const w5Templates = new Set();
+for (let i = 0; i < 100; i++) {
+  const q = gen('g5_word', 0);
+  assert.strictEqual(q.type, 'word');
+  assert.ok(Number.isInteger(q.answer) && q.answer >= 2);
+  assert.ok(!q.prompt.includes('+') && !/\d\s*-\s*\d/.test(q.prompt), `word prompts stay symbol-free: ${q.prompt}`);
+  w5Templates.add(q.meta.template);
+}
+assert.ok(w5Templates.size >= 4, `expected >= 4 distinct multi-step templates, saw ${w5Templates.size}`);
+
+// g5_reason: compare answers equal the larger product; tf answers 0/1
+for (let i = 0; i < 60; i++) {
+  const q = gen('g5_reason', 0);
+  if (q.meta.reasoning === 'compare') {
+    assert.strictEqual(q.answer, Math.max(q.meta.prod, q.meta.prod2));
+  } else {
+    assert.strictEqual(q.meta.reasoning, 'tf');
+    assert.ok(q.answer === 0 || q.answer === 1);
+  }
+}
+
+console.log('smoke-grade-bands: Task 4 OK');

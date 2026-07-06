@@ -619,6 +619,285 @@
     });
   };
 
+  // ---------- Grade 5 ----------
+  BUILDERS.g5_bigmult = function (tier) {
+    var a, b;
+    if (tier <= -1) {
+      a = randInt(11, 19);
+      b = randInt(11, 19);
+    } else if (tier >= 1) {
+      a = randInt(112, 399);
+      b = randInt(12, 49);
+    } else {
+      a = randInt(12, 49);
+      b = randInt(12, 49);
+    }
+    var prod = a * b;
+    var bOnes = b % 10;
+    var bTens = b - bOnes;
+    return makeQuestion({
+      format: 'g5_bigmult',
+      type: 'basic',
+      operation: 'multiply',
+      prompt: a + ' × ' + b + ' = ?',
+      answer: prod,
+      key: 'g5:bm:' + a + 'x' + b,
+      meta: { a: a, b: b, prod: prod, baseFact: null },
+      visualSpec: null,
+      hintEasy: 'Split ' + b + ' into ' + bTens + ' and ' + bOnes + '. Multiply ' + a + ' by each part, then add them.',
+      hintMed: a + ' × ' + bTens + ' first, then ' + a + ' × ' + bOnes + '.',
+      hintHard: 'Add the two partial products.'
+    });
+  };
+
+  BUILDERS.g5_longdiv2 = function (tier) {
+    var d, q, r;
+    if (tier <= -1) {
+      d = randInt(11, 20);
+      q = randInt(2, 9);
+      r = 0;
+    } else if (tier >= 1) {
+      d = randInt(21, 60);
+      q = randInt(6, 20);
+      r = Math.random() < 0.6 ? randInt(1, d - 1) : 0;
+    } else {
+      d = randInt(11, 30);
+      q = randInt(3, 12);
+      r = Math.random() < 0.5 ? randInt(1, d - 1) : 0;
+    }
+    var dividend = d * q + r;
+    return makeQuestion({
+      format: 'g5_longdiv2',
+      type: 'basic',
+      operation: 'divide',
+      prompt: dividend + ' ÷ ' + d + ' = ?',
+      promptSub: r > 0 ? 'This one has a remainder — put it in the R box.' : null,
+      answer: q,
+      answerR: r > 0 ? r : null,
+      key: 'g5:ld2:' + dividend + '/' + d,
+      meta: { dividend: dividend, divisor: d, quotient: q, baseFact: null },
+      visualSpec: null,
+      hintEasy: 'How many groups of ' + d + ' fit into ' + dividend + '?',
+      hintMed: 'Try easy multiples first: ' + d + ' × 5 and ' + d + ' × 10, then zoom in.',
+      hintHard: r > 0 ? 'The answer is not exact — the leftover goes in the R box.' : '? × ' + d + ' = ' + dividend + '.'
+    });
+  };
+
+  BUILDERS.g5_pattern = function (tier) {
+    var maxF = tier >= 1 ? 12 : 9;
+    var a = randInt(2, maxF);
+    var b = randInt(2, maxF);
+    var p = a * b;
+    var mult = tier <= -1 ? true : Math.random() < 0.5;
+    if (mult) {
+      var big = tier >= 1 || Math.random() < 0.5; // a0 × b0 vs a0 × b
+      var x = a * 10;
+      var y = big ? b * 10 : b;
+      var ans = x * y;
+      return makeQuestion({
+        format: 'g5_pattern',
+        type: 'basic',
+        operation: 'multiply',
+        prompt: x + ' × ' + y + ' = ?',
+        answer: ans,
+        key: 'g5:pat:' + x + 'x' + y,
+        meta: { a: x, b: y, prod: ans, baseFact: { a: a, b: b, op: 'mul' } },
+        visualSpec: null,
+        hintEasy: 'Start with ' + a + ' × ' + b + ' = ' + p + ', then put the zeros back.',
+        hintMed: 'Count the zeros in the question.',
+        hintHard: 'It is ' + p + ' with the zeros attached.'
+      });
+    }
+    var hundred = tier >= 1 && Math.random() < 0.5;
+    var dividend = hundred ? p * 100 : p * 10;
+    var divisor = a * 10;
+    var ans2 = hundred ? b * 10 : b;
+    return makeQuestion({
+      format: 'g5_pattern',
+      type: 'basic',
+      operation: 'divide',
+      prompt: dividend + ' ÷ ' + divisor + ' = ?',
+      answer: ans2,
+      key: 'g5:pat:' + dividend + '/' + divisor,
+      meta: { dividend: dividend, divisor: divisor, quotient: ans2, baseFact: { a: a, b: b, op: 'div' } },
+      visualSpec: null,
+      hintEasy: 'Start with ' + p + ' ÷ ' + a + ' = ' + b + ', then match the zeros.',
+      hintMed: 'Cross off one zero from each side.',
+      hintHard: 'It is ' + p + ' ÷ ' + a + ' with zeros.'
+    });
+  };
+
+  BUILDERS.g5_orderops = function (tier) {
+    var maxF = tier >= 1 ? 12 : 9;
+    var a = randInt(2, maxF);
+    var b = randInt(2, maxF);
+    var prod = a * b;
+    var useDiv = Math.random() < 0.5;
+    var form = pick(['plus', 'minus']);
+    var termStr, termVal, baseFact;
+    if (useDiv) {
+      termStr = prod + ' ÷ ' + a;
+      termVal = b;
+      baseFact = { a: a, b: b, op: 'div' };
+    } else {
+      termStr = a + ' × ' + b;
+      termVal = prod;
+      baseFact = { a: a, b: b, op: 'mul' };
+    }
+    var c, prompt, answer;
+    if (form === 'plus') {
+      c = randInt(2, 20);
+      answer = termVal + c;
+      // tier +1 may lead with the added term: '12 + 4 × 6'
+      var leadWithC = tier >= 1 && Math.random() < 0.5;
+      prompt = leadWithC ? c + ' + ' + termStr + ' = ?' : termStr + ' + ' + c + ' = ?';
+    } else {
+      c = termVal < 3 ? 1 : randInt(1, termVal - 1); // keep the result positive
+      answer = termVal - c;
+      prompt = termStr + ' - ' + c + ' = ?';
+    }
+    return makeQuestion({
+      format: 'g5_orderops',
+      type: 'expr',
+      operation: 'expr',
+      prompt: prompt,
+      promptSub: 'Multiply or divide first!',
+      answer: answer,
+      key: 'g5:oo:' + prompt.replace(/\s+/g, '').replace('=?', ''),
+      meta: { a: a, b: b, c: c, form: form, useDiv: useDiv, termVal: termVal, baseFact: baseFact },
+      visualSpec: null,
+      hintEasy: 'Do ' + termStr + ' first. That makes ' + termVal + '.',
+      hintMed: 'Multiplication and division always come before adding or subtracting.',
+      hintHard: 'Now just ' + (form === 'plus' ? termVal + ' plus ' + c : termVal + ' minus ' + c) + '.'
+    });
+  };
+
+  var G5_WORD_TEMPLATES = [
+    function () {
+      var a = randInt(3, 9), b = randInt(2, 9), d = pick([2, 3, 4, 6]);
+      var perBox = b * d;
+      return {
+        prompt: 'A school orders ' + a + ' boxes of ' + perBox + ' pencils and shares them equally among ' + d + ' classes. How many pencils does each class get?',
+        answer: a * b,
+        meta: { a: a, perBox: perBox, d: d, steps: 'mul_div', baseFact: null },
+        hintFact: a + ' × ' + perBox + ' first, then ÷ ' + d
+      };
+    },
+    function () {
+      var k = randInt(2, 5), p1 = randInt(4, 9), m = randInt(2, 4), p2 = randInt(10, 15);
+      return {
+        prompt: 'Kid tickets cost ' + p1 + ' dollars and adult tickets cost ' + p2 + ' dollars. A family buys ' + k + ' kid tickets and ' + m + ' adult tickets. How many dollars do they pay?',
+        answer: k * p1 + m * p2,
+        meta: { k: k, p1: p1, m: m, p2: p2, steps: 'mul_mul_add', baseFact: null },
+        hintFact: k + ' × ' + p1 + ' and ' + m + ' × ' + p2 + ', then add them'
+      };
+    },
+    function () {
+      var a = randInt(6, 12), b = randInt(11, 15), c = randInt(5, 20);
+      return {
+        prompt: 'A farmer picks ' + a + ' crates of ' + b + ' apples. ' + c + ' apples are rotten and thrown away. How many good apples are there?',
+        answer: a * b - c,
+        meta: { a: a, b: b, c: c, steps: 'mul_sub', baseFact: null },
+        hintFact: a + ' × ' + b + ' first, then take away ' + c
+      };
+    },
+    function () {
+      var days = randInt(3, 6), laps = randInt(4, 8), meters = pick([25, 50, 100]);
+      return {
+        prompt: 'Nina swims ' + laps + ' laps every day for ' + days + ' days. Each lap is ' + meters + ' meters. How many meters does she swim in all?',
+        answer: days * laps * meters,
+        meta: { days: days, laps: laps, meters: meters, steps: 'mul_mul', baseFact: null },
+        hintFact: laps + ' × ' + days + ' laps first, then × ' + meters
+      };
+    },
+    function () {
+      var d = pick([4, 6, 8]), boxes = randInt(6, 12), s = randInt(2, 4);
+      var n = d * boxes;
+      return {
+        prompt: 'A baker makes ' + n + ' cupcakes and packs them into boxes of ' + d + '. He sells ' + s + ' full boxes. How many boxes are left?',
+        answer: boxes - s,
+        meta: { d: d, boxes: boxes, s: s, steps: 'div_sub', baseFact: { a: d, b: boxes, op: 'div' } },
+        hintFact: n + ' ÷ ' + d + ' boxes first, then take away ' + s
+      };
+    },
+    function () {
+      var bags = randInt(6, 12), choc = randInt(3, 9), candy = randInt(3, 9);
+      return {
+        prompt: 'Each gift bag gets ' + choc + ' chocolates and ' + candy + ' candies. How many treats are needed to fill ' + bags + ' bags?',
+        answer: bags * (choc + candy),
+        meta: { bags: bags, choc: choc, candy: candy, steps: 'add_mul', baseFact: null },
+        hintFact: choc + ' plus ' + candy + ' treats per bag first, then × ' + bags
+      };
+    }
+  ];
+
+  BUILDERS.g5_word = function (tier) {
+    var idx = randInt(0, G5_WORD_TEMPLATES.length - 1);
+    var t = G5_WORD_TEMPLATES[idx]();
+    t.meta.template = idx;
+    return makeQuestion({
+      format: 'g5_word',
+      type: 'word',
+      operation: t.meta.steps.indexOf('div') === 0 ? 'divide' : 'multiply',
+      prompt: t.prompt,
+      answer: t.answer,
+      key: 'g5:w:t' + idx + ':' + t.answer,
+      meta: t.meta,
+      visualSpec: null,
+      hintEasy: 'Two steps: ' + t.hintFact + '.',
+      hintMed: 'Break it into steps and write each one down.',
+      hintHard: t.hintFact + '.'
+    });
+  };
+
+  function g5BigFactor(tier) {
+    return tier >= 1 ? randInt(31, 99) : randInt(21, 49);
+  }
+
+  BUILDERS.g5_reason = function (tier) {
+    if (Math.random() < 0.5) {
+      var a1 = g5BigFactor(tier), d1 = randInt(3, 9);
+      var a2 = g5BigFactor(tier), d2 = randInt(3, 9);
+      var guard = 0;
+      while (a1 * d1 === a2 * d2 && guard < 30) {
+        a2 = g5BigFactor(tier);
+        d2 = randInt(3, 9);
+        guard++;
+      }
+      if (a1 * d1 === a2 * d2) a2 = a2 + 1;
+      var p1 = a1 * d1, p2 = a2 * d2;
+      return makeQuestion({
+        format: 'g5_reason',
+        type: 'reasoning',
+        operation: 'multiply',
+        prompt: 'Which is larger: ' + a1 + ' × ' + d1 + ' or ' + a2 + ' × ' + d2 + '? Type the larger value only.',
+        answer: Math.max(p1, p2),
+        key: 'g5:rs:rc:' + a1 + 'x' + d1 + 'v' + a2 + 'x' + d2,
+        meta: { a: a1, b: d1, prod: p1, c: a2, d: d2, prod2: p2, reasoning: 'compare', baseFact: null },
+        visualSpec: null,
+        hintEasy: 'Work out both products, then pick the bigger one.',
+        hintMed: 'Estimate first: round each big number to the nearest ten.',
+        hintHard: 'Compare ' + p1 + ' and ' + p2 + '.'
+      });
+    }
+    var a = g5BigFactor(tier), d = randInt(3, 9);
+    var prod = a * d;
+    var wrong = prod + pick([-30, -20, -10, 10, 20, 30]);
+    return makeQuestion({
+      format: 'g5_reason',
+      type: 'reasoning',
+      operation: 'multiply',
+      prompt: 'Is ' + a + ' × ' + d + ' = ' + wrong + '? Type 1 for yes, 0 for no.',
+      answer: 0,
+      key: 'g5:rs:tf:' + a + 'x' + d + ':' + wrong,
+      meta: { a: a, b: d, prod: prod, shown: wrong, reasoning: 'tf', baseFact: { a: a, b: d, op: 'mul' } },
+      visualSpec: null,
+      hintEasy: 'Work out ' + a + ' × ' + d + ' for real.',
+      hintMed: 'Check the ones digit: what does ' + (a % 10) + ' × ' + d + ' end in?',
+      hintHard: a + ' × ' + d + ' = ' + prod + ', not ' + wrong + '.'
+    });
+  };
+
   // ---------- generation entry ----------
   // Permissive stub — replaced with real band rules in Task 5.
   function validateBandQuestion(q, grade) {
