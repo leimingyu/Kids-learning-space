@@ -1377,6 +1377,10 @@
   const BOSS_MAX_QUESTIONS = 16;
   const BOSS_CRIT_DAMAGE = 2;
   const LIGHTNING_SECONDS = 90;
+  const DRIFT_MASTERY_PCT = 0.8;
+  const DRIFT_MIN_FAMILIES = 5;
+  const DRIFT_MIN_ATTEMPTS = 20;
+  const BONUS_POINTS = 15;
   // Storage is scoped per hub-profile so each kid has their own progress.
   // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
   // bare base keys so opening this game directly from file:// keeps working.
@@ -1622,6 +1626,31 @@
       }
     }
     return false;
+  }
+
+  /** Drift-up trigger: >= DRIFT_MIN_FAMILIES of the band's relevant fact
+   *  families each have >= DRIFT_MIN_ATTEMPTS attempts and
+   *  masteryPct >= DRIFT_MASTERY_PCT. Grade 5 has no next band. */
+  function isBandMastered(grade) {
+    if (grade == null || grade >= 5) return false;
+    progress = ensureProgressShape(progress);
+    var fams = (progress.familyStats && progress.familyStats.families) || {};
+    var prefixes = grade === 2 ? ['mul:'] : ['mul:', 'div:'];
+    var count = 0;
+    for (var fid in fams) {
+      if (!Object.prototype.hasOwnProperty.call(fams, fid)) continue;
+      var matches = false;
+      for (var pi = 0; pi < prefixes.length; pi++) {
+        if (fid.indexOf(prefixes[pi]) === 0) { matches = true; break; }
+      }
+      if (!matches) continue;
+      var f = fams[fid];
+      if ((Number(f.attempts) || 0) >= DRIFT_MIN_ATTEMPTS &&
+          (Number(f.masteryPct) || 0) >= DRIFT_MASTERY_PCT) {
+        count++;
+      }
+    }
+    return count >= DRIFT_MIN_FAMILIES;
   }
 
   function tryAwardPracticeProgressBadges() {
@@ -3939,7 +3968,12 @@
     document.getElementById('hud-score').textContent = String(GameState.score);
     const n = GameState.questionIndex + 1;
     var rs = getRoundSize();
-    document.getElementById('hud-q-num').textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
+    var qNumEl = document.getElementById('hud-q-num');
+    if (GameState.currentQuestion && GameState.currentQuestion.isBonus) {
+      qNumEl.textContent = '⭐ Bonus challenge!';
+    } else {
+      qNumEl.textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
+    }
     document.getElementById('hud-streak').textContent = String(GameState.streak);
     document.getElementById('hud-correct').textContent = String(GameState.correctCount);
     document.getElementById('hud-total').textContent = String(GameState.totalAnswered);
@@ -4111,6 +4145,25 @@
         return;
       }
       rnum = parseInt(rawR, 10);
+    }
+
+    if (q.isBonus) {
+      GameState.answered = true;
+      var okBonus = num === q.answer;
+      var bonusLine = '';
+      if (okBonus) {
+        GameState.score += BONUS_POINTS;
+        bonusLine = '+' + BONUS_POINTS + ' bonus';
+      } else {
+        recordWrongAnswer(q, num);
+      }
+      recordFamilyAttemptsForQuestion(q, okBonus);
+      setAnswerControlsEnabled(false);
+      document.getElementById('btn-hint').disabled = true;
+      showFeedback(okBonus, bonusLine, '');
+      document.getElementById('btn-next').hidden = false;
+      updateStatsUI();
+      return;
     }
 
     GameState.answered = true;
@@ -4476,6 +4529,23 @@
     updateResultsExportButtons();
   }
 
+  /** Mastered the band? Append 1-2 next-band Bonus Challenge slots.
+   *  Bonus questions never cost a heart and are excluded from
+   *  accuracy/stars; a miss is still a graded commit (recorded). */
+  function appendDriftBonusQuestions(playMode) {
+    if (playMode !== 'mission') return; // Mission-only: a boss KO ends the round before appended slots (spec §4 amended)
+    if (typeof GradeBands === 'undefined') return;
+    if (!isBandMastered(GameState.grade)) return;
+    var n = 1 + Math.floor(Math.random() * 2); // 1 or 2
+    for (var i = 0; i < n; i++) {
+      var bq = GradeBands.generateDriftBonus(GameState.grade, getAdaptiveTier());
+      if (!bq) return;
+      bq.isBonus = true;
+      GameState.roundQuestions.push(bq);
+      GameState.roundSize += 1;
+    }
+  }
+
   /** @param {'mission'|'boss'|'lightning'} playMode - defaults to 'mission'. */
   function startRound(playMode) {
     clearLightningTimer();
@@ -4539,6 +4609,7 @@
       GameState.currentQuestion = GameState.roundQuestions[0];
       setGameTitle('🛸 Mission in progress');
     }
+    appendDriftBonusQuestions(playMode);
     updateBossHpUI();
     setReviewBannerVisible(false);
     setGameOverModalOpen(false);
