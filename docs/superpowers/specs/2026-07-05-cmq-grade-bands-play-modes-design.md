@@ -74,7 +74,7 @@ Every mode draws from the active band. Recipes are per-round format quotas (impl
 | Big multiplication | 2 | 2-digit × 2-digit (23 × 47); tier +1 unlocks 3-digit × 2-digit |
 | Long division, 2-digit divisor | 2 | 96 ÷ 16; some with remainders (250 ÷ 40 = 6 R 10) |
 | ×10 / ×100 patterns | 2 | 40 × 70 = 2800, 5400 ÷ 60 = 90 |
-| Order of operations | 2 | two-operation expressions where the mult/div part is a table fact: `4 × 6 + 12`, `45 ÷ 9 − 3`, `45 ÷ 9 × 3`. No parentheses; the mult/div term always comes first in the expression at tier −1/0; tier +1 may lead with the added term (`12 + 4 × 6`). Answers are positive integers. |
+| Order of operations | 2 | two-operation expressions where the mult/div part is a table fact, in the forms term+c and term−c: `4 × 6 + 12`, `45 ÷ 9 − 3`. No parentheses; the mult/div term always comes first at tier −1/0; tier +1 may lead with the added term (`12 + 4 × 6`). Answers are positive integers. (Mult/div-chained forms like `45 ÷ 9 × 3` are deliberately out of scope.) |
 | Multi-step word problems | 1 | |
 | Reasoning | 1 | compare / true-false at G5 number sizes |
 
@@ -93,7 +93,7 @@ Band-aware validation replaces the global guards where they conflict: G2 allows 
 ### Drift-up at mastery
 
 - **Trigger:** ≥ 80% `masteryPct` on ≥ 5 of the band's relevant fact families, each with ≥ 20 attempts (from the existing `familyStats`).
-- **Effect:** each Mission/Boss round sprinkles 1–2 **⭐ Bonus Challenge** questions drawn from the *next* band's gentlest format: G2→G3 = gentle missing-factor; G3→G4 = 2-digit × 1-digit with product ≤ 100; G4→G5 = ×10 patterns. G5 has no next band → no drift.
+- **Effect:** each Mission round sprinkles 1–2 **⭐ Bonus Challenge** questions drawn from the *next* band's gentlest format (Mission-only: a Boss round ends at HP 0 before appended slots would appear, so bonuses there would be dead weight): G2→G3 = gentle missing-factor; G3→G4 = 2-digit × 1-digit with product ≤ 100; G4→G5 = ×10 patterns. G5 has no next band → no drift.
 - **Semantics:** bonus questions never cost a heart, are **excluded from accuracy and star computation**, award +15 points when correct, and a miss is recorded to the wrongs store (it is a graded commit) so practice picks it up.
 
 ## 5. Play modes
