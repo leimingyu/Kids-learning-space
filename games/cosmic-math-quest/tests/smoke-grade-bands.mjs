@@ -334,3 +334,77 @@ for (let i = 0; i < 60; i++) {
 }
 
 console.log('smoke-grade-bands: Task 4 OK');
+
+// ---------- Task 5: band validation, retry gate, drift bonus ----------
+
+// G2 accepts 1×1 (trivial facts are legal in grade 2); G3 rejects answers < 2
+{
+  const q = {
+    type: 'basic', operation: 'multiply', prompt: '1 × 1 = ?', promptSub: null,
+    answer: 1, answerR: null, key: 'g2:rc:1x1', level: 'easy', grade: 2, format: 'g2_recall',
+    meta: { a: 1, b: 1, prod: 1, baseFact: null },
+    hintEasy: 'h', hintMed: 'h', hintHard: 'h', visualSpec: null
+  };
+  assert.strictEqual(GB.validateBandQuestion(q, 2), true, 'G2 must accept 1×1');
+  const q3 = { ...q, grade: 3, format: 'g3_recall', key: 'g3:rc:1x1' };
+  assert.strictEqual(GB.validateBandQuestion(q3, 3), false, 'G3 must reject answer < 2');
+}
+
+// answerR: rejected at grades 2/3, accepted at 4 only when the identity holds
+{
+  const rq = {
+    type: 'basic', operation: 'divide', prompt: '68 ÷ 5 = ?', promptSub: null,
+    answer: 13, answerR: 3, key: 'g4:ld:68/5', level: 'hard', grade: 4, format: 'g4_longdiv',
+    meta: { dividend: 68, divisor: 5, quotient: 13, remainder: true, baseFact: { a: 5, b: 13, op: 'div' } },
+    hintEasy: 'h', hintMed: 'h', hintHard: 'h', visualSpec: null
+  };
+  assert.strictEqual(GB.validateBandQuestion(rq, 4), true);
+  assert.strictEqual(GB.validateBandQuestion({ ...rq, grade: 3, format: 'g3_divfact' }, 3), false, 'no remainders before grade 4');
+  assert.strictEqual(GB.validateBandQuestion({ ...rq, grade: 2, format: 'g2_sharing' }, 2), false);
+  assert.strictEqual(GB.validateBandQuestion({ ...rq, answerR: 6 }, 4), false, 'r must be < divisor');
+  assert.strictEqual(GB.validateBandQuestion({ ...rq, answer: 12 }, 4), false, 'identity divisor*q+r === dividend');
+}
+
+// '+' in a prompt is rejected everywhere except g5_orderops
+{
+  const plusQ = {
+    type: 'basic', operation: 'multiply', prompt: '3 × 4 + 1 = ?', promptSub: null,
+    answer: 13, answerR: null, key: 'g3:rc:bad', level: 'easy', grade: 3, format: 'g3_recall',
+    meta: { baseFact: null }, hintEasy: 'h', hintMed: 'h', hintHard: 'h', visualSpec: null
+  };
+  assert.strictEqual(GB.validateBandQuestion(plusQ, 3), false, 'plus sign only allowed in g5_orderops');
+  const ooQ = {
+    type: 'expr', operation: 'expr', prompt: '3 × 4 + 1 = ?', promptSub: null,
+    answer: 13, answerR: null, key: 'g5:oo:3x4p1', level: 'hard', grade: 5, format: 'g5_orderops',
+    meta: { baseFact: { a: 3, b: 4, op: 'mul' } }, hintEasy: 'h', hintMed: 'h', hintHard: 'h', visualSpec: null
+  };
+  assert.strictEqual(GB.validateBandQuestion(ooQ, 5), true, 'orderops may contain +');
+}
+
+// 500-iteration fuzz per format token: generateForSlot always returns validated questions
+const ALL_FORMATS = GB.GRADES.flatMap((g) => Object.keys(GB.RECIPES[g]));
+for (const fmt of ALL_FORMATS) {
+  const grade = parseInt(fmt.slice(1), 10);
+  for (let i = 0; i < 500; i++) {
+    const tier = [-1, 0, 1][i % 3];
+    const q = GB.generateForSlot(fmt, tier);
+    assert.ok(q, `generateForSlot(${fmt}, ${tier}) exhausted retries`);
+    assert.strictEqual(GB.validateBandQuestion(q, grade), true, `invalid ${fmt} question: ${JSON.stringify(q)}`);
+  }
+}
+
+// unknown format token -> null
+assert.strictEqual(GB.generateForSlot('g9_nope', 0), null);
+
+// drift bonus: per-grade next-band formats, null at grade 5
+for (let i = 0; i < 30; i++) {
+  const d2 = GB.generateDriftBonus(2, 0);
+  assert.ok(d2 && d2.format === 'g3_missing', 'G2 drifts to gentle missing-factor');
+  const d3 = GB.generateDriftBonus(3, 0);
+  assert.ok(d3 && d3.format === 'g4_multidigit' && d3.answer <= 100, `G3 drift keeps products <= 100 (got ${d3 && d3.answer})`);
+  const d4 = GB.generateDriftBonus(4, 0);
+  assert.ok(d4 && d4.format === 'g5_pattern', 'G4 drifts to ×10 patterns');
+}
+assert.strictEqual(GB.generateDriftBonus(5, 0), null, 'G5 has no next band');
+
+console.log('smoke-grade-bands: Task 5 OK');

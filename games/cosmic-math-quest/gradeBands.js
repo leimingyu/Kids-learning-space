@@ -903,9 +903,57 @@
   };
 
   // ---------- generation entry ----------
-  // Permissive stub — replaced with real band rules in Task 5.
+  function isTrueFalseQuestion(q) {
+    var m = q.meta || {};
+    return m.reasoning === 'tf' || m.reasoning === 'tf_div';
+  }
+
+  /**
+   * Band-aware validation (replaces index.html's global guards for band questions):
+   * - G2 allows answer < 2 and trivial facts; grades 3-5 require answer >= 2
+   *   (except true/false answers 0/1 and order-of-ops answers >= 1).
+   * - answerR only at grades 4/5, with divisor*quotient + r === dividend and 0 < r < divisor.
+   * - ASCII '+' / digit-minus-digit prompts only for format 'g5_orderops'.
+   * - All answers are non-negative integers.
+   */
   function validateBandQuestion(q, grade) {
-    return !!q && typeof q === 'object';
+    if (!q || typeof q !== 'object') return false;
+    if (GRADES.indexOf(grade) === -1) return false;
+    if (q.grade !== grade) return false;
+    if (q.operation !== 'multiply' && q.operation !== 'divide' && q.operation !== 'expr') return false;
+    if (typeof q.key !== 'string' || !q.key) return false;
+    if (typeof q.prompt !== 'string' || !q.prompt) return false;
+    if (q.level !== 'easy' && q.level !== 'medium' && q.level !== 'hard') return false;
+
+    if (typeof q.answer !== 'number' || !Number.isFinite(q.answer) || q.answer !== Math.floor(q.answer)) return false;
+    if (q.answer < 0) return false;
+
+    var isOrderOps = q.format === 'g5_orderops';
+    if (q.operation === 'expr' && !isOrderOps) return false;
+    if (!isOrderOps) {
+      if (q.prompt.indexOf('+') !== -1) return false;
+      if (/\d\s*[-−]\s*\d/.test(q.prompt)) return false;
+    }
+
+    if (q.answerR != null) {
+      if (grade !== 4 && grade !== 5) return false;
+      var m = q.meta || {};
+      if (typeof q.answerR !== 'number' || q.answerR !== Math.floor(q.answerR)) return false;
+      if (typeof m.divisor !== 'number' || typeof m.dividend !== 'number') return false;
+      if (!(q.answerR > 0 && q.answerR < m.divisor)) return false;
+      if (m.divisor * q.answer + q.answerR !== m.dividend) return false;
+      if (m.remainder !== true) return false;
+    }
+
+    if (isTrueFalseQuestion(q)) {
+      if (q.answer !== 0 && q.answer !== 1) return false;
+    } else if (isOrderOps) {
+      if (q.answer < 1) return false;
+    } else if (grade >= 3) {
+      if (q.answer < 2) return false;
+    }
+
+    return true;
   }
 
   /** Public entry: build a validated question for a format token, or null after 60 tries. */
@@ -921,6 +969,24 @@
     return null;
   }
 
+  /**
+   * Drift-up bonus: one question from the NEXT band's gentlest format.
+   * The caller (index.html, chunk 3) marks it isBonus — no heart loss, no accuracy impact.
+   */
+  function generateDriftBonus(grade, tier) {
+    var t = typeof tier === 'number' ? tier : 0;
+    if (grade === 2) return generateForSlot('g3_missing', -1);
+    if (grade === 3) {
+      for (var i = 0; i < MAX_GENERATE_ATTEMPTS; i++) {
+        var q = generateForSlot('g4_multidigit', -1);
+        if (q && q.answer <= 100) return q;
+      }
+      return null;
+    }
+    if (grade === 4) return generateForSlot('g5_pattern', Math.min(t, 0));
+    return null;
+  }
+
   global.GradeBands = {
     GRADES: GRADES.slice(),
     RECIPES: RECIPES,
@@ -928,6 +994,7 @@
     buildRoundPlan: buildRoundPlan,
     generateForSlot: generateForSlot,
     validateBandQuestion: validateBandQuestion,
+    generateDriftBonus: generateDriftBonus,
     _internals: {
       shuffle: shuffle,
       expandRecipe: expandRecipe,
