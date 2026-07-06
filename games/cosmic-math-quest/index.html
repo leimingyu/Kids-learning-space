@@ -1105,6 +1105,13 @@
     @media (prefers-reduced-motion: reduce) {
       .lightning-timer-track { display: none; } /* number-only countdown */
     }
+
+    /* ===== Review weave-in chip ===== */
+    .weavein-chip {
+      display: inline-block; margin-bottom: 6px; padding: 2px 10px;
+      border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+      background: rgba(9, 132, 227, 0.14); color: #0984e3;
+    }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -1231,6 +1238,7 @@
         </div>
 
         <div class="question-card">
+          <span class="weavein-chip" id="weavein-chip" hidden>🔁 One more try!</span>
           <p class="question-text" id="q-text">Loading…</p>
           <p class="question-sub" id="q-sub" hidden></p>
         </div>
@@ -1381,6 +1389,7 @@
   const DRIFT_MIN_FAMILIES = 5;
   const DRIFT_MIN_ATTEMPTS = 20;
   const BONUS_POINTS = 15;
+  const WEAVE_SLOTS = [2, 6]; // 0-indexed round slots = "questions 3 and 7"
   // Storage is scoped per hub-profile so each kid has their own progress.
   // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
   // bare base keys so opening this game directly from file:// keeps working.
@@ -4093,6 +4102,9 @@
 
     document.getElementById('q-text').textContent = q.prompt;
 
+    var weaveChip = document.getElementById('weavein-chip');
+    if (weaveChip) weaveChip.hidden = !q.isWeaveIn;
+
     var subEl = document.getElementById('q-sub');
     if (subEl) {
       subEl.textContent = q.promptSub || '';
@@ -4217,6 +4229,12 @@
     GameState.adaptiveStats.wrongThisRound = GameState.totalAnswered - GameState.correctCount;
 
     recordFamilyAttemptsForQuestion(q, ok);
+
+    if (ok && q.isWeaveIn && !GameState.isReviewMode) {
+      // Same resolution path practice uses: marks the stored mistake
+      // mastered and credits progress.stats.mistakesFixed.
+      resolveMistake(q.key);
+    }
 
     var adaptiveEncouragement = '';
     if (!GameState.isReviewMode && updateAdaptiveDifficulty(ok)) {
@@ -4608,6 +4626,16 @@
       generateRoundQuestionAtIndex(0);
       GameState.currentQuestion = GameState.roundQuestions[0];
       setGameTitle('🛸 Mission in progress');
+    }
+    if (playMode === 'mission') {
+      var dueRecs = getDueTodaySet().slice(0, WEAVE_SLOTS.length); // at most 2
+      for (var wvi = 0; wvi < dueRecs.length; wvi++) {
+        var slot = WEAVE_SLOTS[wvi];
+        var wq = questionFromSnapshot(dueRecs[wvi].questionSnapshot);
+        if (!wq || slot >= GameState.roundQuestions.length) continue;
+        wq.isWeaveIn = true;
+        GameState.roundQuestions[slot] = wq;
+      }
     }
     appendDriftBonusQuestions(playMode);
     updateBossHpUI();
