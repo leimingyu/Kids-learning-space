@@ -1180,6 +1180,7 @@
   </div>
 
   <script src="learningIntelligence.js"></script>
+  <script src="gradeBands.js"></script>
   <script>
 (function () {
   'use strict';
@@ -1199,6 +1200,14 @@
   // game an unfair head start with someone else's progress).
   const STORAGE_KEY_BASE = 'cosmicMathQuest_v1';
   const WRONGS_KEY_BASE = 'cosmicMathQuest_wrongs_v1';
+
+  /** GradeBands module presence guard — index.html must never hard-depend
+   *  on script load order (standalone file:// play). */
+  function hasGradeBands() {
+    return typeof GradeBands !== 'undefined' && !!GradeBands &&
+      typeof GradeBands.buildRoundPlan === 'function' &&
+      typeof GradeBands.generateForSlot === 'function';
+  }
 
   function isInIframe() {
     try { return !!(window.parent && window.parent !== window); }
@@ -1238,6 +1247,12 @@
 
   // ========== STATE ==========
   const GameState = {
+    /** Active grade band (2|3|4|5|null); mirrors progress.grade at round start. */
+    grade: null,
+    /** How the current round is being played: 'mission'|'boss'|'lightning'|'practice'. */
+    playMode: 'mission',
+    /** playMode of the last completed normal round (results "Play again"). */
+    lastPlayMode: 'mission',
     level: 'easy',
     mode: 'multiply',
     questionIndex: 0,
@@ -1294,6 +1309,12 @@
 
   function defaultProgress() {
     return {
+      /** Grade band chosen on the menu (2|3|4|5); null = not picked yet. */
+      grade: null,
+      /** Best Lightning score per grade, e.g. {3: 14}. Filled by chunk 3. */
+      bestLightningByGrade: {},
+      /** How many times the kid beat their own Lightning best (badge fuel). */
+      lightningBestBeats: 0,
       totalStars: 0,
       roundsPlayed: 0,
       bestStreakEver: 0,
@@ -1327,6 +1348,10 @@
     var lr = p.lastRoundAccuracy;
     if (lr != null && typeof lr !== 'number') lr = null;
     return {
+      grade: p.grade === 2 || p.grade === 3 || p.grade === 4 || p.grade === 5 ? p.grade : null,
+      bestLightningByGrade:
+        p.bestLightningByGrade && typeof p.bestLightningByGrade === 'object' ? p.bestLightningByGrade : {},
+      lightningBestBeats: Number(p.lightningBestBeats) || 0,
       totalStars: Number(p.totalStars) || 0,
       roundsPlayed: Number(p.roundsPlayed) || 0,
       bestStreakEver: Number(p.bestStreakEver) || 0,
