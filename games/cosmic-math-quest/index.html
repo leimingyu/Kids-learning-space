@@ -1123,11 +1123,6 @@
         </div>
         <div class="segment-label">Things to Improve</div>
         <div class="btn-row mistake-actions">
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-quickfix" hidden>Quick Fix</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-mostmissed" hidden>Most Missed</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-duetoday" hidden>Due Today</button>
-        </div>
-        <div class="btn-row mistake-actions">
           <button type="button" class="btn btn-secondary btn-small" id="btn-menu-save-saved-wrongs" hidden>
             Save list to disk
           </button>
@@ -1226,18 +1221,11 @@
         </div>
         <div class="btn-row">
           <button type="button" class="btn btn-primary" id="btn-again">Play again</button>
-          <button type="button" class="btn btn-secondary" id="btn-change-level">Change level</button>
-          <button type="button" class="btn btn-ghost" id="btn-change-mode">Change mode</button>
           <button type="button" class="btn btn-ghost" id="btn-results-menu">Back to menu</button>
         </div>
         <div class="segment-label">Things to improve &amp; practice</div>
         <div class="btn-row mistake-actions" id="results-review-actions">
-          <button type="button" class="btn btn-primary" id="btn-practice-wrongs" hidden>Fix Tricky Questions</button>
-        </div>
-        <div class="btn-row mistake-actions">
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-quickfix" hidden>Quick Fix</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-mostmissed" hidden>Most Missed</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-duetoday" hidden>Due Today</button>
+          <button type="button" class="btn btn-primary" id="btn-practice-wrongs" hidden>Fix tricky questions</button>
         </div>
         <div class="btn-row mistake-actions">
           <button type="button" class="btn btn-secondary" id="btn-save-wrongs-recent" hidden>
@@ -1316,7 +1304,7 @@
       <p class="save-status-msg" id="game-over-mistakes-empty" hidden>Nothing to improve right now. Great job!</p>
       <div class="btn-row" style="margin-top:1rem;">
         <button type="button" class="btn btn-primary" id="btn-game-over-try-again">Try Again</button>
-        <button type="button" class="btn btn-secondary" id="btn-game-over-practice" hidden>Fix Tricky Questions</button>
+        <button type="button" class="btn btn-secondary" id="btn-game-over-practice" hidden>Fix tricky questions</button>
         <button type="button" class="btn btn-ghost" id="btn-game-over-menu">Back to Menu</button>
       </div>
     </div>
@@ -1999,7 +1987,7 @@
   }
 
   function getNoMistakesMessage(location) {
-    if (location === 'menu') return 'Nice work! Nothing to improve right now — fly a mission first.';
+    if (location === 'menu') return 'No tricky questions right now! 🎉';
     if (location === 'results') return 'Nothing to improve right now. Great job!';
     if (location === 'gameover') return 'Nothing to improve right now. Great job!';
     return 'Nothing to improve right now. Great job!';
@@ -2170,9 +2158,6 @@
 
   function updateResultsExportButtons() {
     var pr = document.getElementById('btn-practice-wrongs');
-    var rq = document.getElementById('btn-results-quickfix');
-    var rm = document.getElementById('btn-results-mostmissed');
-    var rd = document.getElementById('btn-results-duetoday');
     var sr = document.getElementById('btn-save-wrongs-recent');
     var sa = document.getElementById('btn-save-wrongs-all');
     var emptyMsg = document.getElementById('results-mistakes-empty');
@@ -2180,11 +2165,7 @@
     var hasLast = hasPracticeMistakes(GameState.lastRoundWrongBuffer);
     var hasHist = wrongAnswerStore.wrongAnswersHistory.length > 0;
     var hasImprove = getActiveMistakes().length > 0;
-    var showSmart = hasImprove && !GameState.reviewJustCompleted;
     pr.hidden = !hasLast || GameState.reviewJustCompleted;
-    if (rq) rq.hidden = !showSmart;
-    if (rm) rm.hidden = !showSmart;
-    if (rd) rd.hidden = !showSmart;
     sr.hidden = !hasLast;
     sa.hidden = !hasHist;
     if (emptyMsg) {
@@ -2194,20 +2175,12 @@
   }
 
   function updateMenuMistakeButtons() {
-    var qf = document.getElementById('btn-menu-quickfix');
-    var mm = document.getElementById('btn-menu-mostmissed');
-    var dt = document.getElementById('btn-menu-duetoday');
     var ms = document.getElementById('btn-menu-save-saved-wrongs');
-    var emptyMsg = document.getElementById('menu-mistakes-empty');
     var hasLatest = hasPracticeMistakes() || getActiveMistakes().length > 0;
-    if (qf) qf.hidden = !hasLatest;
-    if (mm) mm.hidden = !hasLatest;
-    if (dt) dt.hidden = !hasLatest;
     if (ms) ms.hidden = !hasLatest;
-    if (emptyMsg) {
-      emptyMsg.textContent = getNoMistakesMessage('menu');
-      emptyMsg.hidden = hasLatest;
-    }
+    var emptyMsg = document.getElementById('menu-mistakes-empty');
+    if (emptyMsg) emptyMsg.hidden = true; // only shown after tapping Fix-It with nothing due
+    updateFixItTile();
   }
 
   function updateGameOverPracticeUi() {
@@ -2452,6 +2425,57 @@
       return parseNextReviewMs(a) - parseNextReviewMs(b);
     });
     return finalizeSmartPracticeSet(hist);
+  }
+
+  /**
+   * Fix-It: ONE combined practice set — due today first, then recent,
+   * then most missed — deduped by question key, capped by
+   * finalizeSmartPracticeSet (5–10 items when enough exist).
+   */
+  function getFixItSet() {
+    var combined = [];
+    var seen = {};
+    function addAll(list) {
+      var i;
+      for (i = 0; i < list.length; i++) {
+        var r = list[i];
+        if (r && r.key && !seen[r.key]) {
+          seen[r.key] = true;
+          combined.push(r);
+        }
+      }
+    }
+    addAll(getDueTodaySet());
+    addAll(getQuickFixSet());
+    addAll(getMostMissedSet());
+    return finalizeSmartPracticeSet(combined);
+  }
+
+  function startFixItPractice() {
+    var set = getFixItSet();
+    if (!set.length) {
+      showNoMistakesMessage('menu');
+      confettiBurst(); // an empty list is GOOD news
+      return;
+    }
+    safeStartWrongAnswerPractice(set, { emptyStateLocation: 'menu' });
+  }
+
+  /** Due-count badge on the Fix-It tile; refreshed on every menu render. */
+  function updateFixItTile() {
+    var badge = document.getElementById('fixit-due-badge');
+    if (!badge) return;
+    var due = getDueTodaySet().length;
+    var active = getActiveMistakes().length;
+    if (due > 0) {
+      badge.textContent = due + ' due';
+      badge.hidden = false;
+    } else if (active > 0) {
+      badge.textContent = active + ' saved';
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
   }
 
   /**
@@ -4303,20 +4327,7 @@
     startRound('mission');
   }));
   // Boss Battle / Lightning tiles ship hidden; chunk 3 unhides and wires them.
-  document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(function () {
-    // Temporary wiring (replaced in Task 11 by the combined Fix-It set):
-    safeStartWrongAnswerPractice(null, { emptyStateLocation: 'menu' });
-  }));
-
-  document.getElementById('btn-menu-quickfix').addEventListener('click', function () {
-    window.SmartPractice.start('quickfix', { emptyStateLocation: 'menu' });
-  });
-  document.getElementById('btn-menu-mostmissed').addEventListener('click', function () {
-    window.SmartPractice.start('mostmissed', { emptyStateLocation: 'menu' });
-  });
-  document.getElementById('btn-menu-duetoday').addEventListener('click', function () {
-    window.SmartPractice.start('duetoday', { emptyStateLocation: 'menu' });
-  });
+  document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(startFixItPractice));
 
   document.getElementById('btn-how').addEventListener('click', function () {
     document.getElementById('modal-how').classList.add('open');
@@ -4439,25 +4450,6 @@
     });
   });
 
-  document.getElementById('btn-results-quickfix').addEventListener('click', function () {
-    window.SmartPractice.start('quickfix', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
-    });
-  });
-  document.getElementById('btn-results-mostmissed').addEventListener('click', function () {
-    window.SmartPractice.start('mostmissed', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
-    });
-  });
-  document.getElementById('btn-results-duetoday').addEventListener('click', function () {
-    window.SmartPractice.start('duetoday', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
-    });
-  });
-
   document.getElementById('btn-save-wrongs-recent').addEventListener('click', function () {
     var rec =
       GameState.lastRoundWrongBuffer && GameState.lastRoundWrongBuffer.length
@@ -4492,8 +4484,6 @@
     updateMenuMistakeButtons();
     clearSaveStatus('menu-save-status');
   });
-  document.getElementById('btn-change-level').addEventListener('click', function () { showScreen('menu'); });
-  document.getElementById('btn-change-mode').addEventListener('click', function () { showScreen('menu'); });
   document.getElementById('btn-results-menu').addEventListener('click', function () { showScreen('menu'); });
   document.getElementById('btn-results-progress').addEventListener('click', function () {
     renderProgressScreen();
