@@ -358,6 +358,12 @@
       letter-spacing: 0.03em;
     }
 
+    .question-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
     /* Visual models */
     .visual-model {
       display: inline-flex;
@@ -1163,6 +1169,7 @@
 
         <div class="question-card">
           <p class="question-text" id="q-text">Loading…</p>
+          <p class="question-sub" id="q-sub" hidden></p>
         </div>
 
         <div class="answer-stack" id="answer-area">
@@ -1302,7 +1309,6 @@
 
   // ========== CONFIG ==========
   const ROUND_SIZE = 10;
-  const POOL_SIZE = 100;
   const INITIAL_HEARTS = 5;
   const POINTS_CORRECT = 10;
   const STREAK_BONUS_EVERY = 3;
@@ -1368,7 +1374,6 @@
     playMode: 'mission',
     /** playMode of the last completed normal round (results "Play again"). */
     lastPlayMode: 'mission',
-    level: 'easy',
     mode: 'multiply',
     questionIndex: 0,
     roundQuestions: [],
@@ -1391,8 +1396,6 @@
     lastRoundWrongBuffer: [],
     /** Active review session: remaining question keys (shuffled order). */
     reviewQueue: [],
-    lastRoundMode: 'multiply',
-    lastRoundLevel: 'easy',
     reviewJustCompleted: false,
     reviewCompletedAllCorrect: false,
     isGameOver: false,
@@ -1405,8 +1408,8 @@
     recentAnswerHistory: [],
     lastAdaptiveChangeAtQuestionIndex: -99,
     adaptiveStats: { correctThisRound: 0, wrongThisRound: 0 },
-    /** Hard-mode subtype queues + metadata for lazy round generation. */
-    roundAdaptivePlan: null,
+    /** Per-round format-token plan from GradeBands.buildRoundPlan. */
+    bandPlan: null,
   };
 
   var focusAnswerTimer = null;
@@ -1746,6 +1749,8 @@
       id: 'wa_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
       timestamp: ts,
       level: q.level,
+      grade: q.grade != null ? q.grade : (GameState.grade || null),
+      playMode: GameState.playMode || 'mission',
       mode: GameState.mode,
       prompt: q.prompt,
       correctAnswer: q.answer,
@@ -1987,8 +1992,9 @@
     if (titleExtra) lines.push(titleExtra);
     lines.push('Date: ' + now.toISOString());
     lines.push('');
-    lines.push('Round Mode: ' + (r0 && r0.mode ? r0.mode : GameState.lastRoundMode || GameState.mode));
-    lines.push('Level: ' + (r0 && r0.level ? r0.level : GameState.lastRoundLevel || GameState.level));
+    lines.push('Round Mode: ' + (r0 && r0.mode ? r0.mode : GameState.mode));
+    lines.push('Grade: ' + (r0 && r0.grade ? r0.grade : (progress && progress.grade) || '—'));
+    lines.push('Level: ' + (r0 && r0.level ? r0.level : '—'));
     lines.push('');
     var i, r, t;
     for (i = 0; i < records.length; i++) {
@@ -2249,21 +2255,17 @@
     var snaps = shuffle(uniq.map(function (r) {
       return questionFromSnapshot(r.questionSnapshot);
     }));
-    if (opts.preserveRoundContext) {
-      GameState.mode = GameState.lastRoundMode;
-      GameState.level = GameState.lastRoundLevel;
-    } else {
-      var hasM = false;
-      var hasD = false;
-      var si;
-      for (si = 0; si < snaps.length; si++) {
-        if (snaps[si].operation === 'multiply') hasM = true;
-        if (snaps[si].operation === 'divide') hasD = true;
-      }
-      if (hasM && hasD) GameState.mode = 'mixed';
-      else if (hasD) GameState.mode = 'divide';
-      else GameState.mode = 'multiply';
+    var hasM = false;
+    var hasD = false;
+    var si;
+    for (si = 0; si < snaps.length; si++) {
+      if (snaps[si].operation === 'multiply') hasM = true;
+      if (snaps[si].operation === 'divide') hasD = true;
     }
+    if (hasM && hasD) GameState.mode = 'mixed';
+    else if (hasD) GameState.mode = 'divide';
+    else GameState.mode = 'multiply';
+    GameState.playMode = 'practice';
 
     GameState.isReviewMode = true;
     GameState.pendingReviewAdvance = false;
@@ -2796,8 +2798,18 @@
 
   function renderVisualFromSpec(spec) {
     if (!spec) return null;
-    if (spec.kind === 'array') return renderArray(spec.a, spec.b);
-    if (spec.kind === 'groups') return renderGroups(spec.groups, spec.per);
+    if (spec.kind === 'array') {
+      var a = spec.a != null ? spec.a : spec.rows;
+      var b = spec.b != null ? spec.b : spec.cols;
+      if (a == null || b == null) return null;
+      return renderArray(a, b);
+    }
+    if (spec.kind === 'groups') {
+      var g = spec.groups != null ? spec.groups : spec.rows;
+      var per = spec.per != null ? spec.per : spec.cols;
+      if (g == null || per == null) return null;
+      return renderGroups(g, per);
+    }
     return null;
   }
 
@@ -2805,91 +2817,6 @@
   function equationSubtitle(operation, level) {
     if (level === 'easy') return '';
     return operation === 'multiply' ? 'Multiplication' : 'Division';
-  }
-
-  /**
-   * Division & generic slot pick. Hard multiply / hard divide use per-round queues in generateRoundQuestionAtIndex.
-   * Medium multiplication & medium division: caller forces 'missing' only (reverse thinking).
-   */
-  function pickTypeForSlot(level, op) {
-    var allowed = chooseAllowedQuestionTypes(level, op);
-    return allowed.length ? pick(allowed) : 'basic';
-  }
-
-  /** Hard multiply: 35% fact / 25% word / 20% inverse / 20% reasoning for n slots. */
-  function buildHardMultiplySubtypeOrder(n) {
-    if (n <= 0) return [];
-    var fact = Math.floor(0.35 * n);
-    var word = Math.floor(0.25 * n);
-    var inverse = Math.floor(0.2 * n);
-    var reason = Math.floor(0.2 * n);
-    var rem = n - fact - word - inverse - reason;
-    var bump = 0;
-    for (bump = 0; bump < rem; bump++) {
-      if (bump % 4 === 0) fact++;
-      else if (bump % 4 === 1) word++;
-      else if (bump % 4 === 2) inverse++;
-      else reason++;
-    }
-    return shuffle([].concat(
-      Array(fact).fill('hm_fact'),
-      Array(word).fill('hm_word'),
-      Array(inverse).fill('hm_inverse'),
-      Array(reason).fill('hm_reason')
-    ));
-  }
-
-  function pickHardMultiplyQtypeRandom() {
-    var r = Math.random();
-    if (r < 0.35) return 'basic';
-    if (r < 0.6) return 'word';
-    if (r < 0.8) return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  function hardMultTagToQtype(tag) {
-    if (tag === 'hm_fact') return 'basic';
-    if (tag === 'hm_word') return 'word';
-    if (tag === 'hm_inverse') return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  /** Hard divide: 35% direct / 25% word / 20% inverse / 20% reasoning for n slots. */
-  function buildHardDivideSubtypeOrder(n) {
-    if (n <= 0) return [];
-    var direct = Math.floor(0.35 * n);
-    var word = Math.floor(0.25 * n);
-    var inv = Math.floor(0.2 * n);
-    var reason = Math.floor(0.2 * n);
-    var rem = n - direct - word - inv - reason;
-    var bump = 0;
-    for (bump = 0; bump < rem; bump++) {
-      if (bump % 4 === 0) direct++;
-      else if (bump % 4 === 1) word++;
-      else if (bump % 4 === 2) inv++;
-      else reason++;
-    }
-    return shuffle([].concat(
-      Array(direct).fill('hd_direct'),
-      Array(word).fill('hd_word'),
-      Array(inv).fill('hd_inv'),
-      Array(reason).fill('hd_reason')
-    ));
-  }
-
-  function pickHardDivideQtypeRandom() {
-    var r = Math.random();
-    if (r < 0.35) return 'basic';
-    if (r < 0.6) return 'word';
-    if (r < 0.8) return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  function hardDivTagToQtype(tag) {
-    if (tag === 'hd_direct') return 'basic';
-    if (tag === 'hd_word') return 'word';
-    if (tag === 'hd_inv') return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
   }
 
   function buildMultBasic(level) {
@@ -3511,90 +3438,6 @@
     return true;
   }
 
-  /** Division-only validation wrapper (same rules as validateQuestion). */
-  function validateDivisionQuestion(q, level, mode, opts) {
-    if (!q || q.operation !== 'divide' || q.level !== level) return false;
-    return validateQuestion(q, mode, opts || {});
-  }
-
-  function generateDivisionQuestion(level, qtype) {
-    return generateRawQuestion(level, 'divide', qtype);
-  }
-
-  function varietyClash(anchors, anchor) {
-    if (anchor < FACTOR_FLUENCY_MIN) return false;
-    return anchors.length >= 2 && anchors[0] === anchors[1] && anchors[1] === anchor;
-  }
-
-  function multiplySlotsInMode(mode) {
-    if (mode === 'multiply') return ROUND_SIZE;
-    if (mode === 'mixed') return 5;
-    return 0;
-  }
-
-  function divideSlotsInMode(mode) {
-    if (mode === 'divide') return ROUND_SIZE;
-    if (mode === 'mixed') return 5;
-    return 0;
-  }
-
-  function fallbackQtypeForSlot(level, op) {
-    if (level === 'medium' && (op === 'multiply' || op === 'divide')) return 'missing';
-    return 'basic';
-  }
-
-  function attachAdaptiveRoundPlan(level, mode) {
-    var multSlots = multiplySlotsInMode(mode);
-    var divSlots = divideSlotsInMode(mode);
-    GameState.roundAdaptivePlan = {
-      hardMultQueue: level === 'hard' && multSlots > 0 ? buildHardMultiplySubtypeOrder(multSlots) : null,
-      hardDivQueue: level === 'hard' && divSlots > 0 ? buildHardDivideSubtypeOrder(divSlots) : null,
-    };
-  }
-
-  function countOpSlotsBefore(mode, opWant, slotIndex) {
-    var c = 0;
-    var j;
-    for (j = 0; j < slotIndex; j++) {
-      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[j];
-      if (op === opWant) c++;
-    }
-    return c;
-  }
-
-  function getHardMultTagForSlot(slotIndex) {
-    if (GameState.level !== 'hard') return null;
-    var mode = GameState.mode;
-    if (multiplySlotsInMode(mode) <= 0) return null;
-    var idx = countOpSlotsBefore(mode, 'multiply', slotIndex);
-    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardMultQueue;
-    if (!q || idx < 0 || idx >= q.length) return null;
-    return q[idx];
-  }
-
-  function getHardDivTagForSlot(slotIndex) {
-    if (GameState.level !== 'hard') return null;
-    var mode = GameState.mode;
-    if (divideSlotsInMode(mode) <= 0) return null;
-    var idx = countOpSlotsBefore(mode, 'divide', slotIndex);
-    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardDivQueue;
-    if (!q || idx < 0 || idx >= q.length) return null;
-    return q[idx];
-  }
-
-  function recentAnchorsForSlot(slotIndex) {
-    var r = [];
-    if (slotIndex >= 2) {
-      var q0 = GameState.roundQuestions[slotIndex - 2];
-      if (q0 && q0.meta && q0.meta.anchor != null) r.push(q0.meta.anchor);
-    }
-    if (slotIndex >= 1) {
-      var q1 = GameState.roundQuestions[slotIndex - 1];
-      if (q1 && q1.meta && q1.meta.anchor != null) r.push(q1.meta.anchor);
-    }
-    return r;
-  }
-
   function collectRoundKeysExcludingIndex(excludeIndex) {
     var rk = new Set();
     var i;
@@ -3605,46 +3448,44 @@
     return rk;
   }
 
-  /** One slot of the current normal round, using current GameState.adaptiveTier. */
+  /** One slot of the current banded round, generated at ask-time so it uses
+   *  the CURRENT GameState.adaptiveTier. Only normal rounds land here —
+   *  review/practice replays stored snapshots and never calls this. */
   function generateRoundQuestionAtIndex(slotIndex) {
-    var level = GameState.level;
-    var mode = GameState.mode;
     var roundKeys = collectRoundKeysExcludingIndex(slotIndex);
-    var recentAnchors = recentAnchorsForSlot(slotIndex);
-    var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[slotIndex];
-    var multTag = op === 'multiply' ? getHardMultTagForSlot(slotIndex) : null;
-    var divTag = op === 'divide' ? getHardDivTagForSlot(slotIndex) : null;
+    var plan = GameState.bandPlan || [];
+    var token = plan[slotIndex];
     var q = null;
+    var candidate = null;
     var attempt;
-    var qtype;
-    var raw;
-    var anchor;
-    for (attempt = 0; attempt < 140; attempt++) {
-      if (multTag != null) qtype = hardMultTagToQtype(multTag);
-      else if (divTag != null) qtype = hardDivTagToQtype(divTag);
-      else qtype = pickTypeForSlot(level, op);
-      if (level === 'easy') qtype = 'basic';
-      if (level === 'medium' && op === 'multiply') qtype = 'missing';
-      if (level === 'medium' && op === 'divide') qtype = 'missing';
-      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) continue;
-      raw = generateRawQuestion(level, op, qtype);
-      q = finalizeQuestion(raw, level, mode);
-      anchor = q.meta && q.meta.anchor != null ? q.meta.anchor : -1;
-      if (varietyClash(recentAnchors, anchor) && attempt < 120) continue;
-      if (!validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: false })) continue;
+    for (attempt = 0; attempt < 30; attempt++) {
+      candidate = GradeBands.generateForSlot(token, getAdaptiveTier());
+      if (!candidate) continue;
+      if (roundKeys.has(candidate.key)) continue;                 // never repeat inside a round
+      if (sessionAskedKeys.has(candidate.key) && attempt < 20) continue; // soft cross-round dedupe
+      q = candidate;
       break;
     }
+    if (!q) q = candidate; // dedupe exhausted — accept the last valid candidate
     if (!q) {
-      for (attempt = 0; attempt < 80; attempt++) {
-        raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
-        q = finalizeQuestion(raw, level, mode);
-        if (validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: true })) break;
-        q = null;
-      }
-    }
-    if (!q) {
-      raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
-      q = finalizeQuestion(raw, level, mode);
+      // GradeBands returned null 30 times (should never happen): hard-coded safe fact.
+      q = {
+        type: 'basic',
+        operation: 'multiply',
+        prompt: '6 × 7 = ?',
+        promptSub: '',
+        answer: 42,
+        answerR: null,
+        key: 'g' + (GameState.grade || 3) + ':fallback:6x7',
+        level: 'easy',
+        grade: GameState.grade || 3,
+        format: token || 'fallback',
+        meta: { a: 6, b: 7, baseFact: { a: 6, b: 7, op: 'mul' } },
+        hintEasy: 'Skip-count by 7: 7, 14, 21, 28, 35, 42.',
+        hintMed: 'Think of 6 groups of 7.',
+        hintHard: '6 × 7 = 42.',
+        visualSpec: { kind: 'array', rows: 6, cols: 7 },
+      };
     }
     roundKeys.add(q.key);
     sessionAskedKeys.add(q.key);
@@ -3652,34 +3493,6 @@
       sessionAskedKeys = new Set(Array.from(sessionAskedKeys).slice(-2000));
     }
     GameState.roundQuestions[slotIndex] = q;
-  }
-
-  /** Pool builder — valid, deduped questions (does not rely on session keys). */
-  function generateQuestions(level, mode) {
-    var prevTier = GameState.adaptiveTier;
-    GameState.adaptiveTier = 0;
-    var pool = [];
-    var seen = new Set();
-    var n = 0;
-    while (pool.length < POOL_SIZE && n < 25000) {
-      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : (Math.random() < 0.5 ? 'multiply' : 'divide');
-      var qtype = pickTypeForSlot(level, op);
-      if (level === 'easy') qtype = 'basic';
-      if (level === 'medium' && op === 'multiply') qtype = 'missing';
-      if (level === 'medium' && op === 'divide') qtype = 'missing';
-      if (level === 'hard' && op === 'multiply') qtype = pickHardMultiplyQtypeRandom();
-      if (level === 'hard' && op === 'divide') qtype = pickHardDivideQtypeRandom();
-      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) qtype = fallbackQtypeForSlot(level, op);
-      var raw = generateRawQuestion(level, op, qtype);
-      var q = finalizeQuestion(raw, level, mode);
-      if (validateQuestion(q, mode, { roundKeys: seen, skipSession: true }) && !seen.has(q.key)) {
-        seen.add(q.key);
-        pool.push(q);
-      }
-      n++;
-    }
-    GameState.adaptiveTier = prevTier;
-    return pool;
   }
 
   // ========== WRONG-ANSWER HELP ==========
@@ -3731,7 +3544,7 @@
 
   function currentQuestionLevel() {
     var q = GameState.currentQuestion;
-    return q && q.level != null ? q.level : GameState.level;
+    return q && q.level != null ? q.level : 'medium';
   }
 
   function shouldAttachWrongVisual() {
@@ -3808,7 +3621,7 @@
   }
 
   function hintTextForQuestion(q) {
-    var lvl = q && q.level != null ? q.level : GameState.level;
+    var lvl = q && q.level != null ? q.level : 'medium';
     if (lvl === 'easy') return q.hintEasy;
     if (lvl === 'medium') return q.hintMed;
     return q.hintHard;
@@ -3817,7 +3630,8 @@
   function attachHintVisual(panel, q) {
     const spec = q.visualSpec;
     if (!spec) return;
-    var lvl = q && q.level != null ? q.level : GameState.level;
+    var lvl = q && q.level != null ? q.level : 'medium';
+    if (q && q.grade === 2) lvl = 'easy'; // G2 always gets picture support
     if (lvl === 'easy') {
       const el = renderVisualFromSpec(spec);
       if (el) panel.appendChild(el);
@@ -3883,12 +3697,6 @@
     restoreFocusAfterHint();
   }
 
-  function modeLabelForState(mode) {
-    if (mode === 'multiply') return 'Multiplication';
-    if (mode === 'divide') return 'Division';
-    return 'Mixed';
-  }
-
   function updateModeIndicator() {
     var badge = document.getElementById('hud-mode-badge');
     var cur = document.getElementById('hud-current-op');
@@ -3896,10 +3704,14 @@
     if (GameState.isReviewMode) {
       badge.textContent = 'Mode: Fix tricky questions';
     } else {
-      badge.textContent = 'Mode: ' + modeLabelForState(GameState.mode);
+      badge.textContent = 'Grade ' + (GameState.grade || '?');
     }
     var op = GameState.currentQuestion && GameState.currentQuestion.operation;
-    var opLabel = op === 'multiply' ? 'Multiplication' : op === 'divide' ? 'Division' : '—';
+    var opLabel =
+      op === 'multiply' ? 'Multiplication'
+      : op === 'divide' ? 'Division'
+      : op === 'expr' ? 'Number sentence'
+      : '—';
     cur.innerHTML = 'Current question: <strong>' + opLabel + '</strong>';
   }
 
@@ -4031,22 +3843,8 @@
   // ========== QUESTION RENDER ==========
   function renderQuestion() {
     var q = GameState.currentQuestion;
-    var guard = 0;
-    var rk = new Set();
-    var rqi, rkQ;
-    for (rqi = 0; rqi < GameState.roundQuestions.length; rqi++) {
-      rkQ = GameState.roundQuestions[rqi];
-      if (rkQ && rqi !== GameState.questionIndex) rk.add(rkQ.key);
-    }
-    while (guard < 24 && !validateQuestion(q, GameState.mode, { roundKeys: rk, skipSession: true })) {
-      var opFix = GameState.mode === 'multiply' ? 'multiply' : GameState.mode === 'divide' ? 'divide' : GameState.roundMixOps[GameState.questionIndex];
-      var rawFix = generateRawQuestion(GameState.level, opFix, fallbackQtypeForSlot(GameState.level, opFix));
-      q = finalizeQuestion(rawFix, GameState.level, GameState.mode);
-      GameState.roundQuestions[GameState.questionIndex] = q;
-      GameState.currentQuestion = q;
-      guard++;
-    }
-
+    // Band questions are validated by GradeBands at generation time; review
+    // mode replays stored snapshots verbatim. No regenerate-on-invalid loop.
     GameState.answered = false;
     closeHintModal();
     document.getElementById('feedback').textContent = '';
@@ -4055,6 +3853,12 @@
     document.getElementById('btn-next').hidden = true;
 
     document.getElementById('q-text').textContent = q.prompt;
+
+    var subEl = document.getElementById('q-sub');
+    if (subEl) {
+      subEl.textContent = q.promptSub || '';
+      subEl.hidden = !q.promptSub;
+    }
 
     document.getElementById('answer-input').value = '';
     setAnswerControlsEnabled(true);
@@ -4203,7 +4007,13 @@
           return GameState.correctCount === ROUND_SIZE;
         },
       },
-      { id: 'hard', test: function () { return GameState.level === 'hard' && stars >= 4; } },
+      {
+        id: 'hard', // stored id kept for old saves; relabeled "Challenger 🏆"
+        test: function () {
+          return stars >= 4 && (GameState.grade || 0) >= 4 &&
+            (GameState.playMode === 'mission' || GameState.playMode === 'boss');
+        },
+      },
       { id: 'mistake_fixer', test: function () { return progress.stats.mistakesFixed >= 10; } },
       { id: 'comeback_kid', test: function () { return progress.stats.streakRecoveryCount >= 3; } },
       { id: 'fact_master', test: function () { return hasMulFamilyMasteredEnough(5); } },
@@ -4279,8 +4089,7 @@
     progress.lastRoundAccuracy = acc;
     recordPlayDateForMission();
 
-    GameState.lastRoundMode = GameState.mode;
-    GameState.lastRoundLevel = GameState.level;
+    GameState.lastPlayMode = GameState.playMode;
     GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
     wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
     saveWrongAnswerHistory();
@@ -4313,7 +4122,22 @@
     updateResultsExportButtons();
   }
 
-  function startRound() {
+  /** @param {'mission'|'boss'|'lightning'} playMode - defaults to 'mission'. */
+  function startRound(playMode) {
+    progress = ensureProgressShape(progress);
+    if (!hasGradeBands()) {
+      window.alert('Oops — the question maker did not load. Please refresh the page.');
+      return;
+    }
+    if (!isGradeSet()) {
+      gradeCardForcedOpen = true;
+      renderGradeUi();
+      showScreen('menu');
+      return;
+    }
+    GameState.playMode = playMode || 'mission';
+    GameState.grade = progress.grade;
+    GameState.mode = 'mixed'; // band rounds always mix ops; keeps the wrong-record 'mode' field truthful
     GameState.questionIndex = 0;
     GameState.score = 0;
     GameState.streak = 0;
@@ -4333,12 +4157,9 @@
     GameState.currentRoundId = newRoundId();
     GameState.currentRoundWrongAnswers = [];
     resetAdaptiveDifficultyState();
-    if (GameState.mode === 'mixed') {
-      GameState.roundMixOps = shuffle([].concat(Array(5).fill('multiply'), Array(5).fill('divide')));
-    } else {
-      GameState.roundMixOps = null;
-    }
-    attachAdaptiveRoundPlan(GameState.level, GameState.mode);
+    GameState.roundMixOps = null;
+    // Format plan for the whole round (quota recipe for the grade, shuffled).
+    GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, ROUND_SIZE);
     GameState.roundQuestions = new Array(ROUND_SIZE);
     generateRoundQuestionAtIndex(0);
     GameState.currentQuestion = GameState.roundQuestions[0];
@@ -4415,7 +4236,7 @@
   }
 
   document.getElementById('btn-tile-mission').addEventListener('click', guardTile(function () {
-    startRound();
+    startRound('mission');
   }));
   // Boss Battle / Lightning tiles ship hidden; chunk 3 unhides and wires them.
   document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(function () {
@@ -4460,7 +4281,7 @@
       star50: '🌟 50 stars',
       streak5: '🔥 Streak 5+',
       perfect: '💯 Perfect round',
-      hard: '🚀 Hard hero',
+      hard: 'Challenger 🏆',
       mistake_fixer: '🔧 Mistake Fixer',
       comeback_kid: '↩️ Comeback Kid',
       fact_master: '🔢 Fact Master',
@@ -4524,11 +4345,13 @@
 
   document.getElementById('btn-next').addEventListener('click', goToNextQuestion);
 
-  document.getElementById('btn-again').addEventListener('click', startRound);
+  document.getElementById('btn-again').addEventListener('click', function () {
+    startRound(GameState.lastPlayMode || 'mission');
+  });
 
   document.getElementById('btn-game-over-try-again').addEventListener('click', function () {
     setGameOverModalOpen(false);
-    startRound();
+    startRound(GameState.playMode || 'mission');
   });
 
   document.getElementById('btn-game-over-practice').addEventListener('click', function () {
