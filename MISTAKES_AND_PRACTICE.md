@@ -139,7 +139,7 @@ storageBase: ['<gameSlug>_v1', '<gameSlug>_wrongs_v1'],
 
 | Game | Mistake tracking | Practice mode | Notes |
 | ---- | ---------------- | ------------- | ----- |
-| `cosmic-math-quest`     | ✓ (`cosmicMathQuest_wrongs_v1`) | ✓ "Fix Tricky Questions" | Reference implementation. Uses adaptive remediation (Flavor B). |
+| `cosmic-math-quest`     | ✓ (`cosmicMathQuest_wrongs_v1`; records carry `grade` + `playMode` + remainder-capable snapshots since the grade-bands release) | ✓ Fix-It tile + "Fix Tricky Questions" + daily review weave-in (due mistakes replay inside Mission slots 3/7 and resolve on a correct answer) | Reference implementation. Adaptive remediation (Flavor B). Misses recorded in every mode (Mission, Boss, Lightning, drift bonus). |
 | `word-problem-adventure` | ✓ (`wordProblemAdventure_wrongs_v1`, v2 rich records: qid + missCount + yourAnswers + errorTags + timestamps; lazy v1→v2 upgrade) | ✓ practice quests (10-story runs) + review | Always-on recording (any mode). Misconception classifier tags each miss (op-swap, first-step-only, inverse-trap, remainder mix-ups, off-by-one…) and drives diagnostic wrong-answer feedback. Inline blob still carries wrongIds for the picker UI; the wrongs key is the spec-compliant authoritative store. |
 | `lets-learn-fractions`  | ✓ (`letsLearnFractions_wrongs_v1`) | ✓ "Practice tricky pizzas (N)" home button | Replay queue (Flavor A). Profile-scoped via bridge. Reset wipes the queue. |
 | `long-division-coach`   | ✓ (`longDivisionCoach_wrongs_v1`) | ✓ "Tricky problems (N)" toolbar pill | Practice mode + replay queue (Flavor A). Records problem-level on Practice-mode completion when the kid struggled (wrong attempts / hints / reveal). |

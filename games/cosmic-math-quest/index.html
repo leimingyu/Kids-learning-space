@@ -107,6 +107,10 @@
       margin-top: 1rem;
     }
 
+    .btn-row[hidden] {
+      display: none;
+    }
+
     .btn {
       font-family: inherit;
       font-size: clamp(1.05rem, 3.5vw, 1.25rem);
@@ -154,33 +158,6 @@
       margin: 1.25rem 0 0.5rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-    }
-
-    .segment-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .segment-btn {
-      flex: 1 1 auto;
-      min-height: 52px;
-      min-width: 100px;
-      padding: 0.75rem 1rem;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border-radius: 12px;
-      border: 2px solid rgba(110, 181, 255, 0.35);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .segment-btn.selected {
-      background: rgba(126, 255, 179, 0.2);
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     /* Game status bar */
@@ -358,6 +335,12 @@
       letter-spacing: 0.03em;
     }
 
+    .question-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
     /* Visual models */
     .visual-model {
       display: inline-flex;
@@ -458,6 +441,23 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(126, 255, 179, 0.25);
+    }
+
+    /* Remainder input — appears only for grade 4/5 long-division questions */
+    .r-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .r-wrap[hidden] { display: none; }
+    .r-label {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent-warm);
+    }
+    #answer-input-r {
+      width: 110px;
+      max-width: 110px;
     }
 
     .btn-check {
@@ -948,9 +948,150 @@
       opacity: 0.95;
     }
 
+    /* ===== Menu redesign: grade picker + mode tiles ===== */
+    .grade-card {
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      border-radius: 14px;
+      padding: 0.25rem 1rem 1rem;
+      margin-bottom: 1rem;
+      background: rgba(110, 181, 255, 0.08);
+    }
+
+    .grade-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .grade-btn {
+      flex: 1 1 0;
+      min-width: 64px;
+      min-height: 64px;
+      font-family: inherit;
+      font-size: 1.6rem;
+      font-weight: 800;
+      border-radius: 14px;
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.12s;
+    }
+    .grade-btn:active { transform: scale(0.97); }
+    .grade-btn:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+    .grade-btn.selected {
+      background: rgba(126, 255, 179, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .grade-chip-row { display: flex; justify-content: center; margin-bottom: 0.75rem; }
+    .grade-chip-row[hidden] { display: none; }
+    .grade-chip {
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      border: 2px solid rgba(110, 181, 255, 0.4);
+      background: rgba(110, 181, 255, 0.15);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .grade-chip:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+
+    .mode-tile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .mode-tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 1rem 0.75rem;
+      min-height: 108px;
+      font-family: inherit;
+      color: var(--text);
+      background: linear-gradient(145deg, rgba(110, 181, 255, 0.14), rgba(124, 255, 179, 0.08));
+      border: 2px solid rgba(110, 181, 255, 0.35);
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      transition: transform 0.12s, border-color 0.15s, filter 0.12s;
+    }
+    .mode-tile:active { transform: scale(0.97); }
+    .mode-tile:focus-visible { outline: 3px solid var(--accent-warm); outline-offset: 3px; }
+    .mode-tile[aria-disabled="true"] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
+    .mode-tile-emoji { font-size: 1.9rem; line-height: 1; }
+    .mode-tile-name { font-size: 1.15rem; font-weight: 800; }
+    .mode-tile-sub { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
+    .mode-tile-badge {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-warm);
+      color: #3a2a00;
+    }
+
     @media (min-width: 600px) {
       .status-bar { font-size: 1.05rem; }
     }
+
+    /* ===== Boss Battle HP bar ===== */
+    .boss-hp-row { margin-top: 8px; }
+    .boss-hp-label { font-weight: 700; font-size: 0.95rem; }
+    .boss-hp-track {
+      margin-top: 4px; height: 14px; border-radius: 999px;
+      background: rgba(99, 110, 114, 0.25); overflow: hidden;
+    }
+    .boss-hp-fill {
+      height: 100%; width: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #e17055, #d63031);
+      transition: width 0.4s ease;
+    }
+    .boss-hp-fill.crit-flash { animation: bossCritPulse 0.5s ease; }
+    @keyframes bossCritPulse {
+      0% { filter: brightness(1); }
+      40% { filter: brightness(1.9); }
+      100% { filter: brightness(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .boss-hp-fill { transition: none; }
+      .boss-hp-fill.crit-flash { animation: none; }
+    }
+
+    /* ===== Lightning timer ===== */
+    .lightning-timer-row { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+    .lightning-timer-row[hidden] { display: none; }
+    #lightning-timer-num { font-weight: 800; min-width: 3.5ch; }
+    .lightning-timer-track {
+      flex: 1; height: 10px; border-radius: 999px;
+      background: rgba(9, 132, 227, 0.18); overflow: hidden;
+    }
+    .lightning-timer-fill {
+      height: 100%; width: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #74b9ff, #0984e3);
+      transition: width 1s linear;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lightning-timer-track { display: none; } /* number-only countdown */
+    }
+
+    /* ===== Review weave-in chip ===== */
+    .weavein-chip {
+      display: inline-block; margin-bottom: 6px; padding: 2px 10px;
+      border-radius: 999px; font-size: 0.8rem; font-weight: 700;
+      background: rgba(9, 132, 227, 0.14); color: #0984e3;
+    }
+    .weavein-chip[hidden] { display: none; }
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
@@ -961,34 +1102,52 @@
     <!-- ========== MAIN MENU ========== -->
     <section id="screen-menu" class="screen active" aria-labelledby="menu-title">
       <div class="brand">
-        <h1>🚀 Cosmic Math Quest</h1>
+        <h1 id="menu-title">🚀 Cosmic Math Quest</h1>
         <p>A multiplication &amp; division adventure</p>
       </div>
       <div class="panel">
-        <div class="segment-label" id="menu-title">Choose level</div>
-        <div class="segment-group" role="group" aria-label="Difficulty level">
-          <button type="button" class="segment-btn selected" data-level="easy" aria-pressed="true">Easy</button>
-          <button type="button" class="segment-btn" data-level="medium" aria-pressed="false">Medium</button>
-          <button type="button" class="segment-btn" data-level="hard" aria-pressed="false">Hard</button>
+        <!-- One-time grade picker: visible until progress.grade is set,
+             and re-opened by the grade chip. NOT an interstitial — it lives
+             on the menu itself and never blocks a started round. -->
+        <div class="grade-card" id="grade-card" hidden>
+          <div class="segment-label" id="grade-card-title">Which grade are you in?</div>
+          <div class="grade-btn-row" role="group" aria-labelledby="grade-card-title">
+            <button type="button" class="grade-btn" data-grade="2">2</button>
+            <button type="button" class="grade-btn" data-grade="3">3</button>
+            <button type="button" class="grade-btn" data-grade="4">4</button>
+            <button type="button" class="grade-btn" data-grade="5">5</button>
+          </div>
         </div>
-        <div class="segment-label">Choose mode</div>
-        <div class="segment-group" role="group" aria-label="Game mode">
-          <button type="button" class="segment-btn selected" data-mode="multiply" aria-pressed="true">Multiplication</button>
-          <button type="button" class="segment-btn" data-mode="divide" aria-pressed="false">Division</button>
-          <button type="button" class="segment-btn" data-mode="mixed" aria-pressed="false">Mixed</button>
+        <div class="grade-chip-row" id="grade-chip-row" hidden>
+          <button type="button" class="grade-chip" id="grade-chip">🌌 Grade 3 · change</button>
+        </div>
+        <div class="mode-tile-grid" id="mode-tile-grid">
+          <button type="button" class="mode-tile" id="btn-tile-mission">
+            <span class="mode-tile-emoji" aria-hidden="true">🚀</span>
+            <span class="mode-tile-name">Mission</span>
+            <span class="mode-tile-sub">10 questions · hearts &amp; stars</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-boss">
+            <span class="mode-tile-emoji" aria-hidden="true">🎯</span>
+            <span class="mode-tile-name">Boss Battle</span>
+            <span class="mode-tile-sub">Bring the boss to 0 HP</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-lightning">
+            <span class="mode-tile-emoji" aria-hidden="true">⚡</span>
+            <span class="mode-tile-name">Lightning</span>
+            <span class="mode-tile-sub">90 seconds · beat your best</span>
+          </button>
+          <button type="button" class="mode-tile" id="btn-tile-fixit">
+            <span class="mode-tile-emoji" aria-hidden="true">🔧</span>
+            <span class="mode-tile-name">Fix-It</span>
+            <span class="mode-tile-sub">Practice tricky questions</span>
+            <span class="mode-tile-badge" id="fixit-due-badge" hidden></span>
+          </button>
         </div>
         <div class="btn-row" id="cmq-resume-row" hidden>
           <button type="button" class="btn btn-primary cmq-resume" id="btn-cmq-resume">▶ Continue my last session</button>
         </div>
-        <div class="btn-row">
-          <button type="button" class="btn btn-primary" id="btn-play">🆕 Play Mission</button>
-        </div>
         <div class="segment-label">Things to Improve</div>
-        <div class="btn-row mistake-actions">
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-quickfix" hidden>Quick Fix</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-mostmissed" hidden>Most Missed</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-menu-duetoday" hidden>Due Today</button>
-        </div>
         <div class="btn-row mistake-actions">
           <button type="button" class="btn btn-secondary btn-small" id="btn-menu-save-saved-wrongs" hidden>
             Save list to disk
@@ -1044,15 +1203,33 @@
               <span class="lives-note" id="hud-lives-note">Hearts = lives. If they are all gone, the mission pauses.</span>
             </span>
           </div>
+          <div class="boss-hp-row" id="boss-hp-row" hidden>
+            <span class="boss-hp-label">👾 Boss HP: <strong id="boss-hp-num">10</strong> / 10</span>
+            <div class="boss-hp-track" aria-hidden="true">
+              <div class="boss-hp-fill" id="boss-hp-fill"></div>
+            </div>
+          </div>
+          <div class="lightning-timer-row" id="lightning-timer-row" hidden>
+            <span id="lightning-timer-num" role="timer">90s</span>
+            <div class="lightning-timer-track" aria-hidden="true">
+              <div class="lightning-timer-fill" id="lightning-timer-fill"></div>
+            </div>
+          </div>
         </div>
 
         <div class="question-card">
+          <span class="weavein-chip" id="weavein-chip" hidden>🔁 One more try!</span>
           <p class="question-text" id="q-text">Loading…</p>
+          <p class="question-sub" id="q-sub" hidden></p>
         </div>
 
         <div class="answer-stack" id="answer-area">
           <label class="sr-only" for="answer-input">Your answer</label>
-          <input type="text" inputmode="numeric" pattern="[0-9-]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
+          <input type="text" inputmode="numeric" pattern="-?[0-9]*" id="answer-input" autocomplete="off" enterkeyhint="done" />
+          <span class="r-wrap" id="answer-r-wrap" hidden>
+            <label class="r-label" for="answer-input-r">R</label>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" id="answer-input-r" autocomplete="off" enterkeyhint="done" aria-label="Remainder" />
+          </span>
           <button type="button" class="btn btn-secondary btn-check" id="btn-submit-answer">Check</button>
         </div>
 
@@ -1076,25 +1253,18 @@
         <p id="results-rating" style="text-align:center;font-size:1.15rem;margin:0 0 1rem;"></p>
         <div class="results-stats">
           <div class="stat-box"><div class="num" id="res-score">0</div><div class="lbl">Score</div></div>
-          <div class="stat-box"><div class="num" id="res-correct">0</div><div class="lbl">Correct / 10</div></div>
+          <div class="stat-box"><div class="num" id="res-correct">0</div><div class="lbl">Correct</div></div>
           <div class="stat-box"><div class="num" id="res-accuracy">0%</div><div class="lbl">Accuracy</div></div>
           <div class="stat-box"><div class="num" id="res-streak">0</div><div class="lbl">Longest streak</div></div>
           <div class="stat-box"><div class="num" id="res-stars">0</div><div class="lbl">Stars</div></div>
         </div>
         <div class="btn-row">
           <button type="button" class="btn btn-primary" id="btn-again">Play again</button>
-          <button type="button" class="btn btn-secondary" id="btn-change-level">Change level</button>
-          <button type="button" class="btn btn-ghost" id="btn-change-mode">Change mode</button>
           <button type="button" class="btn btn-ghost" id="btn-results-menu">Back to menu</button>
         </div>
         <div class="segment-label">Things to improve &amp; practice</div>
         <div class="btn-row mistake-actions" id="results-review-actions">
-          <button type="button" class="btn btn-primary" id="btn-practice-wrongs" hidden>Fix Tricky Questions</button>
-        </div>
-        <div class="btn-row mistake-actions">
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-quickfix" hidden>Quick Fix</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-mostmissed" hidden>Most Missed</button>
-          <button type="button" class="btn btn-secondary btn-small" id="btn-results-duetoday" hidden>Due Today</button>
+          <button type="button" class="btn btn-primary" id="btn-practice-wrongs" hidden>Fix tricky questions</button>
         </div>
         <div class="btn-row mistake-actions">
           <button type="button" class="btn btn-secondary" id="btn-save-wrongs-recent" hidden>
@@ -1140,8 +1310,8 @@
     <div class="modal">
       <h2 id="how-heading">How to play</h2>
       <ul>
-        <li>Pick <strong>Easy</strong>, <strong>Medium</strong>, or <strong>Hard</strong>. Tap <strong>Show hint</strong> for help (pictures on Easy).</li>
-        <li>Choose <strong>Multiplication</strong>, <strong>Division</strong>, or <strong>Mix</strong>.</li>
+        <li>Pick your <strong>grade</strong> once — change it any time with the <strong>🌌 Grade</strong> chip.</li>
+        <li>Choose a tile: <strong>🚀 Mission</strong> to play, or <strong>🔧 Fix-It</strong> to practice tricky questions. Tap <strong>Show hint</strong> for help.</li>
         <li>Type your answer and press <strong>Check</strong> or Enter. Then press <strong>Next question</strong> when you’re ready.</li>
         <li>Each correct answer is <strong>+10</strong> points. Every <strong>3 in a row</strong> adds <strong>+5</strong> bonus!</li>
         <li>No timer — finish all 10 questions. Hearts are lives, and if they run out the mission pauses so you can try again or fix tricky questions.</li>
@@ -1173,24 +1343,33 @@
       <p class="save-status-msg" id="game-over-mistakes-empty" hidden>Nothing to improve right now. Great job!</p>
       <div class="btn-row" style="margin-top:1rem;">
         <button type="button" class="btn btn-primary" id="btn-game-over-try-again">Try Again</button>
-        <button type="button" class="btn btn-secondary" id="btn-game-over-practice" hidden>Fix Tricky Questions</button>
+        <button type="button" class="btn btn-secondary" id="btn-game-over-practice" hidden>Fix tricky questions</button>
         <button type="button" class="btn btn-ghost" id="btn-game-over-menu">Back to Menu</button>
       </div>
     </div>
   </div>
 
   <script src="learningIntelligence.js"></script>
+  <script src="gradeBands.js"></script>
   <script>
 (function () {
   'use strict';
 
   // ========== CONFIG ==========
   const ROUND_SIZE = 10;
-  const POOL_SIZE = 100;
   const INITIAL_HEARTS = 5;
   const POINTS_CORRECT = 10;
   const STREAK_BONUS_EVERY = 3;
   const STREAK_BONUS_POINTS = 5;
+  const BOSS_HP = 10;
+  const BOSS_MAX_QUESTIONS = 16;
+  const BOSS_CRIT_DAMAGE = 2;
+  const LIGHTNING_SECONDS = 90;
+  const DRIFT_MASTERY_PCT = 0.8;
+  const DRIFT_MIN_FAMILIES = 5;
+  const DRIFT_MIN_ATTEMPTS = 20;
+  const BONUS_POINTS = 15;
+  const WEAVE_SLOTS = [2, 6]; // 0-indexed round slots = "questions 3 and 7"
   // Storage is scoped per hub-profile so each kid has their own progress.
   // Embedded (in hub): keys are `<base>__<profileId>`. Standalone (no hub):
   // bare base keys so opening this game directly from file:// keeps working.
@@ -1199,6 +1378,14 @@
   // game an unfair head start with someone else's progress).
   const STORAGE_KEY_BASE = 'cosmicMathQuest_v1';
   const WRONGS_KEY_BASE = 'cosmicMathQuest_wrongs_v1';
+
+  /** GradeBands module presence guard — index.html must never hard-depend
+   *  on script load order (standalone file:// play). */
+  function hasGradeBands() {
+    return typeof GradeBands !== 'undefined' && !!GradeBands &&
+      typeof GradeBands.buildRoundPlan === 'function' &&
+      typeof GradeBands.generateForSlot === 'function';
+  }
 
   function isInIframe() {
     try { return !!(window.parent && window.parent !== window); }
@@ -1238,7 +1425,12 @@
 
   // ========== STATE ==========
   const GameState = {
-    level: 'easy',
+    /** Active grade band (2|3|4|5|null); mirrors progress.grade at round start. */
+    grade: null,
+    /** How the current round is being played: 'mission'|'boss'|'lightning'|'practice'. */
+    playMode: 'mission',
+    /** playMode of the last completed normal round (results "Play again"). */
+    lastPlayMode: 'mission',
     mode: 'multiply',
     questionIndex: 0,
     roundQuestions: [],
@@ -1261,8 +1453,6 @@
     lastRoundWrongBuffer: [],
     /** Active review session: remaining question keys (shuffled order). */
     reviewQueue: [],
-    lastRoundMode: 'multiply',
-    lastRoundLevel: 'easy',
     reviewJustCompleted: false,
     reviewCompletedAllCorrect: false,
     isGameOver: false,
@@ -1275,8 +1465,13 @@
     recentAnswerHistory: [],
     lastAdaptiveChangeAtQuestionIndex: -99,
     adaptiveStats: { correctThisRound: 0, wrongThisRound: 0 },
-    /** Hard-mode subtype queues + metadata for lazy round generation. */
-    roundAdaptivePlan: null,
+    /** Per-round format-token plan from GradeBands.buildRoundPlan. */
+    bandPlan: null,
+    /** Boss Battle: remaining boss HP (null outside boss rounds). */
+    bossHp: null,
+    /** Lightning: live setInterval id (MUST be cleared on every exit path). */
+    lightningTimerId: null,
+    lightningSecondsLeft: 0,
   };
 
   var focusAnswerTimer = null;
@@ -1294,6 +1489,12 @@
 
   function defaultProgress() {
     return {
+      /** Grade band chosen on the menu (2|3|4|5); null = not picked yet. */
+      grade: null,
+      /** Best Lightning score per grade, e.g. {3: 14}. Filled by chunk 3. */
+      bestLightningByGrade: {},
+      /** How many times the kid beat their own Lightning best (badge fuel). */
+      lightningBestBeats: 0,
       totalStars: 0,
       roundsPlayed: 0,
       bestStreakEver: 0,
@@ -1327,6 +1528,10 @@
     var lr = p.lastRoundAccuracy;
     if (lr != null && typeof lr !== 'number') lr = null;
     return {
+      grade: p.grade === 2 || p.grade === 3 || p.grade === 4 || p.grade === 5 ? p.grade : null,
+      bestLightningByGrade:
+        p.bestLightningByGrade && typeof p.bestLightningByGrade === 'object' ? p.bestLightningByGrade : {},
+      lightningBestBeats: Number(p.lightningBestBeats) || 0,
       totalStars: Number(p.totalStars) || 0,
       roundsPlayed: Number(p.roundsPlayed) || 0,
       bestStreakEver: Number(p.bestStreakEver) || 0,
@@ -1412,6 +1617,31 @@
     return false;
   }
 
+  /** Drift-up trigger: >= DRIFT_MIN_FAMILIES of the band's relevant fact
+   *  families each have >= DRIFT_MIN_ATTEMPTS attempts and
+   *  masteryPct >= DRIFT_MASTERY_PCT. Grade 5 has no next band. */
+  function isBandMastered(grade) {
+    if (grade == null || grade >= 5) return false;
+    progress = ensureProgressShape(progress);
+    var fams = (progress.familyStats && progress.familyStats.families) || {};
+    var prefixes = grade === 2 ? ['mul:'] : ['mul:', 'div:'];
+    var count = 0;
+    for (var fid in fams) {
+      if (!Object.prototype.hasOwnProperty.call(fams, fid)) continue;
+      var matches = false;
+      for (var pi = 0; pi < prefixes.length; pi++) {
+        if (fid.indexOf(prefixes[pi]) === 0) { matches = true; break; }
+      }
+      if (!matches) continue;
+      var f = fams[fid];
+      if ((Number(f.attempts) || 0) >= DRIFT_MIN_ATTEMPTS &&
+          (Number(f.masteryPct) || 0) >= DRIFT_MASTERY_PCT) {
+        count++;
+      }
+    }
+    return count >= DRIFT_MIN_FAMILIES;
+  }
+
   function tryAwardPracticeProgressBadges() {
     if (progress.stats.mistakesFixed >= 10 && progress.badges.indexOf('mistake_fixer') === -1) {
       progress.badges.push('mistake_fixer');
@@ -1457,6 +1687,9 @@
   }
 
   // ========== WRONG ANSWERS (persisted) — mistake records + mastery fields (agent 03) ==========
+  /** @type {ReadonlyArray<string>} */
+  var MASTERY_STAGES = ['new', 'practicing', 'stable', 'mastered'];
+
   var wrongAnswerStore = {
     schemaVersion: 1,
     sessionId: browserSessionId,
@@ -1521,6 +1754,10 @@
           prompt: q.prompt,
           subtitle: q.subtitle || '',
           answer: q.answer,
+          answerR: q.answerR != null ? q.answerR : null,
+          grade: q.grade != null ? q.grade : null,
+          format: q.format || null,
+          promptSub: q.promptSub || '',
           result: q.result,
           operation: q.operation,
           type: q.type,
@@ -1540,6 +1777,10 @@
         prompt: q.prompt,
         subtitle: q.subtitle || '',
         answer: q.answer,
+        answerR: q.answerR != null ? q.answerR : null,
+        grade: q.grade != null ? q.grade : null,
+        format: q.format || null,
+        promptSub: q.promptSub || '',
         result: q.result,
         operation: q.operation,
         type: q.type,
@@ -1559,6 +1800,10 @@
       prompt: snap.prompt,
       subtitle: snap.subtitle || '',
       answer: snap.answer,
+      answerR: snap.answerR != null ? snap.answerR : null,
+      grade: snap.grade != null ? snap.grade : null,
+      format: snap.format || null,
+      promptSub: snap.promptSub || '',
       result: snap.result != null ? snap.result : snap.answer,
       operation: snap.operation,
       type: snap.type,
@@ -1573,9 +1818,6 @@
     };
   }
 
-  /** @type {ReadonlyArray<string>} */
-  var MASTERY_STAGES = ['new', 'practicing', 'stable', 'mastered'];
-
   function familyStringFromQuestion(q) {
     if (!q || typeof LearningIntel === 'undefined') return '';
     var ff = LearningIntel.getFactFamily(q);
@@ -1583,7 +1825,8 @@
   }
 
   function isValidMasteryStage(s) {
-    return typeof s === 'string' && MASTERY_STAGES.indexOf(s) !== -1;
+    var stages = MASTERY_STAGES || ['new', 'practicing', 'stable', 'mastered'];
+    return typeof s === 'string' && stages.indexOf(s) !== -1;
   }
 
   function inferMasteryStageFromLegacy(record) {
@@ -1606,6 +1849,8 @@
       id: 'wa_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
       timestamp: ts,
       level: q.level,
+      grade: q.grade != null ? q.grade : (GameState.grade || null),
+      playMode: GameState.playMode || 'mission',
       mode: GameState.mode,
       prompt: q.prompt,
       correctAnswer: q.answer,
@@ -1821,7 +2066,7 @@
   }
 
   function getNoMistakesMessage(location) {
-    if (location === 'menu') return 'Nice work! Nothing to improve right now — fly a mission first.';
+    if (location === 'menu') return 'No tricky questions right now! 🎉';
     if (location === 'results') return 'Nothing to improve right now. Great job!';
     if (location === 'gameover') return 'Nothing to improve right now. Great job!';
     return 'Nothing to improve right now. Great job!';
@@ -1847,8 +2092,9 @@
     if (titleExtra) lines.push(titleExtra);
     lines.push('Date: ' + now.toISOString());
     lines.push('');
-    lines.push('Round Mode: ' + (r0 && r0.mode ? r0.mode : GameState.lastRoundMode || GameState.mode));
-    lines.push('Level: ' + (r0 && r0.level ? r0.level : GameState.lastRoundLevel || GameState.level));
+    lines.push('Round Mode: ' + (r0 && r0.mode ? r0.mode : GameState.mode));
+    lines.push('Grade: ' + (r0 && r0.grade ? r0.grade : (progress && progress.grade) || '—'));
+    lines.push('Level: ' + (r0 && r0.level ? r0.level : '—'));
     lines.push('');
     var i, r, t;
     for (i = 0; i < records.length; i++) {
@@ -1991,9 +2237,6 @@
 
   function updateResultsExportButtons() {
     var pr = document.getElementById('btn-practice-wrongs');
-    var rq = document.getElementById('btn-results-quickfix');
-    var rm = document.getElementById('btn-results-mostmissed');
-    var rd = document.getElementById('btn-results-duetoday');
     var sr = document.getElementById('btn-save-wrongs-recent');
     var sa = document.getElementById('btn-save-wrongs-all');
     var emptyMsg = document.getElementById('results-mistakes-empty');
@@ -2001,11 +2244,7 @@
     var hasLast = hasPracticeMistakes(GameState.lastRoundWrongBuffer);
     var hasHist = wrongAnswerStore.wrongAnswersHistory.length > 0;
     var hasImprove = getActiveMistakes().length > 0;
-    var showSmart = hasImprove && !GameState.reviewJustCompleted;
     pr.hidden = !hasLast || GameState.reviewJustCompleted;
-    if (rq) rq.hidden = !showSmart;
-    if (rm) rm.hidden = !showSmart;
-    if (rd) rd.hidden = !showSmart;
     sr.hidden = !hasLast;
     sa.hidden = !hasHist;
     if (emptyMsg) {
@@ -2015,20 +2254,12 @@
   }
 
   function updateMenuMistakeButtons() {
-    var qf = document.getElementById('btn-menu-quickfix');
-    var mm = document.getElementById('btn-menu-mostmissed');
-    var dt = document.getElementById('btn-menu-duetoday');
     var ms = document.getElementById('btn-menu-save-saved-wrongs');
-    var emptyMsg = document.getElementById('menu-mistakes-empty');
     var hasLatest = hasPracticeMistakes() || getActiveMistakes().length > 0;
-    if (qf) qf.hidden = !hasLatest;
-    if (mm) mm.hidden = !hasLatest;
-    if (dt) dt.hidden = !hasLatest;
     if (ms) ms.hidden = !hasLatest;
-    if (emptyMsg) {
-      emptyMsg.textContent = getNoMistakesMessage('menu');
-      emptyMsg.hidden = hasLatest;
-    }
+    var emptyMsg = document.getElementById('menu-mistakes-empty');
+    if (emptyMsg) emptyMsg.hidden = true; // only shown after tapping Fix-It with nothing due
+    updateFixItTile();
   }
 
   function updateGameOverPracticeUi() {
@@ -2096,10 +2327,11 @@
 
   /**
    * @param {Array} buffer - wrong records with questionSnapshot (e.g. lastRoundWrongBuffer or history)
-   * @param {{ preserveRoundContext?: boolean }} opts - if true, keep last mission mode/level (results "Practice" button)
+   * @param {Object} opts - reserved for future practice-session options
    */
   function startWrongAnswerPractice(buffer, opts) {
     opts = opts || {};
+    clearLightningTimer();
     var buf = buffer || getLatestMistakesForPractice();
     var uniq = uniquePracticeRecordsFromBuffer(buf).filter(function (r) {
       return !r.resolved;
@@ -2108,22 +2340,18 @@
     recordPracticeSessionStarted();
     var snaps = shuffle(uniq.map(function (r) {
       return questionFromSnapshot(r.questionSnapshot);
-    }));
-    if (opts.preserveRoundContext) {
-      GameState.mode = GameState.lastRoundMode;
-      GameState.level = GameState.lastRoundLevel;
-    } else {
-      var hasM = false;
-      var hasD = false;
-      var si;
-      for (si = 0; si < snaps.length; si++) {
-        if (snaps[si].operation === 'multiply') hasM = true;
-        if (snaps[si].operation === 'divide') hasD = true;
-      }
-      if (hasM && hasD) GameState.mode = 'mixed';
-      else if (hasD) GameState.mode = 'divide';
-      else GameState.mode = 'multiply';
+    }).filter(Boolean));
+    var hasM = false;
+    var hasD = false;
+    var si;
+    for (si = 0; si < snaps.length; si++) {
+      if (snaps[si].operation === 'multiply') hasM = true;
+      if (snaps[si].operation === 'divide') hasD = true;
     }
+    if (hasM && hasD) GameState.mode = 'mixed';
+    else if (hasD) GameState.mode = 'divide';
+    else GameState.mode = 'multiply';
+    GameState.playMode = 'practice';
 
     GameState.isReviewMode = true;
     GameState.pendingReviewAdvance = false;
@@ -2277,6 +2505,59 @@
       return parseNextReviewMs(a) - parseNextReviewMs(b);
     });
     return finalizeSmartPracticeSet(hist);
+  }
+
+  /**
+   * Fix-It: ONE combined practice set — due today first, then recent,
+   * then most missed — deduped by question key, capped by source
+   * priority BEFORE interleaving so due-today items are never bumped
+   * out by later sources. Interleave-by-level runs only after the
+   * cap, for presentation variety — nothing is dropped after selection.
+   */
+  function getFixItSet() {
+    var seen = {};
+    var picked = [];
+    var sources = [getDueTodaySet(), getQuickFixSet(), getMostMissedSet()];
+    var s, i;
+    for (s = 0; s < sources.length && picked.length < PRACTICE_ROUND_MAX; s++) {
+      var list = sources[s] || [];
+      for (i = 0; i < list.length && picked.length < PRACTICE_ROUND_MAX; i++) {
+        var rec = list[i];
+        var key = rec && rec.key;
+        if (!key || seen[key]) continue;
+        seen[key] = true;
+        picked.push(rec);
+      }
+    }
+    // Interleave AFTER selection, for variety only — inclusion priority is already settled.
+    return interleavePracticeRecordsByLevel(picked);
+  }
+
+  function startFixItPractice() {
+    var set = getFixItSet();
+    if (!set.length) {
+      showNoMistakesMessage('menu');
+      confettiBurst(); // an empty list is GOOD news
+      return;
+    }
+    safeStartWrongAnswerPractice(set, { emptyStateLocation: 'menu' });
+  }
+
+  /** Due-count badge on the Fix-It tile; refreshed on every menu render. */
+  function updateFixItTile() {
+    var badge = document.getElementById('fixit-due-badge');
+    if (!badge) return;
+    var due = getDueTodaySet().length;
+    var active = getActiveMistakes().length;
+    if (due > 0) {
+      badge.textContent = due + ' due';
+      badge.hidden = false;
+    } else if (active > 0) {
+      badge.textContent = active + ' saved';
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
   }
 
   /**
@@ -2656,8 +2937,18 @@
 
   function renderVisualFromSpec(spec) {
     if (!spec) return null;
-    if (spec.kind === 'array') return renderArray(spec.a, spec.b);
-    if (spec.kind === 'groups') return renderGroups(spec.groups, spec.per);
+    if (spec.kind === 'array') {
+      var a = spec.a != null ? spec.a : spec.rows;
+      var b = spec.b != null ? spec.b : spec.cols;
+      if (a == null || b == null) return null;
+      return renderArray(a, b);
+    }
+    if (spec.kind === 'groups') {
+      var g = spec.groups != null ? spec.groups : spec.rows;
+      var per = spec.per != null ? spec.per : spec.cols;
+      if (g == null || per == null) return null;
+      return renderGroups(g, per);
+    }
     return null;
   }
 
@@ -2665,91 +2956,6 @@
   function equationSubtitle(operation, level) {
     if (level === 'easy') return '';
     return operation === 'multiply' ? 'Multiplication' : 'Division';
-  }
-
-  /**
-   * Division & generic slot pick. Hard multiply / hard divide use per-round queues in generateRoundQuestionAtIndex.
-   * Medium multiplication & medium division: caller forces 'missing' only (reverse thinking).
-   */
-  function pickTypeForSlot(level, op) {
-    var allowed = chooseAllowedQuestionTypes(level, op);
-    return allowed.length ? pick(allowed) : 'basic';
-  }
-
-  /** Hard multiply: 35% fact / 25% word / 20% inverse / 20% reasoning for n slots. */
-  function buildHardMultiplySubtypeOrder(n) {
-    if (n <= 0) return [];
-    var fact = Math.floor(0.35 * n);
-    var word = Math.floor(0.25 * n);
-    var inverse = Math.floor(0.2 * n);
-    var reason = Math.floor(0.2 * n);
-    var rem = n - fact - word - inverse - reason;
-    var bump = 0;
-    for (bump = 0; bump < rem; bump++) {
-      if (bump % 4 === 0) fact++;
-      else if (bump % 4 === 1) word++;
-      else if (bump % 4 === 2) inverse++;
-      else reason++;
-    }
-    return shuffle([].concat(
-      Array(fact).fill('hm_fact'),
-      Array(word).fill('hm_word'),
-      Array(inverse).fill('hm_inverse'),
-      Array(reason).fill('hm_reason')
-    ));
-  }
-
-  function pickHardMultiplyQtypeRandom() {
-    var r = Math.random();
-    if (r < 0.35) return 'basic';
-    if (r < 0.6) return 'word';
-    if (r < 0.8) return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  function hardMultTagToQtype(tag) {
-    if (tag === 'hm_fact') return 'basic';
-    if (tag === 'hm_word') return 'word';
-    if (tag === 'hm_inverse') return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  /** Hard divide: 35% direct / 25% word / 20% inverse / 20% reasoning for n slots. */
-  function buildHardDivideSubtypeOrder(n) {
-    if (n <= 0) return [];
-    var direct = Math.floor(0.35 * n);
-    var word = Math.floor(0.25 * n);
-    var inv = Math.floor(0.2 * n);
-    var reason = Math.floor(0.2 * n);
-    var rem = n - direct - word - inv - reason;
-    var bump = 0;
-    for (bump = 0; bump < rem; bump++) {
-      if (bump % 4 === 0) direct++;
-      else if (bump % 4 === 1) word++;
-      else if (bump % 4 === 2) inv++;
-      else reason++;
-    }
-    return shuffle([].concat(
-      Array(direct).fill('hd_direct'),
-      Array(word).fill('hd_word'),
-      Array(inv).fill('hd_inv'),
-      Array(reason).fill('hd_reason')
-    ));
-  }
-
-  function pickHardDivideQtypeRandom() {
-    var r = Math.random();
-    if (r < 0.35) return 'basic';
-    if (r < 0.6) return 'word';
-    if (r < 0.8) return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
-  }
-
-  function hardDivTagToQtype(tag) {
-    if (tag === 'hd_direct') return 'basic';
-    if (tag === 'hd_word') return 'word';
-    if (tag === 'hd_inv') return 'inverse';
-    return Math.random() < 0.5 ? 'reasoning_compare' : 'reasoning_tf';
   }
 
   function buildMultBasic(level) {
@@ -3371,90 +3577,6 @@
     return true;
   }
 
-  /** Division-only validation wrapper (same rules as validateQuestion). */
-  function validateDivisionQuestion(q, level, mode, opts) {
-    if (!q || q.operation !== 'divide' || q.level !== level) return false;
-    return validateQuestion(q, mode, opts || {});
-  }
-
-  function generateDivisionQuestion(level, qtype) {
-    return generateRawQuestion(level, 'divide', qtype);
-  }
-
-  function varietyClash(anchors, anchor) {
-    if (anchor < FACTOR_FLUENCY_MIN) return false;
-    return anchors.length >= 2 && anchors[0] === anchors[1] && anchors[1] === anchor;
-  }
-
-  function multiplySlotsInMode(mode) {
-    if (mode === 'multiply') return ROUND_SIZE;
-    if (mode === 'mixed') return 5;
-    return 0;
-  }
-
-  function divideSlotsInMode(mode) {
-    if (mode === 'divide') return ROUND_SIZE;
-    if (mode === 'mixed') return 5;
-    return 0;
-  }
-
-  function fallbackQtypeForSlot(level, op) {
-    if (level === 'medium' && (op === 'multiply' || op === 'divide')) return 'missing';
-    return 'basic';
-  }
-
-  function attachAdaptiveRoundPlan(level, mode) {
-    var multSlots = multiplySlotsInMode(mode);
-    var divSlots = divideSlotsInMode(mode);
-    GameState.roundAdaptivePlan = {
-      hardMultQueue: level === 'hard' && multSlots > 0 ? buildHardMultiplySubtypeOrder(multSlots) : null,
-      hardDivQueue: level === 'hard' && divSlots > 0 ? buildHardDivideSubtypeOrder(divSlots) : null,
-    };
-  }
-
-  function countOpSlotsBefore(mode, opWant, slotIndex) {
-    var c = 0;
-    var j;
-    for (j = 0; j < slotIndex; j++) {
-      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[j];
-      if (op === opWant) c++;
-    }
-    return c;
-  }
-
-  function getHardMultTagForSlot(slotIndex) {
-    if (GameState.level !== 'hard') return null;
-    var mode = GameState.mode;
-    if (multiplySlotsInMode(mode) <= 0) return null;
-    var idx = countOpSlotsBefore(mode, 'multiply', slotIndex);
-    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardMultQueue;
-    if (!q || idx < 0 || idx >= q.length) return null;
-    return q[idx];
-  }
-
-  function getHardDivTagForSlot(slotIndex) {
-    if (GameState.level !== 'hard') return null;
-    var mode = GameState.mode;
-    if (divideSlotsInMode(mode) <= 0) return null;
-    var idx = countOpSlotsBefore(mode, 'divide', slotIndex);
-    var q = GameState.roundAdaptivePlan && GameState.roundAdaptivePlan.hardDivQueue;
-    if (!q || idx < 0 || idx >= q.length) return null;
-    return q[idx];
-  }
-
-  function recentAnchorsForSlot(slotIndex) {
-    var r = [];
-    if (slotIndex >= 2) {
-      var q0 = GameState.roundQuestions[slotIndex - 2];
-      if (q0 && q0.meta && q0.meta.anchor != null) r.push(q0.meta.anchor);
-    }
-    if (slotIndex >= 1) {
-      var q1 = GameState.roundQuestions[slotIndex - 1];
-      if (q1 && q1.meta && q1.meta.anchor != null) r.push(q1.meta.anchor);
-    }
-    return r;
-  }
-
   function collectRoundKeysExcludingIndex(excludeIndex) {
     var rk = new Set();
     var i;
@@ -3465,46 +3587,44 @@
     return rk;
   }
 
-  /** One slot of the current normal round, using current GameState.adaptiveTier. */
+  /** One slot of the current banded round, generated at ask-time so it uses
+   *  the CURRENT GameState.adaptiveTier. Only normal rounds land here —
+   *  review/practice replays stored snapshots and never calls this. */
   function generateRoundQuestionAtIndex(slotIndex) {
-    var level = GameState.level;
-    var mode = GameState.mode;
     var roundKeys = collectRoundKeysExcludingIndex(slotIndex);
-    var recentAnchors = recentAnchorsForSlot(slotIndex);
-    var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : GameState.roundMixOps[slotIndex];
-    var multTag = op === 'multiply' ? getHardMultTagForSlot(slotIndex) : null;
-    var divTag = op === 'divide' ? getHardDivTagForSlot(slotIndex) : null;
+    var plan = GameState.bandPlan || [];
+    var token = plan[slotIndex];
     var q = null;
+    var candidate = null;
     var attempt;
-    var qtype;
-    var raw;
-    var anchor;
-    for (attempt = 0; attempt < 140; attempt++) {
-      if (multTag != null) qtype = hardMultTagToQtype(multTag);
-      else if (divTag != null) qtype = hardDivTagToQtype(divTag);
-      else qtype = pickTypeForSlot(level, op);
-      if (level === 'easy') qtype = 'basic';
-      if (level === 'medium' && op === 'multiply') qtype = 'missing';
-      if (level === 'medium' && op === 'divide') qtype = 'missing';
-      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) continue;
-      raw = generateRawQuestion(level, op, qtype);
-      q = finalizeQuestion(raw, level, mode);
-      anchor = q.meta && q.meta.anchor != null ? q.meta.anchor : -1;
-      if (varietyClash(recentAnchors, anchor) && attempt < 120) continue;
-      if (!validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: false })) continue;
+    for (attempt = 0; attempt < 30; attempt++) {
+      candidate = GradeBands.generateForSlot(token, getAdaptiveTier());
+      if (!candidate) continue;
+      if (roundKeys.has(candidate.key)) continue;                 // never repeat inside a round
+      if (sessionAskedKeys.has(candidate.key) && attempt < 20) continue; // soft cross-round dedupe
+      q = candidate;
       break;
     }
+    if (!q) q = candidate; // dedupe exhausted — accept the last valid candidate
     if (!q) {
-      for (attempt = 0; attempt < 80; attempt++) {
-        raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
-        q = finalizeQuestion(raw, level, mode);
-        if (validateQuestion(q, mode, { roundKeys: roundKeys, skipSession: true })) break;
-        q = null;
-      }
-    }
-    if (!q) {
-      raw = generateRawQuestion(level, op, fallbackQtypeForSlot(level, op));
-      q = finalizeQuestion(raw, level, mode);
+      // GradeBands returned null 30 times (should never happen): hard-coded safe fact.
+      q = {
+        type: 'basic',
+        operation: 'multiply',
+        prompt: '6 × 7 = ?',
+        promptSub: '',
+        answer: 42,
+        answerR: null,
+        key: 'g' + (GameState.grade || 3) + ':fallback:6x7',
+        level: 'easy',
+        grade: GameState.grade || 3,
+        format: token || 'fallback',
+        meta: { a: 6, b: 7, baseFact: { a: 6, b: 7, op: 'mul' } },
+        hintEasy: 'Skip-count by 7: 7, 14, 21, 28, 35, 42.',
+        hintMed: 'Think of 6 groups of 7.',
+        hintHard: '6 × 7 = 42.',
+        visualSpec: { kind: 'array', rows: 6, cols: 7 },
+      };
     }
     roundKeys.add(q.key);
     sessionAskedKeys.add(q.key);
@@ -3514,37 +3634,16 @@
     GameState.roundQuestions[slotIndex] = q;
   }
 
-  /** Pool builder — valid, deduped questions (does not rely on session keys). */
-  function generateQuestions(level, mode) {
-    var prevTier = GameState.adaptiveTier;
-    GameState.adaptiveTier = 0;
-    var pool = [];
-    var seen = new Set();
-    var n = 0;
-    while (pool.length < POOL_SIZE && n < 25000) {
-      var op = mode === 'multiply' ? 'multiply' : mode === 'divide' ? 'divide' : (Math.random() < 0.5 ? 'multiply' : 'divide');
-      var qtype = pickTypeForSlot(level, op);
-      if (level === 'easy') qtype = 'basic';
-      if (level === 'medium' && op === 'multiply') qtype = 'missing';
-      if (level === 'medium' && op === 'divide') qtype = 'missing';
-      if (level === 'hard' && op === 'multiply') qtype = pickHardMultiplyQtypeRandom();
-      if (level === 'hard' && op === 'divide') qtype = pickHardDivideQtypeRandom();
-      if (chooseAllowedQuestionTypes(level, op).indexOf(qtype) === -1) qtype = fallbackQtypeForSlot(level, op);
-      var raw = generateRawQuestion(level, op, qtype);
-      var q = finalizeQuestion(raw, level, mode);
-      if (validateQuestion(q, mode, { roundKeys: seen, skipSession: true }) && !seen.has(q.key)) {
-        seen.add(q.key);
-        pool.push(q);
-      }
-      n++;
-    }
-    GameState.adaptiveTier = prevTier;
-    return pool;
-  }
-
   // ========== WRONG-ANSWER HELP ==========
   function wrongExplainParagraph(q) {
     var m = q.meta || {};
+    if (q.answerR != null) {
+      if (m.dividend != null && m.divisor != null) {
+        return m.dividend + ' ÷ ' + m.divisor + ' = ' + q.answer + ' R ' + q.answerR +
+          ', because ' + m.divisor + ' × ' + q.answer + ' + ' + q.answerR + ' = ' + m.dividend + '.';
+      }
+      return 'Divide, then write what is left over: the answer is ' + q.answer + ' R ' + q.answerR + '.';
+    }
     switch (q.type) {
       case 'basic':
         if (q.operation === 'multiply') {
@@ -3591,7 +3690,7 @@
 
   function currentQuestionLevel() {
     var q = GameState.currentQuestion;
-    return q && q.level != null ? q.level : GameState.level;
+    return q && q.level != null ? q.level : 'medium';
   }
 
   function shouldAttachWrongVisual() {
@@ -3660,12 +3759,15 @@
   function showScreen(name) {
     Object.values(screens).forEach(function (el) { el.classList.remove('active'); });
     screens[name].classList.add('active');
-    if (name === 'menu') updateMenuMistakeButtons();
+    if (name === 'menu') {
+      updateMenuMistakeButtons();
+      renderGradeUi();
+    }
     if (name === 'game') updateExitButtonLabel();
   }
 
   function hintTextForQuestion(q) {
-    var lvl = q && q.level != null ? q.level : GameState.level;
+    var lvl = q && q.level != null ? q.level : 'medium';
     if (lvl === 'easy') return q.hintEasy;
     if (lvl === 'medium') return q.hintMed;
     return q.hintHard;
@@ -3674,7 +3776,8 @@
   function attachHintVisual(panel, q) {
     const spec = q.visualSpec;
     if (!spec) return;
-    var lvl = q && q.level != null ? q.level : GameState.level;
+    var lvl = q && q.level != null ? q.level : 'medium';
+    if (q && q.grade === 2) lvl = 'easy'; // G2 always gets picture support
     if (lvl === 'easy') {
       const el = renderVisualFromSpec(spec);
       if (el) panel.appendChild(el);
@@ -3722,7 +3825,9 @@
   function openHintModal(q) {
     var modal = document.getElementById('modal-hint');
     if (!q || GameState.answered) return;
-    GameState.hintsUsedThisRound = (GameState.hintsUsedThisRound || 0) + 1;
+    if (!q.isBonus) {
+      GameState.hintsUsedThisRound = (GameState.hintsUsedThisRound || 0) + 1;
+    }
     renderHintModalContent(q);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -3740,12 +3845,6 @@
     restoreFocusAfterHint();
   }
 
-  function modeLabelForState(mode) {
-    if (mode === 'multiply') return 'Multiplication';
-    if (mode === 'divide') return 'Division';
-    return 'Mixed';
-  }
-
   function updateModeIndicator() {
     var badge = document.getElementById('hud-mode-badge');
     var cur = document.getElementById('hud-current-op');
@@ -3753,10 +3852,14 @@
     if (GameState.isReviewMode) {
       badge.textContent = 'Mode: Fix tricky questions';
     } else {
-      badge.textContent = 'Mode: ' + modeLabelForState(GameState.mode);
+      badge.textContent = 'Grade ' + (GameState.grade || '?');
     }
     var op = GameState.currentQuestion && GameState.currentQuestion.operation;
-    var opLabel = op === 'multiply' ? 'Multiplication' : op === 'divide' ? 'Division' : '—';
+    var opLabel =
+      op === 'multiply' ? 'Multiplication'
+      : op === 'divide' ? 'Division'
+      : op === 'expr' ? 'Number sentence'
+      : '—';
     cur.innerHTML = 'Current question: <strong>' + opLabel + '</strong>';
   }
 
@@ -3779,16 +3882,98 @@
       : 'Hearts = lives. If they are all gone, the mission pauses.';
   }
 
+  /** Show/hide hearts row vs Boss HP row vs Lightning timer per play mode. */
+  function updateModeHud() {
+    var livesWrap = document.getElementById('hud-lives-wrap');
+    var bossRow = document.getElementById('boss-hp-row');
+    var timerRow = document.getElementById('lightning-timer-row');
+    var inBoss = GameState.playMode === 'boss' && !GameState.isReviewMode;
+    var inLightning = GameState.playMode === 'lightning' && !GameState.isReviewMode;
+    var hideHearts = inBoss || inLightning;
+    if (livesWrap) livesWrap.style.display = hideHearts ? 'none' : '';
+    if (bossRow) bossRow.hidden = !inBoss;
+    if (timerRow) timerRow.hidden = !inLightning;
+  }
+
+  function updateBossHpUI() {
+    var num = document.getElementById('boss-hp-num');
+    var fill = document.getElementById('boss-hp-fill');
+    if (!num || !fill) return;
+    var hp = typeof GameState.bossHp === 'number' ? GameState.bossHp : BOSS_HP;
+    num.textContent = String(hp);
+    fill.style.width = ((hp / BOSS_HP) * 100) + '%';
+  }
+
+  function flashBossCrit() {
+    var fill = document.getElementById('boss-hp-fill');
+    if (!fill) return;
+    fill.classList.remove('crit-flash');
+    void fill.offsetWidth; // restart the CSS animation
+    fill.classList.add('crit-flash');
+  }
+
+  function bossVictoryCelebration() {
+    confettiBurst();
+    setTimeout(confettiBurst, 350);
+    setTimeout(confettiBurst, 700);
+    try {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.celebrate) {
+        window.KLS.bridge.celebrate();
+      }
+    } catch (e) { /* standalone: no hub */ }
+  }
+
+  /** Stop the Lightning countdown. Safe to call when no timer is running. */
+  function clearLightningTimer() {
+    if (GameState.lightningTimerId != null) {
+      clearInterval(GameState.lightningTimerId);
+      GameState.lightningTimerId = null;
+    }
+  }
+
+  function updateLightningTimerUI() {
+    var num = document.getElementById('lightning-timer-num');
+    var fill = document.getElementById('lightning-timer-fill');
+    var s = Math.max(0, GameState.lightningSecondsLeft | 0);
+    if (num) num.textContent = s + 's';
+    if (fill) fill.style.width = ((s / LIGHTNING_SECONDS) * 100) + '%';
+  }
+
+  function startLightningTimer() {
+    clearLightningTimer();
+    GameState.lightningSecondsLeft = LIGHTNING_SECONDS;
+    updateLightningTimerUI();
+    GameState.lightningTimerId = setInterval(function () {
+      GameState.lightningSecondsLeft -= 1;
+      updateLightningTimerUI();
+      if (GameState.lightningSecondsLeft <= 0) {
+        clearLightningTimer();
+        // Mid-question expiry: the unanswered question was never graded
+        // (totalAnswered only moves inside handleSubmitAnswer), so it is
+        // simply discarded — not a graded commit.
+        endRound();
+      }
+    }, 1000);
+  }
+
   function updateStatsUI() {
     document.getElementById('hud-score').textContent = String(GameState.score);
     const n = GameState.questionIndex + 1;
     var rs = getRoundSize();
-    document.getElementById('hud-q-num').textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
+    var qNumEl = document.getElementById('hud-q-num');
+    if (GameState.currentQuestion && GameState.currentQuestion.isBonus) {
+      qNumEl.textContent = '⭐ Bonus challenge!';
+    } else if (GameState.playMode === 'lightning' && !GameState.isReviewMode) {
+      qNumEl.textContent = 'Question ' + n;
+    } else {
+      qNumEl.textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
+    }
     document.getElementById('hud-streak').textContent = String(GameState.streak);
     document.getElementById('hud-correct').textContent = String(GameState.correctCount);
     document.getElementById('hud-total').textContent = String(GameState.totalAnswered);
     document.getElementById('hud-accuracy').textContent = accuracyPercent(GameState.correctCount, GameState.totalAnswered) + '%';
     updateLivesUI();
+    updateModeHud();
   }
 
   function animateLifeLost() {
@@ -3864,7 +4049,8 @@
       confettiBurst();
     } else {
       fb.className = 'feedback gentle';
-      fb.textContent = pick(GENTLE_PHRASES) + ' The answer is ' + q.answer + '.';
+      var answerText = q.answerR != null ? q.answer + ' R ' + q.answerR : String(q.answer);
+      fb.textContent = pick(GENTLE_PHRASES) + ' The answer is ' + answerText + '.';
       const explain = document.createElement('div');
       explain.className = 'feedback-explain';
       explain.textContent = wrongExplainParagraph(q);
@@ -3882,28 +4068,16 @@
 
   function setAnswerControlsEnabled(on) {
     document.getElementById('answer-input').disabled = !on;
+    var r = document.getElementById('answer-input-r');
+    if (r) r.disabled = !on;
     document.getElementById('btn-submit-answer').disabled = !on;
   }
 
   // ========== QUESTION RENDER ==========
   function renderQuestion() {
     var q = GameState.currentQuestion;
-    var guard = 0;
-    var rk = new Set();
-    var rqi, rkQ;
-    for (rqi = 0; rqi < GameState.roundQuestions.length; rqi++) {
-      rkQ = GameState.roundQuestions[rqi];
-      if (rkQ && rqi !== GameState.questionIndex) rk.add(rkQ.key);
-    }
-    while (guard < 24 && !validateQuestion(q, GameState.mode, { roundKeys: rk, skipSession: true })) {
-      var opFix = GameState.mode === 'multiply' ? 'multiply' : GameState.mode === 'divide' ? 'divide' : GameState.roundMixOps[GameState.questionIndex];
-      var rawFix = generateRawQuestion(GameState.level, opFix, fallbackQtypeForSlot(GameState.level, opFix));
-      q = finalizeQuestion(rawFix, GameState.level, GameState.mode);
-      GameState.roundQuestions[GameState.questionIndex] = q;
-      GameState.currentQuestion = q;
-      guard++;
-    }
-
+    // Band questions are validated by GradeBands at generation time; review
+    // mode replays stored snapshots verbatim. No regenerate-on-invalid loop.
     GameState.answered = false;
     closeHintModal();
     document.getElementById('feedback').textContent = '';
@@ -3913,7 +4087,21 @@
 
     document.getElementById('q-text').textContent = q.prompt;
 
+    var weaveChip = document.getElementById('weavein-chip');
+    if (weaveChip) weaveChip.hidden = !q.isWeaveIn;
+
+    var subEl = document.getElementById('q-sub');
+    if (subEl) {
+      subEl.textContent = q.promptSub || '';
+      subEl.hidden = !q.promptSub;
+    }
+
     document.getElementById('answer-input').value = '';
+    var rWrap = document.getElementById('answer-r-wrap');
+    var rInput = document.getElementById('answer-input-r');
+    var needsR = q && q.answerR != null;
+    if (rWrap) rWrap.hidden = !needsR;
+    if (rInput) rInput.value = '';
     setAnswerControlsEnabled(true);
     document.getElementById('btn-hint').disabled = false;
 
@@ -3940,9 +4128,44 @@
       return;
     }
 
+    // Remainder questions (grade 4/5 long division) need BOTH boxes.
+    const needsR = q.answerR != null;
+    let rnum = 0;
+    if (needsR) {
+      const rawR = document.getElementById('answer-input-r').value.trim();
+      if (!/^\d+$/.test(rawR)) {
+        document.getElementById('feedback').textContent =
+          rawR === ''
+            ? 'Type the answer AND the remainder in the R box, then tap Check.'
+            : 'Use digits only in the R box, then tap Check.';
+        document.getElementById('feedback').className = 'feedback neutral';
+        return;
+      }
+      rnum = parseInt(rawR, 10);
+    }
+
+    if (q.isBonus) {
+      GameState.answered = true;
+      var okBonus = num === q.answer;
+      var bonusLine = '';
+      if (okBonus) {
+        GameState.score += BONUS_POINTS;
+        bonusLine = '+' + BONUS_POINTS + ' bonus';
+      } else {
+        recordWrongAnswer(q, num);
+      }
+      recordFamilyAttemptsForQuestion(q, okBonus);
+      setAnswerControlsEnabled(false);
+      document.getElementById('btn-hint').disabled = true;
+      showFeedback(okBonus, bonusLine, '');
+      document.getElementById('btn-next').hidden = false;
+      updateStatsUI();
+      return;
+    }
+
     GameState.answered = true;
     GameState.totalAnswered++;
-    const ok = num === q.answer;
+    const ok = num === q.answer && (!needsR || rnum === q.answerR);
 
     let pointsLine = '';
     if (ok) {
@@ -3969,14 +4192,34 @@
       if (!GameState.isReviewMode) {
         GameState.mistakeSeenThisRound = true;
       }
-      recordWrongAnswer(q, num);
-      if (!GameState.isReviewMode) handleLifeLost();
+      recordWrongAnswer(q, needsR ? String(num) + ' R ' + String(rnum) : num);
+      if (!GameState.isReviewMode && GameState.playMode === 'mission') handleLifeLost();
+    }
+
+    if (GameState.playMode === 'boss' && !GameState.isReviewMode) {
+      if (ok) {
+        var bossDmg = GameState.streak >= 3 ? BOSS_CRIT_DAMAGE : 1;
+        GameState.bossHp = Math.max(0, GameState.bossHp - bossDmg);
+        if (bossDmg >= BOSS_CRIT_DAMAGE) {
+          pointsLine += '  ·  ⚡ CRITICAL HIT!';
+          flashBossCrit();
+        }
+      } else {
+        GameState.bossHp = Math.min(BOSS_HP, GameState.bossHp + 1);
+      }
+      updateBossHpUI();
     }
 
     GameState.adaptiveStats.correctThisRound = GameState.correctCount;
     GameState.adaptiveStats.wrongThisRound = GameState.totalAnswered - GameState.correctCount;
 
     recordFamilyAttemptsForQuestion(q, ok);
+
+    if (ok && q.isWeaveIn && !GameState.isReviewMode) {
+      // Same resolution path practice uses: marks the stored mistake
+      // mastered and credits progress.stats.mistakesFixed.
+      resolveMistake(q.key);
+    }
 
     var adaptiveEncouragement = '';
     if (!GameState.isReviewMode && updateAdaptiveDifficulty(ok)) {
@@ -4009,6 +4252,10 @@
 
   function goToNextQuestion() {
     if (!GameState.answered || GameState.isGameOver) return;
+    if (GameState.playMode === 'boss' && !GameState.isReviewMode && GameState.bossHp !== null && GameState.bossHp <= 0) {
+      endRound();
+      return;
+    }
     if (GameState.reviewCompletedAllCorrect) {
       GameState.reviewCompletedAllCorrect = false;
       wrapUpReviewSessionSuccess();
@@ -4026,7 +4273,7 @@
       endRound();
       return;
     }
-    if (!GameState.isReviewMode && GameState.questionIndex < ROUND_SIZE) {
+    if (!GameState.isReviewMode) {
       if (!GameState.roundQuestions[GameState.questionIndex]) {
         generateRoundQuestionAtIndex(GameState.questionIndex);
       }
@@ -4057,10 +4304,16 @@
       {
         id: 'perfect',
         test: function () {
-          return GameState.correctCount === ROUND_SIZE;
+          return GameState.playMode === 'mission' && GameState.correctCount === ROUND_SIZE;
         },
       },
-      { id: 'hard', test: function () { return GameState.level === 'hard' && stars >= 4; } },
+      {
+        id: 'hard', // stored id kept for old saves; relabeled "Challenger 🏆"
+        test: function () {
+          return stars >= 4 && (GameState.grade || 0) >= 4 &&
+            (GameState.playMode === 'mission' || GameState.playMode === 'boss');
+        },
+      },
       { id: 'mistake_fixer', test: function () { return progress.stats.mistakesFixed >= 10; } },
       { id: 'comeback_kid', test: function () { return progress.stats.streakRecoveryCount >= 3; } },
       { id: 'fact_master', test: function () { return hasMulFamilyMasteredEnough(5); } },
@@ -4081,7 +4334,8 @@
       {
         id: 'focus_mode',
         test: function () {
-          return GameState.hintsUsedThisRound === 0 && GameState.totalAnswered === ROUND_SIZE;
+          return GameState.playMode === 'mission' &&
+            GameState.hintsUsedThisRound === 0 && GameState.totalAnswered === ROUND_SIZE;
         },
       },
     ];
@@ -4090,7 +4344,111 @@
     });
   }
 
+  function endLightningRound() {
+    clearLightningTimer();
+    progress = ensureProgressShape(progress);
+    var g = GameState.grade;
+    var acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    var prevBest = Number(progress.bestLightningByGrade[g]) || 0;
+    var isNewBest = GameState.correctCount > prevBest;
+    if (isNewBest) {
+      progress.bestLightningByGrade[g] = GameState.correctCount;
+      if (prevBest > 0) {
+        progress.lightningBestBeats = (Number(progress.lightningBestBeats) || 0) + 1;
+      }
+    }
+    var stars = 0;
+    if (GameState.totalAnswered >= 5) stars += 1;               // played for real
+    if (isNewBest) stars += 1;                                   // beat your own best
+    if (GameState.totalAnswered > 0 && acc >= 90) stars += 1;    // sharp accuracy
+    progress.totalStars += stars;
+    progress.roundsPlayed += 1;
+    if (GameState.bestStreakThisRound > progress.bestStreakEver) {
+      progress.bestStreakEver = GameState.bestStreakThisRound;
+    }
+    recordPlayDateForMission();
+    if (progress.lightningBestBeats >= 2 && progress.badges.indexOf('lightning_streak') === -1) {
+      progress.badges.push('lightning_streak');
+    }
+    GameState.lastPlayMode = GameState.playMode;
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    GameState.reviewJustCompleted = false;
+    saveProgress(progress);
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent = '⚡ Lightning finished!';
+    document.getElementById('results-stars').textContent =
+      stars > 0 ? new Array(stars + 1).join('⭐') : '—';
+    document.getElementById('results-rating').textContent = isNewBest
+      ? 'New personal best: ' + GameState.correctCount + ' correct! ⚡'
+      : (GameState.correctCount === prevBest && prevBest > 0
+        ? 'You tied your best: ' + prevBest + '! One more gets a new record!'
+        : 'You got ' + GameState.correctCount + ' — your best is ' +
+          (progress.bestLightningByGrade[g] || 0) + '. Beat your own best!');
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent =
+      GameState.correctCount + ' / ' + GameState.totalAnswered;
+    document.getElementById('res-accuracy').textContent = acc + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = String(stars);
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
+  function endBossRound() {
+    var victory = typeof GameState.bossHp === 'number' && GameState.bossHp <= 0;
+    progress = ensureProgressShape(progress);
+    if (GameState.mistakeSeenThisRound) {
+      progress.stats.streakRecoveryCount = Math.max(
+        progress.stats.streakRecoveryCount,
+        GameState.correctAfterFirstMistake
+      );
+    }
+    var stars = computeStarsForNormalRound();
+    progress.totalStars += stars;
+    progress.roundsPlayed += 1;
+    if (GameState.bestStreakThisRound > progress.bestStreakEver) {
+      progress.bestStreakEver = GameState.bestStreakThisRound;
+    }
+    var acc = accuracyPercent(GameState.correctCount, GameState.totalAnswered);
+    progress.lastRoundAccuracy = acc;
+    recordPlayDateForMission();
+    if (victory && progress.badges.indexOf('boss_slayer') === -1) {
+      progress.badges.push('boss_slayer');
+    }
+    GameState.lastPlayMode = GameState.playMode;
+    GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
+    wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
+    saveWrongAnswerHistory();
+    updatePracticeButtons();
+    GameState.reviewJustCompleted = false;
+    evaluateMissionBadges(stars);
+    saveProgress(progress);
+    if (victory) bossVictoryCelebration();
+    showNormalResultsStats();
+    document.getElementById('results-title').textContent =
+      victory ? '🎉 Boss defeated!' : 'The boss escaped — next time!';
+    document.getElementById('results-stars').textContent = new Array(stars + 1).join('⭐');
+    document.getElementById('results-rating').textContent = victory
+      ? 'Amazing! Your math attacks took the boss down!'
+      : 'So close! The boss is already scared of your math.';
+    document.getElementById('res-score').textContent = String(GameState.score);
+    document.getElementById('res-correct').textContent =
+      GameState.correctCount + ' / ' + GameState.totalAnswered;
+    document.getElementById('res-accuracy').textContent = acc + '%';
+    document.getElementById('res-streak').textContent = String(GameState.bestStreakThisRound);
+    document.getElementById('res-stars').textContent = String(stars);
+    clearSaveStatus('results-save-status');
+    showScreen('results');
+    updateResultsExportButtons();
+  }
+
   function endRound() {
+    clearLightningTimer();
+    closeHintModal();
     if (GameState.isReviewMode) {
       GameState.isReviewMode = false;
       GameState.pendingReviewAdvance = false;
@@ -4118,6 +4476,16 @@
       return;
     }
 
+    if (GameState.playMode === 'boss') {
+      endBossRound();
+      return;
+    }
+
+    if (GameState.playMode === 'lightning') {
+      endLightningRound();
+      return;
+    }
+
     progress = ensureProgressShape(progress);
     if (GameState.mistakeSeenThisRound) {
       progress.stats.streakRecoveryCount = Math.max(
@@ -4136,8 +4504,7 @@
     progress.lastRoundAccuracy = acc;
     recordPlayDateForMission();
 
-    GameState.lastRoundMode = GameState.mode;
-    GameState.lastRoundLevel = GameState.level;
+    GameState.lastPlayMode = GameState.playMode;
     GameState.lastRoundWrongBuffer = GameState.currentRoundWrongAnswers.slice();
     wrongAnswerStore.recentWrongAnswers = GameState.lastRoundWrongBuffer.slice();
     saveWrongAnswerHistory();
@@ -4170,7 +4537,40 @@
     updateResultsExportButtons();
   }
 
-  function startRound() {
+  /** Mastered the band? Append 1-2 next-band Bonus Challenge slots.
+   *  Bonus questions never cost a heart and are excluded from
+   *  accuracy/stars; a miss is still a graded commit (recorded). */
+  function appendDriftBonusQuestions(playMode) {
+    if (playMode !== 'mission') return; // Mission-only: a boss KO ends the round before appended slots (spec §4 amended)
+    if (typeof GradeBands === 'undefined') return;
+    if (!isBandMastered(GameState.grade)) return;
+    var n = 1 + Math.floor(Math.random() * 2); // 1 or 2
+    for (var i = 0; i < n; i++) {
+      var bq = GradeBands.generateDriftBonus(GameState.grade, getAdaptiveTier());
+      if (!bq) return;
+      bq.isBonus = true;
+      GameState.roundQuestions.push(bq);
+      GameState.roundSize += 1;
+    }
+  }
+
+  /** @param {'mission'|'boss'|'lightning'} playMode - defaults to 'mission'. */
+  function startRound(playMode) {
+    clearLightningTimer();
+    progress = ensureProgressShape(progress);
+    if (!hasGradeBands()) {
+      window.alert('Oops — the question maker did not load. Please refresh the page.');
+      return;
+    }
+    if (!isGradeSet()) {
+      gradeCardForcedOpen = true;
+      renderGradeUi();
+      showScreen('menu');
+      return;
+    }
+    GameState.playMode = playMode || 'mission';
+    GameState.grade = progress.grade;
+    GameState.mode = 'mixed'; // band rounds always mix ops; keeps the wrong-record 'mode' field truthful
     GameState.questionIndex = 0;
     GameState.score = 0;
     GameState.streak = 0;
@@ -4190,17 +4590,46 @@
     GameState.currentRoundId = newRoundId();
     GameState.currentRoundWrongAnswers = [];
     resetAdaptiveDifficultyState();
-    if (GameState.mode === 'mixed') {
-      GameState.roundMixOps = shuffle([].concat(Array(5).fill('multiply'), Array(5).fill('divide')));
+    GameState.roundMixOps = null;
+    GameState.bossHp = null;
+    if (playMode === 'boss') {
+      GameState.bossHp = BOSS_HP;
+      GameState.roundSize = BOSS_MAX_QUESTIONS;
+      // Recipe cycles past 10 slots inside buildRoundPlan (contract).
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, BOSS_MAX_QUESTIONS, {});
+      GameState.roundQuestions = new Array(BOSS_MAX_QUESTIONS);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('🎯 Boss Battle!');
+    } else if (playMode === 'lightning') {
+      GameState.roundSize = 60;
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, 60, { fastOnly: true });
+      GameState.roundQuestions = new Array(60);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('⚡ Lightning Round!');
+      startLightningTimer();
     } else {
-      GameState.roundMixOps = null;
+      // Format plan for the whole round (quota recipe for the grade, shuffled).
+      GameState.bandPlan = GradeBands.buildRoundPlan(GameState.grade, ROUND_SIZE);
+      GameState.roundQuestions = new Array(ROUND_SIZE);
+      generateRoundQuestionAtIndex(0);
+      GameState.currentQuestion = GameState.roundQuestions[0];
+      setGameTitle('🛸 Mission in progress');
     }
-    attachAdaptiveRoundPlan(GameState.level, GameState.mode);
-    GameState.roundQuestions = new Array(ROUND_SIZE);
-    generateRoundQuestionAtIndex(0);
-    GameState.currentQuestion = GameState.roundQuestions[0];
+    if (playMode === 'mission') {
+      var dueRecs = getDueTodaySet().slice(0, WEAVE_SLOTS.length); // at most 2
+      for (var wvi = 0; wvi < dueRecs.length; wvi++) {
+        var slot = WEAVE_SLOTS[wvi];
+        var wq = questionFromSnapshot(dueRecs[wvi].questionSnapshot);
+        if (!wq || slot >= GameState.roundQuestions.length) continue;
+        wq.isWeaveIn = true;
+        GameState.roundQuestions[slot] = wq;
+      }
+    }
+    appendDriftBonusQuestions(playMode);
+    updateBossHpUI();
     setReviewBannerVisible(false);
-    setGameTitle('🛸 Mission in progress');
     setGameOverModalOpen(false);
     showNormalResultsStats();
     showScreen('game');
@@ -4209,41 +4638,78 @@
   }
 
   // ========== MENU / EVENTS ==========
-  document.querySelectorAll('[data-level]').forEach(function (btn) {
+  // ---- Grade picker + mode tiles (menu redesign) ----
+  /** True when the chip re-opened the grade card over an already-set grade. */
+  var gradeCardForcedOpen = false;
+
+  function isGradeSet() {
+    var g = progress && progress.grade;
+    return g === 2 || g === 3 || g === 4 || g === 5;
+  }
+
+  /** Single source of truth for menu grade UI: card vs chip, tile enablement. */
+  function renderGradeUi() {
+    progress = ensureProgressShape(progress);
+    var set = isGradeSet();
+    var card = document.getElementById('grade-card');
+    var chipRow = document.getElementById('grade-chip-row');
+    var chip = document.getElementById('grade-chip');
+    if (card) card.hidden = set && !gradeCardForcedOpen;
+    if (chipRow) chipRow.hidden = !set;
+    if (chip) chip.textContent = set ? '🌌 Grade ' + progress.grade + ' · change' : '';
+    var tiles = document.querySelectorAll('.mode-tile');
+    var i;
+    for (i = 0; i < tiles.length; i++) {
+      tiles[i].setAttribute('aria-disabled', set ? 'false' : 'true');
+    }
+    var gbtns = document.querySelectorAll('.grade-btn');
+    var j;
+    for (j = 0; j < gbtns.length; j++) {
+      var g = parseInt(gbtns[j].getAttribute('data-grade'), 10);
+      gbtns[j].classList.toggle('selected', set && g === progress.grade);
+    }
+  }
+
+  document.querySelectorAll('.grade-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      document.querySelectorAll('[data-level]').forEach(function (b) {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-pressed', 'true');
-      GameState.level = btn.getAttribute('data-level');
+      var g = parseInt(btn.getAttribute('data-grade'), 10);
+      if (!(g >= 2 && g <= 5)) return;
+      progress = ensureProgressShape(progress);
+      progress.grade = g;
+      saveProgress(progress);
+      GameState.grade = g;
+      gradeCardForcedOpen = false;
+      renderGradeUi();
     });
   });
 
-  document.querySelectorAll('[data-mode]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('[data-mode]').forEach(function (b) {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-pressed', 'true');
-      GameState.mode = btn.getAttribute('data-mode');
-    });
+  document.getElementById('grade-chip').addEventListener('click', function () {
+    gradeCardForcedOpen = true;
+    renderGradeUi();
   });
 
-  document.getElementById('btn-play').addEventListener('click', startRound);
+  /** Tiles are inert until a grade is picked (they just re-open the card). */
+  function guardTile(handler) {
+    return function () {
+      if (!isGradeSet()) {
+        gradeCardForcedOpen = true;
+        renderGradeUi();
+        return;
+      }
+      handler();
+    };
+  }
 
-  document.getElementById('btn-menu-quickfix').addEventListener('click', function () {
-    window.SmartPractice.start('quickfix', { emptyStateLocation: 'menu' });
-  });
-  document.getElementById('btn-menu-mostmissed').addEventListener('click', function () {
-    window.SmartPractice.start('mostmissed', { emptyStateLocation: 'menu' });
-  });
-  document.getElementById('btn-menu-duetoday').addEventListener('click', function () {
-    window.SmartPractice.start('duetoday', { emptyStateLocation: 'menu' });
-  });
+  document.getElementById('btn-tile-mission').addEventListener('click', guardTile(function () {
+    startRound('mission');
+  }));
+  document.getElementById('btn-tile-boss').addEventListener('click', guardTile(function () {
+    startRound('boss');
+  }));
+  document.getElementById('btn-tile-lightning').addEventListener('click', guardTile(function () {
+    startRound('lightning');
+  }));
+  document.getElementById('btn-tile-fixit').addEventListener('click', guardTile(startFixItPractice));
 
   document.getElementById('btn-how').addEventListener('click', function () {
     document.getElementById('modal-how').classList.add('open');
@@ -4272,7 +4738,7 @@
       star50: '🌟 50 stars',
       streak5: '🔥 Streak 5+',
       perfect: '💯 Perfect round',
-      hard: '🚀 Hard hero',
+      hard: 'Challenger 🏆',
       mistake_fixer: '🔧 Mistake Fixer',
       comeback_kid: '↩️ Comeback Kid',
       fact_master: '🔢 Fact Master',
@@ -4281,6 +4747,8 @@
       practice_star: '🎯 Practice Star',
       daily_learner: '📅 Daily Learner',
       focus_mode: '🧭 Focus Mode',
+      boss_slayer: 'Boss Slayer 🎯',
+      lightning_streak: 'Lightning Streak ⚡',
     };
     if (!progress.badges.length) {
       list.innerHTML = '<span class="badge-pill">Fly a mission to earn your first badge!</span>';
@@ -4301,6 +4769,7 @@
       ? 'Exit practice and return to the main menu?'
       : 'Exit this mission? Your progress on this round will not be saved.';
     if (window.confirm(confirmText)) {
+      clearLightningTimer();
       if (GameState.isReviewMode) {
         GameState.isReviewMode = false;
         GameState.pendingReviewAdvance = false;
@@ -4336,16 +4805,17 @@
 
   document.getElementById('btn-next').addEventListener('click', goToNextQuestion);
 
-  document.getElementById('btn-again').addEventListener('click', startRound);
+  document.getElementById('btn-again').addEventListener('click', function () {
+    startRound(GameState.lastPlayMode || 'mission');
+  });
 
   document.getElementById('btn-game-over-try-again').addEventListener('click', function () {
     setGameOverModalOpen(false);
-    startRound();
+    startRound(GameState.playMode || 'mission');
   });
 
   document.getElementById('btn-game-over-practice').addEventListener('click', function () {
     if (safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
-      preserveRoundContext: true,
       emptyStateLocation: 'gameover'
     })) {
       setGameOverModalOpen(false);
@@ -4359,27 +4829,7 @@
 
   document.getElementById('btn-practice-wrongs').addEventListener('click', function () {
     safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
-      preserveRoundContext: true,
       emptyStateLocation: 'results'
-    });
-  });
-
-  document.getElementById('btn-results-quickfix').addEventListener('click', function () {
-    window.SmartPractice.start('quickfix', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
-    });
-  });
-  document.getElementById('btn-results-mostmissed').addEventListener('click', function () {
-    window.SmartPractice.start('mostmissed', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
-    });
-  });
-  document.getElementById('btn-results-duetoday').addEventListener('click', function () {
-    window.SmartPractice.start('duetoday', {
-      emptyStateLocation: 'results',
-      preserveRoundContext: true,
     });
   });
 
@@ -4417,8 +4867,6 @@
     updateMenuMistakeButtons();
     clearSaveStatus('menu-save-status');
   });
-  document.getElementById('btn-change-level').addEventListener('click', function () { showScreen('menu'); });
-  document.getElementById('btn-change-mode').addEventListener('click', function () { showScreen('menu'); });
   document.getElementById('btn-results-menu').addEventListener('click', function () { showScreen('menu'); });
   document.getElementById('btn-results-progress').addEventListener('click', function () {
     renderProgressScreen();
@@ -4429,6 +4877,10 @@
     if (e.key === 'Enter') handleSubmitAnswer();
   });
 
+  document.getElementById('answer-input-r').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') handleSubmitAnswer();
+  });
+
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeHintModal();
   });
@@ -4436,6 +4888,8 @@
   (function initWrongAnswersUi() {
     resetLatestPracticeStateOnLaunch();
     updatePracticeButtons();
+    GameState.grade = (progress && progress.grade) || null;
+    renderGradeUi();
   })();
 
   // ── Hub profile-scope integration ─────────────────────────────────────────
@@ -4449,6 +4903,9 @@
     wrongAnswerStore = loadWrongAnswerHistory();
     resetLatestPracticeStateOnLaunch();
     updatePracticeButtons();
+    GameState.grade = (progress && progress.grade) || null;
+    gradeCardForcedOpen = false;
+    renderGradeUi();
   }
 
   /** Wipe THIS profile's CMQ data (both scoped keys). Tell the hub to drop
@@ -4459,19 +4916,31 @@
       'This will erase your stars, badges, mastered facts, and saved review ' +
       "list — for YOU only. Other profiles are not changed."
     )) return;
+    // The grade choice is identity, not progress — it survives the wipe.
+    var keepGrade = null;
+    if (progress && (progress.grade === 2 || progress.grade === 3 || progress.grade === 4 || progress.grade === 5)) {
+      keepGrade = progress.grade;
+    }
     try {
       var k1 = storageKey(); if (k1) localStorage.removeItem(k1);
       var k2 = wrongsKey();  if (k2) localStorage.removeItem(k2);
     } catch (e) { /* ignore */ }
     progress = defaultProgress();
+    if (keepGrade) {
+      progress.grade = keepGrade;
+      saveProgress(progress);
+    }
+    GameState.grade = keepGrade;
     wrongAnswerStore = defaultWrongAnswerStore();
     GameState.lastRoundWrongBuffer = [];
     GameState.reviewQueue = [];
     updatePracticeButtons();
+    renderGradeUi();
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded() && window.KLS.bridge.resetProgress) {
       window.KLS.bridge.resetProgress();
     }
     window.alert("All clear! Starting fresh. 🌟");
+    clearLightningTimer();
     showScreen('menu');
   }
 
@@ -4484,26 +4953,26 @@
   // Chrome-bar "🏠 Home" → return to the menu screen. Cancels any active
   // game/practice screen without resetting progress.
   window.__cmq_onGoHome = function () {
-    try { showScreen('menu'); } catch (e) { /* ignore */ }
+    try { clearLightningTimer(); showScreen('menu'); } catch (e) { /* ignore */ }
   };
 
-  // Resume-blob contract — entry-context only. Captures which screen the
-  // kid is on plus mode/level. Restoring lands them at the same screen
-  // (a fresh round at the same level/mode); we don't try to rebuild the
-  // in-progress question queue.
+  // Resume-blob contract — entry-context only: { v: 2, screen, playMode,
+  // grade }. Captures which screen the kid is on plus mode/grade.
+  // Restoring lands them at the same screen (a fresh round at the same
+  // grade/mode); we don't try to rebuild the in-progress question queue.
   window.__cmq_captureState = function () {
     try {
       var active = document.querySelector('.screen.active');
       return {
-        v: 1,
+        v: 2,
         screen: active ? active.id : 'screen-menu',
-        mode: (GameState && GameState.mode) || null,
-        level: (GameState && GameState.level) || null,
+        playMode: (GameState && GameState.playMode) || 'mission',
+        grade: (progress && progress.grade) || null,
       };
-    } catch (e) { return { v: 1, screen: 'screen-menu' }; }
+    } catch (e) { return { v: 2, screen: 'screen-menu', playMode: 'mission', grade: null }; }
   };
-  // Approach 4: stash the blob; the kid clicks Continue or Play Mission
-  // on the menu to decide. We don't auto-restore.
+  // Approach 4: stash the blob; the kid clicks Continue or the Mission
+  // tile on the menu to decide. We don't auto-restore.
   var __cmq_pendingResume = null;
   function __cmq_showResumeRow(on) {
     var row = document.getElementById('cmq-resume-row');
@@ -4519,21 +4988,30 @@
     } catch (e) { /* ignore */ }
   }
   function __cmq_doRestoreFromBlob(blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
     try {
-      if (GameState) {
-        if (blob.mode)  GameState.mode  = blob.mode;
-        if (blob.level) GameState.level = blob.level;
+      if (blob.v === 2) {
+        if (blob.playMode) GameState.playMode = blob.playMode;
+        // The per-profile progress blob is authoritative for grade; only
+        // seed from the resume blob when no grade has been picked yet.
+        if ((blob.grade === 2 || blob.grade === 3 || blob.grade === 4 || blob.grade === 5) && !isGradeSet()) {
+          progress = ensureProgressShape(progress);
+          progress.grade = blob.grade;
+          saveProgress(progress);
+          GameState.grade = blob.grade;
+        }
       }
+      // v1 blobs restore the screen only (their level/mode fields are ignored).
+      renderGradeUi();
       showScreen('menu');
     } catch (e) { /* corrupted blob */ }
   }
   window.__cmq_restoreState = function (blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
     __cmq_pendingResume = blob;
     __cmq_showResumeRow(true);
   };
-  // Wire Continue / Play Mission interactions.
+  // Wire Continue / Mission tile interactions.
   (function () {
     var rb = document.getElementById('btn-cmq-resume');
     if (rb) rb.addEventListener('click', function () {
@@ -4542,7 +5020,7 @@
       __cmq_showResumeRow(false);
       __cmq_doRestoreFromBlob(blob);
     });
-    var play = document.getElementById('btn-play');
+    var play = document.getElementById('btn-tile-mission');
     if (play) play.addEventListener('click', function () {
       if (__cmq_pendingResume) __cmq_clearPendingResume();
     }, true);

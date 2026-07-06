@@ -32,6 +32,22 @@ Each record includes the question shape, kid's answer, correct answer,
 timestamp, attempts, and fact-family tags used by
 `learningIntelligence.js` for weakness detection.
 
+Since the grade-bands release, new records additionally carry:
+
+- `grade` — the profile's grade band (2-5) at the time of the miss.
+- `playMode` — `'mission' | 'boss' | 'lightning' | 'practice'`.
+- `level` — KEPT for backward compatibility, now derived from the
+  question format (recall/warm-up → `easy`, missing → `medium`,
+  everything else → `hard`). Old easy/medium/hard records replay
+  verbatim in Fix-It.
+- `questionSnapshot.answerR` and `questionSnapshot.meta.remainder` —
+  present on remainder questions (G4/G5 long division) so practice
+  re-renders the `R __` input box.
+
+Misses are recorded in every mode — Mission, Boss Battle, Lightning,
+and drift-up bonus questions (a bonus miss is a graded commit even
+though bonuses never cost hearts or accuracy).
+
 ## Entry points
 
 - **"Fix Tricky Questions"** button (`#btn-practice-wrongs`) on the

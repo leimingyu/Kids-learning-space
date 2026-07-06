@@ -6,7 +6,7 @@
 (function (global) {
   'use strict';
 
-  var FAMILY_FACTORS = [3, 4, 5, 6, 7, 8, 9];
+  var FAMILY_FACTORS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   var FLUENCY_MIN = 2;
   var FLUENCY_MAX = 9;
 
@@ -43,6 +43,29 @@
   function getFactFamily(q) {
     if (!q || typeof q !== 'object') {
       return { kind: 'unknown', operation: null, familyIds: [], primaryFactors: [], meta: {} };
+    }
+    var bf = q.meta && q.meta.baseFact;
+    if (bf && typeof bf === 'object' && (bf.op === 'mul' || bf.op === 'div')) {
+      var bfPrefix = bf.op === 'div' ? 'div:' : 'mul:';
+      var bfFactors = [];
+      [bf.a, bf.b].forEach(function (f) {
+        if (typeof f === 'number' && isFamilyTable(f)) bfFactors.push(f);
+      });
+      return {
+        kind: 'fact',
+        operation: q.operation || (bf.op === 'div' ? 'divide' : 'multiply'),
+        familyIds: uniq(bfFactors.map(function (n) { return bfPrefix + n; })),
+        primaryFactors: bfFactors.slice().sort(function (x, y) { return x - y; }),
+        meta: { baseFact: { a: bf.a, b: bf.b, op: bf.op } },
+      };
+    }
+    if (q.meta && 'baseFact' in q.meta && !q.meta.baseFact) {
+      // A band question that explicitly declares "no anchoring table fact"
+      // (g5_bigmult, g5_longdiv2). Never fall through to the legacy meta
+      // paths — with families widened to 2-12 they would misfile 12 × 15
+      // under mul:12 and pollute the mastery stats that drive drift-up.
+      // Legacy questions and old snapshots never carry the baseFact key.
+      return { kind: 'unknown', operation: q.operation || null, familyIds: [], primaryFactors: [], meta: {} };
     }
     var op = q.operation;
     var type = q.type;
