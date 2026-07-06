@@ -2429,26 +2429,28 @@
 
   /**
    * Fix-It: ONE combined practice set — due today first, then recent,
-   * then most missed — deduped by question key, capped by
-   * finalizeSmartPracticeSet (5–10 items when enough exist).
+   * then most missed — deduped by question key, capped by source
+   * priority BEFORE interleaving so due-today items are never bumped
+   * out by later sources. Interleave-by-level runs only after the
+   * cap, for presentation variety — nothing is dropped after selection.
    */
   function getFixItSet() {
-    var combined = [];
     var seen = {};
-    function addAll(list) {
-      var i;
-      for (i = 0; i < list.length; i++) {
-        var r = list[i];
-        if (r && r.key && !seen[r.key]) {
-          seen[r.key] = true;
-          combined.push(r);
-        }
+    var picked = [];
+    var sources = [getDueTodaySet(), getQuickFixSet(), getMostMissedSet()];
+    var s, i;
+    for (s = 0; s < sources.length && picked.length < PRACTICE_ROUND_MAX; s++) {
+      var list = sources[s] || [];
+      for (i = 0; i < list.length && picked.length < PRACTICE_ROUND_MAX; i++) {
+        var rec = list[i];
+        var key = rec && rec.key;
+        if (!key || seen[key]) continue;
+        seen[key] = true;
+        picked.push(rec);
       }
     }
-    addAll(getDueTodaySet());
-    addAll(getQuickFixSet());
-    addAll(getMostMissedSet());
-    return finalizeSmartPracticeSet(combined);
+    // Interleave AFTER selection, for variety only — inclusion priority is already settled.
+    return interleavePracticeRecordsByLevel(picked);
   }
 
   function startFixItPractice() {
