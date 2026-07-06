@@ -4535,15 +4535,26 @@
       'This will erase your stars, badges, mastered facts, and saved review ' +
       "list — for YOU only. Other profiles are not changed."
     )) return;
+    // The grade choice is identity, not progress — it survives the wipe.
+    var keepGrade = null;
+    if (progress && (progress.grade === 2 || progress.grade === 3 || progress.grade === 4 || progress.grade === 5)) {
+      keepGrade = progress.grade;
+    }
     try {
       var k1 = storageKey(); if (k1) localStorage.removeItem(k1);
       var k2 = wrongsKey();  if (k2) localStorage.removeItem(k2);
     } catch (e) { /* ignore */ }
     progress = defaultProgress();
+    if (keepGrade) {
+      progress.grade = keepGrade;
+      saveProgress(progress);
+    }
+    GameState.grade = keepGrade;
     wrongAnswerStore = defaultWrongAnswerStore();
     GameState.lastRoundWrongBuffer = [];
     GameState.reviewQueue = [];
     updatePracticeButtons();
+    renderGradeUi();
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.isEmbedded() && window.KLS.bridge.resetProgress) {
       window.KLS.bridge.resetProgress();
     }
@@ -4571,12 +4582,12 @@
     try {
       var active = document.querySelector('.screen.active');
       return {
-        v: 1,
+        v: 2,
         screen: active ? active.id : 'screen-menu',
-        mode: (GameState && GameState.mode) || null,
-        level: (GameState && GameState.level) || null,
+        playMode: (GameState && GameState.playMode) || 'mission',
+        grade: (progress && progress.grade) || null,
       };
-    } catch (e) { return { v: 1, screen: 'screen-menu' }; }
+    } catch (e) { return { v: 2, screen: 'screen-menu', playMode: 'mission', grade: null }; }
   };
   // Approach 4: stash the blob; the kid clicks Continue or Play Mission
   // on the menu to decide. We don't auto-restore.
@@ -4595,17 +4606,26 @@
     } catch (e) { /* ignore */ }
   }
   function __cmq_doRestoreFromBlob(blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
     try {
-      if (GameState) {
-        if (blob.mode)  GameState.mode  = blob.mode;
-        if (blob.level) GameState.level = blob.level;
+      if (blob.v === 2) {
+        if (blob.playMode) GameState.playMode = blob.playMode;
+        // The per-profile progress blob is authoritative for grade; only
+        // seed from the resume blob when no grade has been picked yet.
+        if ((blob.grade === 2 || blob.grade === 3 || blob.grade === 4 || blob.grade === 5) && !isGradeSet()) {
+          progress = ensureProgressShape(progress);
+          progress.grade = blob.grade;
+          saveProgress(progress);
+          GameState.grade = blob.grade;
+        }
       }
+      // v1 blobs restore the screen only (their level/mode fields are ignored).
+      renderGradeUi();
       showScreen('menu');
     } catch (e) { /* corrupted blob */ }
   }
   window.__cmq_restoreState = function (blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
     __cmq_pendingResume = blob;
     __cmq_showResumeRow(true);
   };
