@@ -107,6 +107,10 @@
       margin-top: 1rem;
     }
 
+    .btn-row[hidden] {
+      display: none;
+    }
+
     .btn {
       font-family: inherit;
       font-size: clamp(1.05rem, 3.5vw, 1.25rem);
@@ -154,33 +158,6 @@
       margin: 1.25rem 0 0.5rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-    }
-
-    .segment-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .segment-btn {
-      flex: 1 1 auto;
-      min-height: 52px;
-      min-width: 100px;
-      padding: 0.75rem 1rem;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border-radius: 12px;
-      border: 2px solid rgba(110, 181, 255, 0.35);
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-
-    .segment-btn.selected {
-      background: rgba(126, 255, 179, 0.2);
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     /* Game status bar */
@@ -2350,7 +2327,7 @@
 
   /**
    * @param {Array} buffer - wrong records with questionSnapshot (e.g. lastRoundWrongBuffer or history)
-   * @param {{ preserveRoundContext?: boolean }} opts - if true, keep last mission mode/level (results "Practice" button)
+   * @param {Object} opts - reserved for future practice-session options
    */
   function startWrongAnswerPractice(buffer, opts) {
     opts = opts || {};
@@ -2363,7 +2340,7 @@
     recordPracticeSessionStarted();
     var snaps = shuffle(uniq.map(function (r) {
       return questionFromSnapshot(r.questionSnapshot);
-    }));
+    }).filter(Boolean));
     var hasM = false;
     var hasD = false;
     var si;
@@ -3848,7 +3825,9 @@
   function openHintModal(q) {
     var modal = document.getElementById('modal-hint');
     if (!q || GameState.answered) return;
-    GameState.hintsUsedThisRound = (GameState.hintsUsedThisRound || 0) + 1;
+    if (!q.isBonus) {
+      GameState.hintsUsedThisRound = (GameState.hintsUsedThisRound || 0) + 1;
+    }
     renderHintModalContent(q);
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -3984,6 +3963,8 @@
     var qNumEl = document.getElementById('hud-q-num');
     if (GameState.currentQuestion && GameState.currentQuestion.isBonus) {
       qNumEl.textContent = '⭐ Bonus challenge!';
+    } else if (GameState.playMode === 'lightning' && !GameState.isReviewMode) {
+      qNumEl.textContent = 'Question ' + n;
     } else {
       qNumEl.textContent = 'Question ' + Math.min(n, rs) + ' of ' + rs;
     }
@@ -4402,8 +4383,10 @@
       stars > 0 ? new Array(stars + 1).join('⭐') : '—';
     document.getElementById('results-rating').textContent = isNewBest
       ? 'New personal best: ' + GameState.correctCount + ' correct! ⚡'
-      : 'You got ' + GameState.correctCount + ' — your best is ' +
-        (progress.bestLightningByGrade[g] || 0) + '. Beat your own best!';
+      : (GameState.correctCount === prevBest && prevBest > 0
+        ? 'You tied your best: ' + prevBest + '! One more gets a new record!'
+        : 'You got ' + GameState.correctCount + ' — your best is ' +
+          (progress.bestLightningByGrade[g] || 0) + '. Beat your own best!');
     document.getElementById('res-score').textContent = String(GameState.score);
     document.getElementById('res-correct').textContent =
       GameState.correctCount + ' / ' + GameState.totalAnswered;
@@ -4465,6 +4448,7 @@
 
   function endRound() {
     clearLightningTimer();
+    closeHintModal();
     if (GameState.isReviewMode) {
       GameState.isReviewMode = false;
       GameState.pendingReviewAdvance = false;
@@ -4832,7 +4816,6 @@
 
   document.getElementById('btn-game-over-practice').addEventListener('click', function () {
     if (safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
-      preserveRoundContext: true,
       emptyStateLocation: 'gameover'
     })) {
       setGameOverModalOpen(false);
@@ -4846,7 +4829,6 @@
 
   document.getElementById('btn-practice-wrongs').addEventListener('click', function () {
     safeStartWrongAnswerPractice(GameState.lastRoundWrongBuffer, {
-      preserveRoundContext: true,
       emptyStateLocation: 'results'
     });
   });
@@ -4974,10 +4956,10 @@
     try { clearLightningTimer(); showScreen('menu'); } catch (e) { /* ignore */ }
   };
 
-  // Resume-blob contract — entry-context only. Captures which screen the
-  // kid is on plus mode/level. Restoring lands them at the same screen
-  // (a fresh round at the same level/mode); we don't try to rebuild the
-  // in-progress question queue.
+  // Resume-blob contract — entry-context only: { v: 2, screen, playMode,
+  // grade }. Captures which screen the kid is on plus mode/grade.
+  // Restoring lands them at the same screen (a fresh round at the same
+  // grade/mode); we don't try to rebuild the in-progress question queue.
   window.__cmq_captureState = function () {
     try {
       var active = document.querySelector('.screen.active');
@@ -4989,8 +4971,8 @@
       };
     } catch (e) { return { v: 2, screen: 'screen-menu', playMode: 'mission', grade: null }; }
   };
-  // Approach 4: stash the blob; the kid clicks Continue or Play Mission
-  // on the menu to decide. We don't auto-restore.
+  // Approach 4: stash the blob; the kid clicks Continue or the Mission
+  // tile on the menu to decide. We don't auto-restore.
   var __cmq_pendingResume = null;
   function __cmq_showResumeRow(on) {
     var row = document.getElementById('cmq-resume-row');
@@ -5029,7 +5011,7 @@
     __cmq_pendingResume = blob;
     __cmq_showResumeRow(true);
   };
-  // Wire Continue / Play Mission interactions.
+  // Wire Continue / Mission tile interactions.
   (function () {
     var rb = document.getElementById('btn-cmq-resume');
     if (rb) rb.addEventListener('click', function () {

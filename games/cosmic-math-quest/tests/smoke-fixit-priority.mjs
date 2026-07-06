@@ -113,7 +113,7 @@ function keysOf(list) {
     console.error(`FAIL: scenario 1 duplicate keys in result: ${keys.join(', ')}`);
     process.exit(1);
   }
-  // Most-missed items are the ones that should be squeezed out (2 due + 4 quickfix + 6 due = 10, no room left).
+  // Most-missed items are the ones that should be squeezed out (6 due + 4 quickfix = 10, no room for the 2 most-missed).
   const mostMissedSurvivors = ['m0', 'm1'].filter((k) => keys.includes(k));
   if (mostMissedSurvivors.length) {
     console.error(`FAIL: scenario 1 expected most-missed items to be squeezed out, found: ${mostMissedSurvivors.join(', ')}`);

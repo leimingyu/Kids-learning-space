@@ -37,6 +37,12 @@ node games/cosmic-math-quest/tests/smoke-fixit-priority.mjs
 # Grade-band recipes and generators
 node games/cosmic-math-quest/tests/smoke-grade-bands.mjs
 
+# Wrongs-store load order + normalization (guards a data-wipe regression)
+node games/cosmic-math-quest/tests/smoke-wrongs-load.mjs
+
+# Wrongs-store profile scoping round-trip
+node games/cosmic-math-quest/tests/smoke-wrongs-roundtrip.mjs
+
 # Quiet Backup snapshot helpers: summarize / dedupe / thinning / period-grouping
 node tests/smoke-backup-snapshots.mjs
 
