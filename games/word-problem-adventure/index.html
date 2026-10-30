@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Word Problem Adventure</title>
+  <link rel="stylesheet" href="grade-adventure.css" />
   <style>
     :root {
       --bg: #fff8e7;
@@ -30,6 +31,8 @@
     * {
       box-sizing: border-box;
     }
+
+    [hidden] { display: none !important; }
 
     body {
       margin: 0;
@@ -1259,7 +1262,8 @@
   </style>
   <link rel="stylesheet" href="../../shared/styles/tokens.css">
 </head>
-<body>
+<body class="grade-mode">
+  <main id="grade-adventure" aria-label="Grade adventures"></main>
   <!-- Pip the Fox SVG library (mascot peeking next to the current lesson). -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
@@ -1285,12 +1289,13 @@
   <!-- Welcome -->
   <div id="screen-welcome" class="screen active">
     <h1>Word Problem Adventure</h1>
-    <p class="subtitle">Learn math stories. Solve puzzles. Have fun!</p>
+    <p class="subtitle">Earlier adventures: journey, daily challenge, and practice.</p>
+    <div class="btn-row"><button type="button" class="btn btn-primary" id="btn-grade-home">🏠 Back to Grade 2–5 adventures</button></div>
     <div class="emoji-row" aria-hidden="true">🍎 🐟 📚 ⭐ 🎒</div>
     <div class="card">
       <p style="text-align: center; line-height: 1.7;">
         Read each story. Find the numbers. Decide: add, subtract, compare, or share!
-        Tap <strong>Start Game</strong> to pick a level and begin your adventure.
+        Choose <strong>Adventure</strong> to return to your earlier journey.
       </p>
       <div class="btn-row" id="welcome-resume-row" hidden>
         <button type="button" class="btn btn-primary btn-resume" id="btn-resume-welcome">▶ Continue my last session</button>
@@ -1574,6 +1579,7 @@
     </div>
   </div>
 
+  <script src="../../shared/scripts/game-bridge.js?v=20261011-save-recovery"></script>
   <script>
 (function () {
   "use strict";
@@ -1587,6 +1593,25 @@
   // another's stars. The legacy un-scoped key is only used when the game
   // is opened standalone (no hub, no profile).
   var STORAGE_KEY_BASE = "wordProblemAdventure_v1";
+  var pendingWrites = new Map();
+  function writeGameStorage(key, value) {
+    var bridge = window.KLS && window.KLS.bridge;
+    if (bridge && bridge.isEmbedded() && !bridge.getProfileId()) return false;
+    var raw = JSON.stringify(value);
+    try {
+      if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+      localStorage.setItem(key, raw); pendingWrites.delete(key);
+      if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      return true;
+    } catch (e) {
+      pendingWrites.set(key, raw);
+      if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+      return false;
+    }
+  }
+  function retryGameStorage() {
+    pendingWrites.forEach(function (raw, key) { writeGameStorage(key, JSON.parse(raw)); });
+  }
   function storageKey() {
     try {
       var pid = (window.KLS && window.KLS.bridge && window.KLS.bridge.getProfileId)
@@ -1632,8 +1657,9 @@
     // v2 shape: { v: 2, byType: { [type]: [record] } }.
     // v1 stored bare qid strings — upgrade lazily so old profiles keep
     // their saved wrongs (missCount defaults to 1, timestamps to "now").
+    if (window.KLS.bridge.isEmbedded() && !window.KLS.bridge.getProfileId()) return { v: 2, byType: {} };
     try {
-      var raw = localStorage.getItem(wrongsKey());
+      var raw = pendingWrites.get(wrongsKey()) || localStorage.getItem(wrongsKey());
       if (!raw) return { v: 2, byType: {} };
       var parsed = JSON.parse(raw);
       var byType = (parsed && parsed.byType && typeof parsed.byType === "object") ? parsed.byType : {};
@@ -1649,10 +1675,22 @@
     } catch (e) { return { v: 2, byType: {} }; }
   }
   function saveWrongsStore(store) {
-    try { localStorage.setItem(wrongsKey(), JSON.stringify(store)); } catch (e) { /* ignore */ }
+    return writeGameStorage(wrongsKey(), store);
   }
   function resetWrongsStore() {
-    try { localStorage.removeItem(wrongsKey()); } catch (e) { /* ignore */ }
+    return removeGameStorage(wrongsKey());
+  }
+  function removeGameStorage(key) {
+    var bridge = window.KLS && window.KLS.bridge;
+    try {
+      if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+      localStorage.removeItem(key); pendingWrites.delete(key);
+      if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      return true;
+    } catch (e) {
+      if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+      return false;
+    }
   }
   /** Record a miss in the wrongs key, scoped by problem type.
    *  detail (optional): { yourAnswer, errorTag, newMiss } — newMiss
@@ -2714,7 +2752,7 @@
         wrongIds:       Array.isArray(state.wrongIds) ? state.wrongIds.slice() : [],
         seenIds:        Array.isArray(state.seenIds) ? state.seenIds.slice() : [],
       };
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
@@ -3000,13 +3038,14 @@
       while (arr.length > RECENT_QUESTION_IDS_MAX) arr.shift();
       p.recentQuestionIds[selectedLevel] = arr;
       if (typeof p.bestStreakEver !== "number") p.bestStreakEver = 0;
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
   function loadPersisted() {
+    if (window.KLS.bridge.isEmbedded() && !window.KLS.bridge.getProfileId()) return { bestStreakEver: 0, journey: { lessons: {} } };
     try {
-      var raw = localStorage.getItem(storageKey());
+      var raw = pendingWrites.get(storageKey()) || localStorage.getItem(storageKey());
       var p = raw ? JSON.parse(raw) : {};
       if (typeof p.bestStreakEver !== "number") p.bestStreakEver = 0;
       if (!p.journey || typeof p.journey !== "object") p.journey = { lessons: {} };
@@ -3028,7 +3067,7 @@
       var total = 0;
       Object.keys(store.byType || {}).forEach(function (t) {
         var arr = store.byType[t];
-        if (Array.isArray(arr)) total += arr.length;
+        if (Array.isArray(arr) && !/^Grade [2-5]: /.test(t)) total += arr.length;
       });
       return total;
     } catch (e) { return 0; }
@@ -3107,7 +3146,7 @@
     try {
       var p = loadPersisted();
       p.bestStreakEver = ever;
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
@@ -3128,7 +3167,7 @@
       if (stars > prev.stars) prev.stars = stars;
       if (stars > 0 && !prev.completedAt) prev.completedAt = new Date().toISOString();
       p.journey.lessons[lessonId] = prev;
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
@@ -3513,7 +3552,7 @@
     if (sub) sub.disabled = !enabled;
   }
 
-  function renderQuestion() {
+  function renderQuestion(restoring) {
     clearAdvanceTimer();
     const q = currentQuestion();
     if (!q) {
@@ -3523,10 +3562,12 @@
     // Daily Challenge mixes levels — let each question carry its own level so
     // the badge, picture button, and visual hints behave per-question.
     if (isDailyChallenge && q.sessionLevel) selectedLevel = q.sessionLevel;
-    recordShownQuestionId(q);
-    wrongSubmitsOnQuestion = 0;
-    hintUsedOnQuestion = false;
-    pictureVisible = false;
+    if (!restoring) {
+      recordShownQuestionId(q);
+      wrongSubmitsOnQuestion = 0;
+      hintUsedOnQuestion = false;
+      pictureVisible = false;
+    }
     setAnswerStateBanner("waiting");
     document.getElementById("question-text").innerHTML = buildStoryHtml(q.text);
     setProblemTypeLabel(q);
@@ -4409,7 +4450,7 @@
       if (!Array.isArray(p.practice.__stickers)) p.practice.__stickers = [];
       if (p.practice.__stickers.indexOf(id) === -1) {
         p.practice.__stickers.push(id);
-        localStorage.setItem(storageKey(), JSON.stringify(p));
+        writeGameStorage(storageKey(), p);
       }
     } catch (e) { /* ignore */ }
   }
@@ -4456,7 +4497,7 @@
       var p = loadPersisted();
       p.lastLevel = lesson.level;
       p.lastPlayed = new Date().toISOString();
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
@@ -4521,7 +4562,7 @@
     try {
       var p = loadPersisted();
       p.dailyChallenge = dc;
-      localStorage.setItem(storageKey(), JSON.stringify(p));
+      writeGameStorage(storageKey(), p);
     } catch (e) { /* ignore */ }
   }
 
@@ -5002,19 +5043,20 @@
    *   - any future game-internal home affordance.
    *  Standalone-safe (doesn't depend on bridge presence). */
   function goToGameHome() {
+    if (findActiveScreenId() === 'screen-game' && window.__wpa_captureState) {
+      __wpa_pendingResume = window.__wpa_captureState(); showWelcomeResumeButton(true);
+    }
+    clearAdvanceTimer();
     leavePracticeMode();
     leaveDailyMode();
     activeLesson = null;
     showScreen("screen-welcome");
   }
   document.getElementById("btn-game-home").addEventListener("click", goToGameHome);
-  // Expose for the bottom inline script — game-bridge.js loads AFTER this
-  // IIFE, so we can't subscribe to onHubMessage here (window.KLS.bridge
-  // doesn't exist yet). The bottom script registers the handler after the
-  // bridge has attached. Same pattern as cosmic-math-quest's __cmq_onGoHome.
+  // Expose for the bottom inline script and the grade adventure's legacy entry.
   window.__wpa_goHome = goToGameHome;
 
-  // Resume-blob contract — entry-context only. Approach 4: STASH the blob,
+  // Resume-blob contract — STASH the exact checkpoint,
   // show a Continue button on the welcome screen. The kid picks Continue
   // (restore) or any other entry (discard).
   function findActiveScreenId() {
@@ -5022,15 +5064,32 @@
     return active ? active.id : "screen-welcome";
   }
   window.__wpa_captureState = function () {
-    return {
-      v: 1,
+    if (__wpa_pendingResume && findActiveScreenId() === 'screen-welcome') return JSON.parse(JSON.stringify(__wpa_pendingResume));
+    var ui = {};
+    document.querySelectorAll('[id^="sum-"], [id^="daily-sum-"], [id^="practice-sum-"], #summary-level-name, #summary-level-rows, #summary-mastery').forEach(function (node) {
+      ui[node.id] = { text: node.textContent, display: node.style.display };
+    });
+    return JSON.parse(JSON.stringify({
+      v: 2,
       screen: findActiveScreenId(),
       mode: isPracticeMode ? "practice" : isDailyChallenge ? "daily" : "journey",
       practiceType: practiceType || null,
       selectedLevel: selectedLevel || null,
       selectedSessionLabel: selectedSessionLabel || "",
-    };
+      selectedSessionWasFull: selectedSessionWasFull,
+      queue: sessionQueue.map(function (q) { return { id: q.id, sessionLevel: q.sessionLevel }; }),
+      questionIndex: questionIndex, questionsCompleted: questionsCompleted,
+      firstTryCorrect: firstTryCorrect, correctCount: correctCount, attemptedCount: attemptedCount,
+      streak: streak, sessionBestStreak: sessionBestStreak,
+      wrongSubmitsOnQuestion: wrongSubmitsOnQuestion, hintUsedOnQuestion: hintUsedOnQuestion,
+      answerState: answerState, pictureVisible: pictureVisible, levelStats: levelStats, typeCorrect: typeCorrect,
+      practiceMode: practiceMode, practiceInitialWrongs: practiceInitialWrongs,
+      activeLessonId: activeLesson ? activeLesson.id : null, dailyPracticeOnly: dailyPracticeOnly,
+      draft: document.getElementById('answer-input').value, ui: ui,
+    }));
   };
+  window.__wpa_flushStorage = retryGameStorage;
+  window.__wpa_suspend = clearAdvanceTimer;
   let __wpa_pendingResume = null;
   function showWelcomeResumeButton(on) {
     const row = document.getElementById("welcome-resume-row");
@@ -5039,6 +5098,11 @@
   function clearPendingResume() {
     __wpa_pendingResume = null;
     showWelcomeResumeButton(false);
+    if (window.WPA_GradeAdventure) {
+      window.WPA_GradeAdventure.clearEarlierResume();
+      window.KLS.bridge.saveState(window.WPA_GradeAdventure.capture());
+      return;
+    }
     // Tell the hub we used / discarded the blob.
     try {
       if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
@@ -5054,12 +5118,53 @@
     doRestoreFromBlob(blob);
   }
   function doRestoreFromBlob(blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
     leavePracticeMode();
     leaveDailyMode();
     selectedLevel = blob.selectedLevel || null;
     selectedSessionLabel = blob.selectedSessionLabel || "";
     const target = blob.screen || "screen-welcome";
+    if (blob.v === 2 && Array.isArray(blob.queue)) {
+      var queue = blob.queue.map(function (entry) {
+        var q = getQuestionById(entry.id);
+        return q ? Object.assign({}, q, entry.sessionLevel ? { sessionLevel: entry.sessionLevel } : {}) : null;
+      });
+      if (queue.some(function (q) { return !q; })) return showScreen('screen-welcome');
+      sessionQueue = queue; questionIndex = blob.questionIndex | 0;
+      questionsCompleted = blob.questionsCompleted | 0; firstTryCorrect = blob.firstTryCorrect | 0;
+      correctCount = blob.correctCount | 0; attemptedCount = blob.attemptedCount | 0;
+      streak = blob.streak | 0; sessionBestStreak = blob.sessionBestStreak | 0;
+      wrongSubmitsOnQuestion = blob.wrongSubmitsOnQuestion | 0; hintUsedOnQuestion = !!blob.hintUsedOnQuestion;
+      selectedSessionWasFull = !!blob.selectedSessionWasFull;
+      if (blob.levelStats) levelStats = JSON.parse(JSON.stringify(blob.levelStats));
+      if (blob.typeCorrect) typeCorrect = JSON.parse(JSON.stringify(blob.typeCorrect));
+      isPracticeMode = blob.mode === 'practice'; isDailyChallenge = blob.mode === 'daily';
+      dailyPracticeOnly = !!blob.dailyPracticeOnly; practiceMode = blob.practiceMode || null;
+      practiceType = blob.practiceType || null; practiceInitialWrongs = blob.practiceInitialWrongs | 0;
+      activeLesson = blob.activeLessonId ? lessonById(blob.activeLessonId) : null;
+      if (target === 'screen-game' && currentQuestion()) {
+        renderQuestion(true);
+        var q = currentQuestion();
+        if (blob.answerState === 'correct') { showFeedbackCorrect(!wrongSubmitsOnQuestion && !hintUsedOnQuestion); clearAdvanceTimer(); }
+        else if (blob.answerState === 'asking') showQuestionIntentChooser(q, diagnoseWrongAnswer(q, parseAnswer(blob.draft)));
+        else if (blob.answerState === 'hint') showFeedbackHint(q);
+        else if (blob.answerState === 'explain') showFeedbackExplain(q);
+        document.getElementById('answer-input').value = blob.draft || '';
+        if (blob.pictureVisible) { pictureVisible = false; togglePicture(); }
+        showScreen('screen-game'); return;
+      }
+      if (target === 'screen-map') renderJourneyMap();
+      else if (target === 'screen-practice-picker') renderPracticePicker();
+      else if (target === 'screen-daily') renderDailyIntro();
+      var allowed = ['screen-map', 'screen-practice-picker', 'screen-daily', 'screen-summary', 'screen-practice-summary', 'screen-daily-summary', 'screen-end', 'screen-welcome'];
+      if (allowed.indexOf(target) === -1) return showScreen('screen-welcome');
+      Object.keys(blob.ui || {}).forEach(function (id) {
+        if (/^(?:sum-|daily-sum-|practice-sum-)/.test(id) || ['summary-level-name','summary-level-rows','summary-mastery'].indexOf(id) !== -1) {
+          var node = document.getElementById(id); if (node) { node.textContent = blob.ui[id].text; node.style.display = blob.ui[id].display === 'none' ? 'none' : ''; }
+        }
+      });
+      showScreen(target); return;
+    }
     if (target === "screen-daily" || target === "screen-daily-summary") {
       renderDailyIntro();
       showScreen("screen-daily");
@@ -5073,9 +5178,26 @@
     }
   }
   window.__wpa_restoreState = function (blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2) || __wpa_pendingResume) return;
     __wpa_pendingResume = blob;
     showWelcomeResumeButton(true);
+  };
+  window.__wpa_getPendingResume = function () {
+    return __wpa_pendingResume ? JSON.parse(JSON.stringify(__wpa_pendingResume)) : null;
+  };
+  window.__wpa_setPendingResume = function (blob) {
+    __wpa_pendingResume = blob && (blob.v === 1 || blob.v === 2) && blob.mode !== 'grade-adventure'
+      ? JSON.parse(JSON.stringify(blob)) : null;
+    showWelcomeResumeButton(Boolean(__wpa_pendingResume));
+  };
+  window.__wpa_continueSaved = consumePendingResume;
+  window.__wpa_resetForProfile = function () {
+    clearAdvanceTimer();
+    __wpa_pendingResume = null;
+    showWelcomeResumeButton(false);
+    sessionQueue = []; questionIndex = 0;
+    isPracticeMode = false; isDailyChallenge = false;
+    showScreen('screen-welcome');
   };
   // Hook the Continue button + auto-discard the stash on any "fresh" entry.
   document.getElementById("btn-resume-welcome").addEventListener("click", consumePendingResume);
@@ -5188,8 +5310,9 @@
       "and personal best for this profile. Your sound setting stays.\n\n" +
       "This only affects YOU — other profiles are not changed."
     )) return;
-    try { localStorage.removeItem(storageKey()); } catch (e) { /* ignore */ }
-    resetWrongsStore();
+    if (!removeGameStorage(storageKey()) || !resetWrongsStore()) {
+      window.alert('Your browser could not reset progress. Try again.'); return;
+    }
     try { updatePracticeAffordances(); } catch (e) { /* ignore */ }
     // Reset in-memory state so the journey map and side panel re-render fresh
     // without needing a page reload.
@@ -5237,27 +5360,38 @@
 })();
   </script>
 
-  <script src="../../shared/scripts/game-bridge.js"></script>
   <script>
-    // Post-bridge registrations: bridge.onHubMessage subscriptions MUST live
-    // here, not inside the main IIFE above, because that IIFE runs before
-    // game-bridge.js loads and window.KLS.bridge doesn't exist yet.
+    // The bridge is loaded before both engines so profile-dependent reads
+    // can wait for the active profile instead of touching standalone data.
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.onHubMessage) {
       if (window.__wpa_goHome) {
         window.KLS.bridge.onHubMessage("goHome", window.__wpa_goHome);
+        window.KLS.bridge.onHubMessage("suspendSession", window.__wpa_suspend);
       }
       // Resume-blob contract.
       if (window.__wpa_captureState) {
         window.KLS.bridge.onHubMessage("requestState", function () {
-          try { window.KLS.bridge.saveState(window.__wpa_captureState()); } catch (e) {}
+          try {
+            window.__wpa_flushStorage();
+            var grade = window.WPA_GradeAdventure;
+            window.KLS.bridge.saveState(grade ? grade.capture() : window.__wpa_captureState());
+          } catch (e) { window.KLS.bridge.saveState(null, { ok: false, error: e.message }); }
         });
       }
       if (window.__wpa_restoreState) {
         window.KLS.bridge.onHubMessage("resumeState", function (msg) {
-          try { if (msg && msg.state) window.__wpa_restoreState(msg.state); } catch (e) {}
+          try {
+            if (msg && msg.state) {
+              var earlier = msg.state.mode === 'grade-adventure' ? msg.state.earlierAdventure : msg.state;
+              if (earlier) window.__wpa_restoreState(earlier);
+            }
+          } catch (e) {}
         });
       }
     }
   </script>
+  <script src="grade-bank.js"></script>
+  <script src="grade-core.js?v=20261011-save-recovery"></script>
+  <script src="grade-adventure.js?v=20261011-save-recovery"></script>
 </body>
 </html>

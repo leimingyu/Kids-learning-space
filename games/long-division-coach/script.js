@@ -399,7 +399,27 @@
   }
   function storageKey() {
     const pid = activeProfileId();
+    if (window.parent !== window && !pid) return null;
     return pid ? `${STORAGE_KEY_BASE}__${pid}` : STORAGE_KEY_BASE;
+  }
+  const pendingWrites = new Map();
+  function writeGameStorage(key, value) {
+    if (!key) return false;
+    const raw = JSON.stringify(value);
+    const bridge = window.KLS && window.KLS.bridge;
+    try {
+      if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+      localStorage.setItem(key, raw); pendingWrites.delete(key);
+      if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      return true;
+    } catch (e) {
+      pendingWrites.set(key, raw);
+      if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+      return false;
+    }
+  }
+  function retryGameStorage() {
+    for (const [key, raw] of pendingWrites) writeGameStorage(key, JSON.parse(raw));
   }
   function defaultProgress() {
     return {
@@ -414,6 +434,7 @@
     };
   }
   function loadProgress() {
+    if (!storageKey()) return defaultProgress();
     try {
       const raw = localStorage.getItem(storageKey());
       if (!raw) return defaultProgress();
@@ -422,10 +443,22 @@
     } catch { return defaultProgress(); }
   }
   function saveProgress(p) {
-    try { localStorage.setItem(storageKey(), JSON.stringify(p)); } catch {}
+    return writeGameStorage(storageKey(), p);
   }
   function resetProgressStorage() {
-    try { localStorage.removeItem(storageKey()); } catch {}
+    return removeGameStorage(storageKey());
+  }
+  function removeGameStorage(key) {
+    const bridge = window.KLS && window.KLS.bridge;
+    try {
+      if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+      localStorage.removeItem(key); pendingWrites.delete(key);
+      if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      return true;
+    } catch (e) {
+      if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+      return false;
+    }
   }
 
   // ----- Wrongs store (mistakes + practice replay) -----
@@ -435,10 +468,12 @@
   const WRONGS_KEY_BASE = "longDivisionCoach_wrongs_v1";
   function wrongsKey() {
     const pid = activeProfileId();
+    if (window.parent !== window && !pid) return null;
     return pid ? `${WRONGS_KEY_BASE}__${pid}` : WRONGS_KEY_BASE;
   }
   function defaultWrongs() { return { records: [] }; }
   function loadWrongs() {
+    if (!wrongsKey()) return defaultWrongs();
     try {
       const raw = localStorage.getItem(wrongsKey());
       if (!raw) return defaultWrongs();
@@ -447,10 +482,10 @@
     } catch { return defaultWrongs(); }
   }
   function saveWrongs(w) {
-    try { localStorage.setItem(wrongsKey(), JSON.stringify(w)); } catch {}
+    return writeGameStorage(wrongsKey(), w);
   }
   function resetWrongsStorage() {
-    try { localStorage.removeItem(wrongsKey()); } catch {}
+    return removeGameStorage(wrongsKey());
   }
 
   /** Push a wrong-completion record for the just-finished problem.
@@ -550,6 +585,23 @@
 
   /** @type {'practice'|'game'} */
   let topMode = "practice";
+  let activeExperience = "learning";
+  let learningJourney = null;
+  let boundStorageKey = null;
+  let sessionSuspended = false;
+  const classicTimers = new Set();
+
+  function cancelClassicTimers() {
+    classicTimers.forEach(clearTimeout);
+    classicTimers.clear();
+  }
+  function classicLater(callback, delay) {
+    const timer = setTimeout(() => {
+      classicTimers.delete(timer);
+      if (activeExperience === "classic" && !sessionSuspended) callback();
+    }, delay);
+    classicTimers.add(timer);
+  }
 
   const app = {
     mode: "guided",          // sub-mode in Practice: 'demo'|'guided'|'independent'
@@ -670,7 +722,7 @@
     // (Kept as a callable stub so existing call-sites don't need rewrites.)
   }
   function setSelectedSegment(selector, pressedValue, attrName) {
-    document.querySelectorAll(selector).forEach((btn) => {
+    document.getElementById("ldc-classic-root").querySelectorAll(selector).forEach((btn) => {
       btn.setAttribute("aria-pressed", String(btn.getAttribute(attrName) === pressedValue));
     });
   }
@@ -911,7 +963,9 @@
       renderMissionPanel();
     } else {
       // Load next problem
-      setTimeout(() => {
+      const mission = app.mission;
+      classicLater(() => {
+        if (app.mission !== mission) return;
         loadMissionProblem();
         renderMissionPanel();
         render();
@@ -940,7 +994,7 @@
     if (!window.KLS || !window.KLS.bridge) return;
     const levelId = topMode === "game"
       ? `mission-${app.mission ? app.mission.difficulty : app.difficulty}`
-      : `practice-${app.difficulty}`;
+      : `practice-${app.problem ? app.problem.difficulty : app.difficulty}`;
     window.KLS.bridge.stars(levelId, Math.max(0, Math.min(3, stars)));
   }
 
@@ -999,7 +1053,7 @@
     generateConfetti(dom.completionConfetti, 32);
     dom.completionOverlay.hidden = false;
     // Move focus to the primary action for keyboard users.
-    setTimeout(() => { try { dom.completionAgainBtn.focus(); } catch {} }, 50);
+    classicLater(() => { try { dom.completionAgainBtn.focus(); } catch {} }, 50);
   }
 
   function hideCompletionOverlay() {
@@ -1509,7 +1563,9 @@
     dom.body.setAttribute("data-input", !done && app.mode !== "demo" ? "on" : "off");
     // Arrow positioning depends on layout — defer to next frame so the rows
     // just appended above have their final bounding rects.
-    requestAnimationFrame(() => renderBringDownArrow(e, done));
+    requestAnimationFrame(() => {
+      if (activeExperience === "classic" && app.engine === e && !sessionSuspended) renderBringDownArrow(e, done);
+    });
 
     // Example button: show in Practice mode, after 2+ wrong divides
     const inDivideStruggle = !done && e.phase === "divide" && app.attemptsThisStep >= 2;
@@ -1564,7 +1620,7 @@
           // Brief delay so the kid sees the final answer commit before the
           // overlay takes over the screen.
           const earned = scoreProblem();
-          pushStarsToHub(earned);
+          if (app.mode !== "demo") pushStarsToHub(earned);
 
           // Mistakes-and-practice: record the wrong (if the kid struggled) or
           // resolve it (if they were replaying a queued problem and got it
@@ -1575,9 +1631,9 @@
             revealUsed: app.revealUsedThisProblem,
           };
           const struggled = counters.attempts > 0 || counters.hintsUsed > 0 || counters.revealUsed;
-          if (struggled) {
+          if (app.mode !== "demo" && struggled) {
             recordMistake(app.problem, app.engine, counters);
-          } else if (app.replayingQuestionId) {
+          } else if (app.mode !== "demo" && app.replayingQuestionId) {
             // Replay completed cleanly → remove from queue.
             resolveMistake(app.replayingQuestionId);
           }
@@ -1586,7 +1642,7 @@
 
           const finalProblem = app.problem;
           const finalEngine = app.engine;
-          setTimeout(() => {
+          classicLater(() => {
             // Guard: don't pop the overlay if the kid already moved on
             // (e.g., clicked New problem in the meantime).
             if (app.problem === finalProblem && app.engine === finalEngine) {
@@ -1664,16 +1720,24 @@
       "Erase Long Division Coach progress for this profile?\n\n" +
       "This wipes your streak, calendar, and star history. Other games and other profiles are not affected."
     );
-    if (!ok) return;
+    if (!ok) return null;
+    cancelClassicTimers();
+    if (learningJourney) learningJourney.suspend();
     hideCompletionOverlay();
-    resetProgressStorage();
-    resetWrongsStorage();
+    if (!resetProgressStorage() || !resetWrongsStorage()) {
+      if (learningJourney && activeExperience === "learning") learningJourney.resume();
+      setAppFeedback('error', 'Your browser could not reset progress. Try again.'); render(); return false;
+    }
     app.progress = defaultProgress();
     app.wrongs = defaultWrongs();
     app.mission = null;
     app.replayProblem = null;
     app.replayingQuestionId = null;
     app.sessionStats = { problemsDone: 0, stepsCorrect: 0, streak: 0, stars: 0 };
+    _pendingResumeBlob = null;
+    hideResumeOverlay();
+    if (learningJourney) learningJourney.reset();
+    startGeneratedProblem();
     updatePracticePillUI();
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.resetProgress) {
       window.KLS.bridge.resetProgress();
@@ -1684,6 +1748,8 @@
       renderMissionPanel();
     }
     render();
+    showLearningHome();
+    return true;
   }
 
   // ============================================================
@@ -1692,6 +1758,7 @@
 
   // Top-level mode toggle
   document.addEventListener("click", (ev) => {
+    if (activeExperience !== "classic" || sessionSuspended) return;
     const target = ev.target instanceof HTMLElement ? ev.target.closest("[data-top-mode]") : null;
     if (!target) return;
     const v = target.getAttribute("data-top-mode");
@@ -1700,6 +1767,7 @@
 
   // Mission difficulty pick
   document.addEventListener("click", (ev) => {
+    if (activeExperience !== "classic" || sessionSuspended) return;
     const target = ev.target instanceof HTMLElement ? ev.target.closest("[data-mission-difficulty]") : null;
     if (!target) return;
     const d = target.getAttribute("data-mission-difficulty");
@@ -1708,6 +1776,7 @@
 
   // Difficulty + sub-mode (Practice toolbar)
   document.addEventListener("click", (ev) => {
+    if (activeExperience !== "classic" || sessionSuspended) return;
     const target = ev.target instanceof HTMLElement ? ev.target : null;
     if (!target) return;
     const diff = target.getAttribute("data-difficulty");
@@ -1748,6 +1817,7 @@
     }
   });
   document.addEventListener("keydown", (ev) => {
+    if (activeExperience !== "classic" || sessionSuspended) return;
     if (ev.key === "Escape" && !dom.completionOverlay.hidden) {
       hideCompletionOverlay();
     }
@@ -1786,6 +1856,7 @@
   // Solution 2 — document-level keydown captures input for the roaming cursor.
   // Skip when a button is focused so Enter/Space still activates the button.
   document.addEventListener("keydown", (ev) => {
+    if (activeExperience !== "classic" || sessionSuspended) return;
     if (!app.engine) return;
     if (app.engine.phase === "done") return;
     if (app.mode === "demo") {
@@ -1859,7 +1930,7 @@
   window.addEventListener("resize", () => {
     if (_resizeTimer) cancelAnimationFrame(_resizeTimer);
     _resizeTimer = requestAnimationFrame(() => {
-      if (app.engine) renderBringDownArrow(app.engine, app.engine.phase === "done");
+      if (activeExperience === "classic" && app.engine && !sessionSuspended) renderBringDownArrow(app.engine, app.engine.phase === "done");
     });
   });
 
@@ -1867,9 +1938,123 @@
   // Profile lifecycle (load progress when profile arrives)
   // ============================================================
 
+  function syncExperienceVisibility() {
+    document.getElementById("ldc-learning-shell").hidden = activeExperience !== "learning";
+    document.getElementById("ldc-classic-root").hidden = activeExperience !== "classic";
+    document.getElementById("ldc-saved-classic").hidden = !app.progress.classicSession ||
+      !!(learningJourney && learningJourney.getState().screen !== "home");
+    document.querySelector(".skip-link").setAttribute("href", activeExperience === "classic" ? "#main" : "#ldc-learning-root");
+    dom.body.setAttribute("data-experience", activeExperience);
+  }
+
+  function persistActiveSession() {
+    // A staged checkpoint belongs to the previous visit until the child chooses
+    // Continue. Never replace it with the freshly rendered menu during Save.
+    if (_pendingResumeBlob) return true;
+    if (learningJourney) app.progress.learningJourney = learningJourney.getState();
+    if (activeExperience === "classic") app.progress.classicSession = captureClassicSessionBlob();
+    return saveProgress(app.progress);
+  }
+
+  function mountLearningJourney() {
+    if (learningJourney) learningJourney.destroy();
+    const container = document.getElementById("ldc-learning-root");
+    container.replaceChildren();
+    const ownerKey = storageKey();
+    const canUse = () => !sessionSuspended && ownerKey && ownerKey === storageKey();
+    learningJourney = window.LDCLearningJourney.mount(container, {
+      initialState: app.progress.learningJourney || null,
+      getWrongs: () => canUse() ? app.wrongs.records : [],
+      onChange(snapshot) {
+        if (!canUse()) return false;
+        app.progress.learningJourney = snapshot;
+        syncExperienceVisibility();
+        return saveProgress(app.progress);
+      },
+      onMistake(event) {
+        if (!canUse()) return;
+        recordMistake(event.problem, null, {
+          attempts: event.kind === "answer" ? 1 : 0,
+          hintsUsed: event.kind === "hint" ? 1 : 0,
+          revealUsed: false,
+        });
+        const record = app.wrongs.records.find(r => r.questionId === `${event.problem.divisor}/${event.problem.dividend}`);
+        if (record) {
+          record.phaseWhereStuck = event.phase;
+          record.lastAnswer = event.answer;
+          saveWrongs(app.wrongs);
+        }
+        updatePracticePillUI();
+      },
+      onCompleted(event) {
+        if (!canUse()) return;
+        // Only accepted division steps can earn credit. Opening a visual proof
+        // or restoring an already finished board never calls this callback.
+        const core = window.DivisionPracticeCore;
+        const result = core.replay(event.problem.dividend, event.problem.divisor, event.record.answers);
+        if (!core.checkFinal(result)) return;
+        if (event.replay && !event.usedHelp && event.wrong === 0) {
+          resolveMistake(`${event.problem.divisor}/${event.problem.dividend}`);
+          updatePracticePillUI();
+        }
+        const bridge = window.KLS && window.KLS.bridge;
+        if (bridge) {
+          const stars = event.mode === "guided" ? 2 :
+            !event.usedHelp && event.wrong === 0 ? 3 :
+            event.wrong <= 1 && event.record.hintsUsed <= 1 ? 2 : 1;
+          bridge.stars(`learning-${event.id}`, stars);
+          bridge.played();
+          bridge.celebrate();
+        }
+      },
+      onOpenClassic(mode) { if (canUse()) showClassicExperience(mode); },
+      onReset() { if (canUse()) return handleResetProgress(); },
+    });
+    syncExperienceVisibility();
+  }
+
+  function showLearningHome() {
+    cancelClassicTimers();
+    hideCompletionOverlay();
+    activeExperience = "learning";
+    if (learningJourney) {
+      learningJourney.resume();
+      learningJourney.goHome();
+    }
+    syncExperienceVisibility();
+  }
+
+  function showClassicExperience(mode, resumeSaved) {
+    if (sessionSuspended) return;
+    persistActiveSession();
+    if (learningJourney) learningJourney.suspend();
+    cancelClassicTimers();
+    activeExperience = "classic";
+    syncExperienceVisibility();
+    const saved = app.progress.classicSession;
+    if (mode === "tricky") {
+      setTopMode("practice");
+      app.mode = "guided";
+      startNextPracticeReplay();
+      render();
+    } else if (saved && (resumeSaved || saved.topMode === mode)) restoreSessionBlob(saved);
+    else {
+      setTopMode(mode === "game" ? "game" : "practice");
+      if (mode !== "game") render();
+    }
+  }
+
   function rebindProfile() {
+    const key = storageKey();
+    if (!key || key === boundStorageKey) return;
+    cancelClassicTimers();
+    if (learningJourney) learningJourney.suspend();
+    boundStorageKey = key;
+    sessionSuspended = false;
     app.progress = loadProgress();
     app.wrongs = loadWrongs();
+    activeExperience = "learning";
+    mountLearningJourney();
     updatePracticePillUI();
     if (topMode === "game") {
       refreshStreakState();
@@ -1878,7 +2063,8 @@
     render();
   }
 
-  if (window.KLS && window.KLS.bridge) {
+  function wireHubLifecycle() {
+    if (!window.KLS || !window.KLS.bridge) return;
     if (window.KLS.bridge.onProfileReady) {
       window.KLS.bridge.onProfileReady(() => rebindProfile());
     }
@@ -1888,6 +2074,11 @@
       // (top-level Practice mode with a fresh problem). Cancels any active
       // mission, replay queue, and overlay.
       window.KLS.bridge.onHubMessage("goHome", () => goToGameHome());
+      window.KLS.bridge.onHubMessage("suspendSession", () => {
+        sessionSuspended = true;
+        cancelClassicTimers();
+        if (learningJourney) learningJourney.suspend();
+      });
 
       // Resume-blob contract.
       // requestState: chrome bar's Save button → reply with current snapshot.
@@ -1895,8 +2086,10 @@
       //               The kid picks Continue or New on the resume overlay.
       window.KLS.bridge.onHubMessage("requestState", () => {
         try {
+          persistActiveSession();
+          retryGameStorage();
           window.KLS.bridge.saveState(captureSessionBlob());
-        } catch (e) { /* never throw inside a message handler */ }
+        } catch (e) { window.KLS.bridge.saveState(null, { ok: false, error: e.message }); }
       });
       window.KLS.bridge.onHubMessage("resumeState", (msg) => {
         try {
@@ -1909,9 +2102,9 @@
   /** Capture enough state to drop the kid back at the exact same problem,
    *  same phase, same partial answer they were in. Engine objects are plain
    *  data already (see `cloneEngineState`), so they serialize cleanly. */
-  function captureSessionBlob() {
+  function captureClassicSessionBlob() {
     return {
-      v: 1,
+      v: 2,
       topMode: topMode,
       mode: app.mode,
       difficulty: app.difficulty,
@@ -1921,8 +2114,28 @@
       attemptsThisProblem: app.attemptsThisProblem,
       hintsUsedThisProblem: app.hintsUsedThisProblem,
       revealUsedThisProblem: !!app.revealUsedThisProblem,
-      // Mission state is intentionally NOT captured for v1 — restoring
-      // mid-mission is a future enhancement.
+      attemptsThisStep: app.attemptsThisStep,
+      history: app.history.map(cloneEngineState),
+      sessionStats: { ...app.sessionStats },
+      mission: app.mission ? JSON.parse(JSON.stringify(app.mission)) : null,
+      replayProblem: app.replayProblem ? { ...app.replayProblem } : null,
+      replayingQuestionId: app.replayingQuestionId,
+      feedback: { ...app.feedback },
+      completionVisible: !dom.completionOverlay.hidden,
+      missionSummary: !dom.missionSummary.hidden ? {
+        stars: dom.missionSummaryStars.textContent, text: dom.missionSummaryText.textContent,
+      } : null,
+    };
+  }
+
+  function captureSessionBlob() {
+    if (_pendingResumeBlob) return JSON.parse(JSON.stringify(_pendingResumeBlob));
+    if (activeExperience === "classic") return captureClassicSessionBlob();
+    return {
+      v: 2,
+      module: "learning",
+      learningJourney: learningJourney ? learningJourney.getState() : app.progress.learningJourney || null,
+      classicSession: app.progress.classicSession || null,
     };
   }
 
@@ -1931,7 +2144,7 @@
    *  game-state change anyway; this just makes the choice explicit. */
   let _pendingResumeBlob = null;
   function showResumeChoice(blob) {
-    if (!blob || blob.v !== 1) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2) || _pendingResumeBlob) return;
     _pendingResumeBlob = blob;
     const overlay = document.getElementById("resumeOverlay");
     if (overlay) overlay.hidden = false;
@@ -1950,15 +2163,42 @@
   }
   function onResumeFresh() {
     hideResumeOverlay();
+    const pending = _pendingResumeBlob;
     _pendingResumeBlob = null;
+    // Visiting Home must leave the earlier advanced session available.
+    if (pending && pending.module !== "learning") app.progress.classicSession = pending;
+    if (pending && pending.module === "learning") {
+      if (learningJourney) learningJourney.load(pending.learningJourney);
+      app.progress.classicSession = app.progress.classicSession || pending.classicSession || null;
+    }
     if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearState) {
       window.KLS.bridge.clearState();
     }
-    startGeneratedProblem();
+    showLearningHome();
   }
 
   function restoreSessionBlob(blob) {
-    if (!blob || blob.v !== 1 || !blob.problem || !blob.engine) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
+    blob = JSON.parse(JSON.stringify(blob));
+    cancelClassicTimers();
+    if (blob.module === "learning") {
+      activeExperience = "learning";
+      // A newer advanced session may have been saved locally after this hub
+      // checkpoint. Restoring the lesson must not erase that separate work.
+      app.progress.classicSession = app.progress.classicSession || blob.classicSession || null;
+      if (learningJourney) {
+        learningJourney.suspend();
+        learningJourney.load(blob.learningJourney);
+        learningJourney.resume();
+      }
+      syncExperienceVisibility();
+      persistActiveSession();
+      return;
+    }
+    if (!blob.problem || !blob.engine) return;
+    if (learningJourney) learningJourney.suspend();
+    activeExperience = "classic";
+    syncExperienceVisibility();
     hideCompletionOverlay();
     app.mission = null;
     app.replayProblem = null;
@@ -1972,23 +2212,42 @@
     setTopMode(blob.topMode === "game" ? "game" : "practice");
     app.problem = blob.problem;
     app.engine = blob.engine; // already a clone — safe to use directly
-    app.history = [];
-    app.attemptsThisStep = 0;
+    app.history = Array.isArray(blob.history) ? blob.history.map(cloneEngineState) : [];
+    app.attemptsThisStep = blob.attemptsThisStep | 0;
     app.attemptsThisProblem = blob.attemptsThisProblem | 0;
     app.hintsUsedThisProblem = blob.hintsUsedThisProblem | 0;
     app.revealUsedThisProblem = !!blob.revealUsedThisProblem;
     setInputValue(blob.inputValue || "");
-    setAppFeedback("neutral", "Resumed where you left off!");
+    app.mission = blob.mission || null;
+    app.replayProblem = blob.replayProblem || null;
+    app.replayingQuestionId = blob.replayingQuestionId || null;
+    if (blob.sessionStats) app.sessionStats = blob.sessionStats;
+    app.feedback = blob.feedback || { kind: "neutral", message: "Resumed where you left off!" };
+    // The mission index advances before its short celebration finishes. A
+    // checkpoint taken during that pause must resume the next problem, rather
+    // than a finished board whose Check button can no longer advance.
+    if (app.mission && app.engine.phase === "done" &&
+        app.mission.currentIndex < app.mission.problems.length) loadMissionProblem();
+    if (topMode === "game") {
+      if (app.mission) showMissionInProgress();
+      else if (blob.missionSummary) {
+        dom.missionStart.hidden = true; dom.missionProgress.hidden = true; dom.missionSummary.hidden = false;
+        dom.missionSummaryStars.textContent = blob.missionSummary.stars;
+        dom.missionSummaryText.textContent = blob.missionSummary.text;
+      }
+      renderMissionPanel();
+    }
     render();
+    if (blob.completionVisible && app.engine.phase === "done") showCompletionOverlay(app.problem, app.engine, scoreProblem());
+    app.progress.classicSession = blob;
   }
 
   function goToGameHome() {
-    hideCompletionOverlay();
-    app.mission = null;
-    app.replayProblem = null;
-    app.replayingQuestionId = null;
-    setTopMode("practice");
-    startGeneratedProblem();
+    if (sessionSuspended) return;
+    if (_pendingResumeBlob) { onResumeFresh(); return; }
+    persistActiveSession();
+    hideResumeOverlay();
+    showLearningHome();
   }
 
   // ============================================================
@@ -2014,4 +2273,13 @@
 
   // Practice mode default: start with a generated problem.
   startGeneratedProblem();
+  document.getElementById("ldc-learning-home").addEventListener("click", goToGameHome);
+  document.getElementById("ldc-continue-classic").addEventListener("click", () => showClassicExperience("practice", true));
+  // Embedded games wait for their profile before exposing writable controls.
+  // Standalone play keeps using the original unscoped key.
+  if (storageKey()) rebindProfile();
+  // The bridge can already know the profile while this external script loads.
+  // Register only after the engine and resume state exist: onProfileReady may
+  // invoke its callback immediately rather than waiting for another message.
+  wireHubLifecycle();
 })();

@@ -1,0 +1,158 @@
+# AGENTS.md
+
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+
+## Project shape
+
+Static, no-build, no-framework, `file://`-friendly site. Pure vanilla HTML/CSS/JS — no npm, no bundler, no server required. Browser baseline: Chrome 111+, Safari 15.4+, Firefox 113+ (`oklch()` + `:focus-visible`).
+
+**Self-contained / offline:** no runtime network dependency. Fonts (Fredoka + Nunito) are bundled under `shared/fonts/` (OFL) and wired via `shared/styles/fonts.css` — do NOT re-introduce a `fonts.googleapis.com` `<link>`. Games already use system-font stacks. The launchers are `Play Kids Learning Space.command` / `.bat` (renamed from `start-mac`/`start-windows`); they run `python3 tools/kls_server.py` (so folder-saving works) and fall back to opening `index.html` via `file://`; `.gitattributes` keeps the `.bat` CRLF and marks `*.woff2` binary. Silent auto-backup (IndexedDB) needs Chrome/Edge on `file://` or any browser over `http://localhost`; progress + manual Export work everywhere.
+
+**Current save/restore interface (launcher-first):** open “Play Kids Learning Space”
+for automatic folder backups. The launchers run `tools/kls_server.py 8000 --open`;
+the server opens the browser after binding and reuses an existing server only
+when its `appId` matches this folder. The hub has no manual Save button.
+Parent page → **Restore progress** lists browser and folder backups, shows a
+read-only preview, then requires **Replace all profiles and progress**. A typed
+REPLACE is no longer required; journal safety and Undo/Redo remain mandatory.
+**Backup settings** holds Download backup and optional folder setup.
+`checkStartupRecovery()` runs before profile creation or automatic backups;
+missing profiles plus existing backups (or a folder-listing error) must show
+recovery first. First-time setup also offers **Already played? Restore a backup…**.
+`GET /__kls_backups__` lists restore metadata; `GET /__kls_backups__/<id>` reads
+only allowlisted IDs. These reads must never apply progress or trigger writes.
+The older save helpers below remain API-compatible, without default UI buttons.
+
+**Save-to-folder:** the on-disk save folder is named **`saved_status/`** (`SAVES_SUBDIR`). Three mechanisms:
+0. **`saveMyGame()` (retained compatibility helper).** Folder-first, download-last: tries save server → File System Access folder (`connectBackupFolder` picked once, then `getLastDirHandle`+`ensureRWPermission`, writes via `writeHistoryToFolder` into a `saved_status/` subdir) → `saveToDownload()` fallback. Must be called from a user gesture (Save click) for the picker/permission prompt. Returns `{mode:'server'|'folder'|'download'|'cancelled'}`. **`showDirectoryPicker` DOES work on `file://` in Chrome/Edge** (verified live: `isSecureContext` true, picker function present and opens — the earlier "blocked/SecurityError" claim was WRONG). So a double-clicked `index.html` in Chrome/Edge → Save → pick a folder once → real `saved_status/` folder there. Firefox/Safari lack `showDirectoryPicker` → download fallback (`saveToDownload` names it `saved_status/…` but browsers flatten `/` → `saved_status_…json` file). Autosave-to-file is impossible on `file://` (only the button/picker writes).
+1. **Local save server (automatic, any browser, needs launcher+Python).** `tools/kls_server.py` serves the app AND exposes `GET /__kls_ping__` + `POST /__kls_save__`; `detectSaveServer()`/`postSaveToServer()` POST the envelope and the *server* writes `kls-backup-latest.json` + `saved_status/kls-save-<stamp>.json` (newest 30) into the app folder. Binds `127.0.0.1`, validates the envelope, server-chosen filenames.
+2. **File System Access folder (fallback).** A user-picked folder (Parent page → Choose folder…) via `writeHistoryToFolder` — Chrome/Edge + `http://localhost` only.
+`mirrorAfterSnapshot` (autosave, throttled `MIRROR_THROTTLE_MS`=3 min) and `saveHistoryNow` (manual) route server→folder; `pagehide` uses `sendBeacon`. `getSaveTargetStatus()` → `{mode:'server'|'folder'|'none'}` drives the Parent page. `saved_status/`, `saves/`, `kls-backup-*.json` are gitignored. Pure helpers (`stampForFilename`, `savedStatusDownloadName`, `selectHistoryToPrune`) on `KLS.backup._internals`.
+
+## Commands
+
+Run locally (either works):
+```bash
+# Just open the file
+open index.html
+
+# Or serve over HTTP
+python3 -m http.server 8000
+# → http://localhost:8000
+```
+
+Smoke tests (no browser; each `eval`s a source file into a faked `window`):
+```bash
+# Cosmic Math Quest learning-intelligence: fact-family / weak-family aggregation
+node games/cosmic-math-quest/tests/smoke-learning-intelligence.mjs
+
+# Fix-It practice set priority (due > recent > most-missed)
+node games/cosmic-math-quest/tests/smoke-fixit-priority.mjs
+
+# Grade-band recipes and generators
+node games/cosmic-math-quest/tests/smoke-grade-bands.mjs
+
+# Wrongs-store load order + normalization (guards a data-wipe regression)
+node games/cosmic-math-quest/tests/smoke-wrongs-load.mjs
+
+# Wrongs-store profile scoping round-trip
+node games/cosmic-math-quest/tests/smoke-wrongs-roundtrip.mjs
+
+# Quiet Backup snapshot helpers: summarize / dedupe / thinning / period-grouping
+node tests/smoke-backup-snapshots.mjs
+
+# Local save-server file logic: history count + prune-to-30
+python3 tools/test_kls_server.py
+```
+
+Regenerate Word Problem Adventure question banks (Python, patches the HTML in place):
+```bash
+python3 games/word-problem-adventure/tools/gen_banks.py
+python3 games/word-problem-adventure/tools/gen_extended_banks.py
+python3 games/word-problem-adventure/tools/validate_banks.py
+```
+
+## Architecture (the load-bearing parts)
+
+The hub is **one** HTML page (`index.html`). It loads each game in an `<iframe>` and renders a "chrome bar" (back button, profile, total stars/stickers) above it. Routing is hash-based: `#/games/<slug>` → iframe `src=games/<slug>/index.html`. Hash routing is deliberate so `file://` and any static host work without rewrites.
+
+Why iframe (not DOM composition): the four games define overlapping global CSS (`.btn`, `.card`, `.screen`) and global JS state. Iframe gives free CSS/JS/crash isolation and zero-refactor integration. Cost is `postMessage` for hub↔game traffic.
+
+Each game is the **original game, byte-for-byte** (modulo filename — three were renamed to `index.html` for clean iframe URLs). Each `games/<slug>/index.html` must remain self-contained: opening it directly (bypassing the hub) must still work.
+
+### Progress data flow
+
+The hub owns a multi-profile localStorage blob: `kls.progress.v2` (migrated from the legacy `kls.progress.v1`). It holds every profile's stars/stickers/levels per game. Games keep their own internal localStorage for things the hub doesn't track (e.g. journey state, recent-question history, practice wrongs) — leave it untouched; the hub's key is a separate summary layer.
+
+```
+game (iframe)  ──postMessage──▶  chrome.js  ──▶  progress.js  ──▶  localStorage
+                                     │
+                                     └─validates message.slug against iframe src
+                                       before applying (prevents cross-game writes)
+```
+
+Games opt into the hub via `shared/scripts/game-bridge.js`. Loaded standalone, every bridge method is a no-op so the game still works. Loaded in the iframe, the bridge adds `body.kls-embedded` and exposes `window.KLS.bridge.{played, session, stars, sticker, celebrate, saveState, clearState, resetProgress, onVisible, onHubMessage, getProfileId, onProfileReady}`. All four games currently load it.
+
+### Per-profile state — the load-bearing rule
+
+**Every new profile starts at zero.** No stars, no stickers, no journey progress, no saved wrong-questions list — nothing. Creating a profile in the hub must give the kid a clean slate in every game. This is not negotiable; do not write code that lets one profile inherit another's progress.
+
+To make that true, **a game's own localStorage MUST be scoped by the active hub profile id**. The pattern is:
+
+1. The hub sends the iframe a `{ type: 'kls:hub', event: 'setProfile', profileId }` message right after the iframe loads (chrome.js `pushProfileToIframe`, retried up to ~1.5s so it survives a slow first paint).
+2. The bridge caches it. Games read it synchronously via `KLS.bridge.getProfileId()` and prefix their keys: e.g. `wordProblemAdventure_v1__<profileId>`.
+3. Standalone (no hub) → `getProfileId()` returns null → game falls back to its un-scoped key so direct-file:// play still works.
+4. **Device-level preferences** (mute, volume, theme) are NOT per-profile — keep those un-scoped.
+5. **Do NOT auto-migrate un-scoped legacy data into any profile.** It looks helpful and is not — it gives whichever profile first opens the game an unfair head start. If users had pre-multi-profile data, they can keep using standalone mode for it, or replay. Future "import legacy" can be an explicit opt-in button if anyone asks for it; never silent.
+
+A "Reset my progress" affordance is owed to every kid on every game that stores progress. The game wipes its own profile-scoped key AND posts `bridge.resetProgress()` so the hub also drops its per-game record (stars/stickers/levels) for the active profile. Other profiles are untouched.
+
+### Backup & Restore — the safety net for updates
+
+Before changing anything that could invalidate stored data (schema version bump, slug rename, removal of a game, breaking change to a profile-scoped key), the previous version must still be able to **Export** every profile + all progress to a JSON file, and a future version must still be able to **Import** that file. See `BACKUP_RESTORE.md` for the full spec: envelope format, REPLACE-only restore semantics, the registered-`storageBase` discovery pattern, and the versioning rule (bump `BACKUP_VERSION` only when the envelope shape changes — never when an individual game's internal schema changes).
+
+When adding or modifying a game that uses profile-scoped storage, register its `storageBase` in the `GAMES` entry in `hub.js` so the backup module can discover its keys without hard-coding them.
+
+### Module map (shared/)
+
+- `scripts/util.js` — `qs`/`el`/`formatRelative`. Loaded first; everything attaches to `window.KLS`.
+- `scripts/progress.js` — the `window.KLS.progress` API (read/write of `kls.progress.v1`, derived totals, subscribe-on-write).
+- `scripts/chrome.js` — parent-rendered chrome bar; owns the postMessage listener and slug validation.
+- `scripts/hub.js` — `GAMES` registry, `TOPICS` filter, hash router, tile rendering.
+- `scripts/celebrate.js`, `scripts/audio.js` — confetti particles and Web Audio SFX (reduced-motion aware).
+- `scripts/game-bridge.js` — loaded **by each game**, not by the hub. Never reaches into hub internals; only posts messages.
+- `styles/tokens.css`, `styles/components.css` — design tokens (OKLCH palette, spacing, motion, dark-mode overrides) and component CSS. `design-system.html` is a living reference page for these.
+
+## Invariants and gotchas
+
+- **Stars per level are clamped 0–3** in `progress.awardStars`. Totals (`totalStars`, `totalStickers`) are **derived on read**, never stored.
+- **Stickers are deduped** by stable string ID on write.
+- The iframe `src` is always built as `games/<slug>/index.html` (not the bare directory) — `file://` has no directory-index resolution.
+- `chrome.js` validates incoming `kls:progress` messages by matching `data.slug` against the slug parsed from the iframe `src`. Don't bypass this check.
+- The hub is **additive**: a game opened directly from `games/<slug>/index.html` must still work unchanged. Never make the hub a hard dependency of a game.
+- Slugs are `kebab-case` and are the canonical ID in both URLs and the progress schema. Changing a slug invalidates a user's saved progress for that game.
+- Each game under `games/` has its own `docs/` directory with PRD/QA/review docs. **Respect those before touching a game's internals** — the games predate the hub and have their own design intent.
+- `prefers-reduced-motion` and `prefers-color-scheme: dark` are honored via token overrides and celebrate.js — preserve those paths when changing motion/visuals.
+- **Every game must track the kid's mistakes and expose a Practice mode that lets them replay or remediate those mistakes** — see `MISTAKES_AND_PRACTICE.md` at the project root for the canonical spec, plus each game's `docs/MISTAKES_AND_PRACTICE.md` for current status and per-game integration notes. Cosmic Math Quest is the reference implementation.
+- **Every game must let the kid return to its own home screen without leaving the iframe.** Two parallel surfaces: the shared chrome bar renders a `🏠 Home` button next to `← Hub` that sends a `{ type: 'kls:hub', event: 'goHome' }` postMessage, AND each game must subscribe via `bridge.onHubMessage('goHome', cb)` and navigate to its welcome/menu screen. For deep screens (mid-session, mid-mission), each game should also expose an in-game home affordance so standalone (file://) users — who don't get the chrome bar — can still escape. See `ARCHITECTURE.md` for the contract.
+
+## Adding a new game
+
+1. Drop into `games/<new-slug>/index.html` (self-contained).
+2. Add an entry to the `GAMES` array in `shared/scripts/hub.js` (slug, title, emoji, subtitle, topics, tag, tagClass).
+3. Optional: `<link>` `shared/styles/tokens.css` and `<script src="../../shared/scripts/game-bridge.js">` to wire progress. Hook `KLS.bridge.onVisible('#end-screen', () => { KLS.bridge.played(); KLS.bridge.celebrate(); })`.
+4. **If your game persists state**, scope its localStorage by `KLS.bridge.getProfileId()` so each profile starts clean — see "Per-profile state" above. Add a visible "Reset my progress" affordance.
+5. **Plan for mistakes-and-practice from day one.** Add a `<gameSlug>_wrongs_v1` storage key alongside the main state, register both in `GAMES[].storageBase` as an array, hook the wrong-answer signal into a `recordMistake(record)` function, and surface a Practice affordance in the game UI. See `MISTAKES_AND_PRACTICE.md`.
+
+If you add a new topic, also add it to the `TOPICS` filter array in `hub.js`.
+
+## Further reading
+
+- `README.md` — user-facing intro and the 5-step "add a game" recipe.
+- `ARCHITECTURE.md` — full decision record (iframe choice, chrome strategy, progress schema, postMessage contract, routing rationale).
+- `MISTAKES_AND_PRACTICE.md` — cross-game requirement: save the kid's mistakes (profile-scoped) and expose a Practice mode that replays them.
+- `design-system.html` — open in a browser; living reference for every token and component.
+
+## Imported Claude Cowork project instructions
+
+Games for Kids to learn

@@ -5,6 +5,40 @@ cross-game spec. This file documents this game's implementation.
 
 ## Implementation status
 
+### Grade 2–5 adventure (2026-09-29)
+
+The default grade path adds 400 original questions. `grade-core.js` owns
+mistake rules; `grade-adventure.js` owns the play/practice UI. New records
+live in the existing registered `wordProblemAdventure_wrongs_v1` store under
+`byType["Grade N: skill"]`. They retain the v2 record fields and additionally
+include grade, correctAnswer, and a questionSnapshot. IDs are stable
+`wpa-gN-001` through `wpa-gN-100`. Wrong graded submissions increment the
+same record. Revealed or hinted stories are also queued with a distinct tag
+for a fresh independent attempt; they do not count as mastered stories.
+
+Practice shows up to five exact saved stories for the selected grade,
+oldest first. An independent first-try answer removes the record and can
+earn that story's first mastery credit. Correcting a miss in the same
+attempt does not clear it. Practice has its own session counter and does
+not award quest stars or alter quest accuracy. The old practice picker
+counts only its legacy questions; grade practice is on the grade home.
+
+The ten-kingdom journey uses a separate `completed` list. Correct answers after
+a hint or miss finish a story for the journey but do not earn independent
+mastery. A revealed solution counts as finished only after explicitly moving
+on. Such stories remain in Practice. Practice can finish a story and earn its
+first independent solve, while keeping its own statistics and no quest stars.
+Next quest skips finished stories if practice replaced its checkpoint, so a
+practice trip does not restart the original quest.
+
+Main state is an additive `gradeAdventure` field inside the existing main
+key, including the checkpoint and help/attempt flags. Profile-dependent
+reads wait for the bridge; no standalone data is inherited by a profile.
+Both new and legacy reset controls clear the two registered keys and call
+the hub reset API. See `GRADE_ADVENTURE_RELEASE.md` for tests and source data.
+
+### Earlier adventures
+
 ✓ Mistake tracking — **always-on (any mode)**, mirrored to a
   dedicated `wordProblemAdventure_wrongs_v1` key
 ✓ Practice mode — practice grid UI in-game (unchanged)

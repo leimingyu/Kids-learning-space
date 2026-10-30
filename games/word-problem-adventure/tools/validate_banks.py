@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import tempfile
@@ -238,7 +239,9 @@ def main() -> None:
         raise SystemExit("Missing Quick Play band quota (4/4/2) in selection logic")
     if "return { 1: 7, 2: 8, 3: 5 }" not in script:
         raise SystemExit("Missing Standard Play band quota (7/8/5) in selection logic")
-    tmp = Path(tempfile.mkstemp(suffix=".js")[1])
+    fd, filename = tempfile.mkstemp(suffix=".js")
+    os.close(fd)  # Windows cannot remove a file while this handle is open.
+    tmp = Path(filename)
     try:
         tmp.write_text(script, encoding="utf-8")
         r = subprocess.run(["node", "--check", str(tmp)], capture_output=True, text=True)

@@ -125,7 +125,12 @@
    *  `write(s)`. Outside callers (hub, chrome, etc.) MUST treat returned
    *  objects as read-only — same contract the v1 API already had. */
   let _cache = null;
+  let lastWriteError = null;
   function invalidateCache() { _cache = null; }
+  function assertStorageWritable() {
+    const journal = localStorage.getItem('kls.restore.journal.v1');
+    if (journal && JSON.parse(journal).phase === 'prepared') throw new Error('A restore is in progress. Wait and try again.');
+  }
 
   function readRaw() {
     if (_cache) return _cache;
@@ -156,7 +161,7 @@
         if (v1 && v1.version === 1) {
           const migrated = runMigrations(v1);
           // Persist v2 immediately (leave v1 untouched as backup).
-          try { localStorage.setItem(KEY, JSON.stringify(migrated)); } catch (e) { /* ignore */ }
+          try { assertStorageWritable(); localStorage.setItem(KEY, JSON.stringify(migrated)); } catch (e) { /* old data remains readable */ }
           _cache = migrated;
           return _cache;
         }
@@ -170,14 +175,21 @@
 
   function write(state) {
     try {
+      assertStorageWritable();
       localStorage.setItem(KEY, JSON.stringify(state));
     } catch (e) {
       console.warn('[KLS] progress write failed', e);
-      return;
+      // Callers mutate the cached object before writing. Never let an
+      // unsuccessful mutation masquerade as persisted progress on the next read.
+      invalidateCache();
+      lastWriteError = e && e.message ? e.message : 'Browser storage is unavailable.';
+      return false;
     }
     // We just wrote this state — it IS the cache now.
     _cache = state;
+    lastWriteError = null;
     listeners.forEach((fn) => { try { fn(state); } catch (err) { console.error(err); } });
+    return true;
   }
 
   // Cross-tab sync: if another tab writes to our key, drop the cache so
@@ -280,7 +292,7 @@
       const profile = defaultProfile(id, safeName(input.displayName), safeAvatar(input.avatar));
       s.profiles[id] = profile;
       if (makeActive !== false) s.activeProfileId = id;
-      write(s);
+      if (!write(s)) throw new Error(lastWriteError);
       return profile;
     },
 
@@ -289,8 +301,7 @@
       if (!s.profiles[id]) return false;
       s.activeProfileId = id;
       s.profiles[id].lastActiveAt = new Date().toISOString();
-      write(s);
-      return true;
+      return write(s);
     },
 
     updateProfile(id, patch) {
@@ -299,8 +310,7 @@
       if (!p) return false;
       if (patch.displayName != null) p.displayName = safeName(patch.displayName);
       if (patch.avatar != null) p.avatar = safeAvatar(patch.avatar);
-      write(s);
-      return true;
+      return write(s);
     },
 
     deleteProfile(id) {
@@ -311,8 +321,7 @@
         const remaining = Object.keys(s.profiles);
         s.activeProfileId = remaining[0] || null;
       }
-      write(s);
-      return true;
+      return write(s);
     },
 
     /** Active profile's view of a game, default-shaped if absent. */
@@ -327,52 +336,52 @@
     setProfile(patch) {
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       if (patch.displayName != null) p.displayName = safeName(patch.displayName);
       if (patch.avatar != null) p.avatar = safeAvatar(patch.avatar);
-      write(s);
+      return write(s);
     },
 
     awardStars(slug, level, stars) {
       const n = Math.max(0, Math.min(3, Number(stars) | 0));
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = getGameMut(p, slug);
       const lv = getLevelMut(g, level);
       if (n > lv.stars) lv.stars = n;
       g.lastPlayedAt = new Date().toISOString();
       p.lastActiveAt = g.lastPlayedAt;
-      write(s);
+      return write(s);
     },
 
     awardSticker(slug, stickerId) {
-      if (!stickerId) return;
+      if (!stickerId) return false;
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = getGameMut(p, slug);
       if (!g.stickers.includes(stickerId)) g.stickers.push(stickerId);
       g.lastPlayedAt = new Date().toISOString();
       p.lastActiveAt = g.lastPlayedAt;
-      write(s);
+      return write(s);
     },
 
     played(slug) {
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = getGameMut(p, slug);
       g.lastPlayedAt = new Date().toISOString();
       p.lastActiveAt = g.lastPlayedAt;
-      write(s);
+      return write(s);
     },
 
     recordSession(slug, level, stats) {
       stats = stats || {};
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = getGameMut(p, slug);
       const lv = getLevelMut(g, level);
       if (typeof stats.questionsAnswered === 'number') {
@@ -386,19 +395,19 @@
       }
       g.lastPlayedAt = new Date().toISOString();
       p.lastActiveAt = g.lastPlayedAt;
-      write(s);
+      return write(s);
     },
 
     /** Opaque per-game state. The shape is whatever the game wants. */
     saveGameState(slug, blob) {
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = getGameMut(p, slug);
       g.gameState = blob == null ? null : blob;
       g.lastPlayedAt = new Date().toISOString();
       p.lastActiveAt = g.lastPlayedAt;
-      write(s);
+      return write(s);
     },
 
     getGameState(slug) {
@@ -412,9 +421,10 @@
     clearGameState(slug) {
       const s = readRaw();
       const p = activeProfileMut(s);
-      if (!p) return;
+      if (!p) return false;
       const g = p.games[slug];
-      if (g) { g.gameState = null; write(s); }
+      if (g) { g.gameState = null; return write(s); }
+      return true;
     },
 
     /** Reset one game for the active profile, or all data when slug is omitted. */
@@ -422,15 +432,24 @@
       const s = readRaw();
       if (slug) {
         const p = activeProfileMut(s);
-        if (!p) return;
+        if (!p) return false;
         delete p.games[slug];
-        write(s);
+        return write(s);
       } else {
-        try { localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
-        try { localStorage.removeItem(LEGACY_V1_KEY); } catch (e) { /* ignore */ }
+        try {
+          assertStorageWritable();
+          localStorage.removeItem(KEY);
+          localStorage.removeItem(LEGACY_V1_KEY);
+        } catch (e) {
+          invalidateCache();
+          lastWriteError = e && e.message ? e.message : 'Browser storage is unavailable.';
+          return false;
+        }
         const fresh = defaultState();
         _cache = fresh;
+        lastWriteError = null;
         listeners.forEach((fn) => { try { fn(fresh); } catch (e) { console.error(e); } });
+        return true;
       }
     },
 
@@ -514,13 +533,15 @@
         const firstId = Object.keys(s.profiles)[0];
         if (firstId) s.activeProfileId = firstId;
       }
-      write(s);
+      if (!write(s)) throw new Error(lastWriteError);
       return { imported, skipped };
     },
 
     /** Constant for UI to render. */
     MAX_PROFILES,
     CURRENT_VERSION,
+    getLastWriteError() { return lastWriteError; },
+    invalidateCache,
   };
 
   window.KLS = window.KLS || {};

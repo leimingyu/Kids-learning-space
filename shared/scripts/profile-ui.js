@@ -12,6 +12,7 @@
 (function () {
   const { qs, el } = window.KLS.util;
   const progress = window.KLS.progress;
+  let backupStatusUnsubscribe = null;
 
   // ──────────────────────────────────────────────────────────────────────
   // Avatar pool — curated, child-friendly. Mix of animals, faces, food.
@@ -130,7 +131,8 @@
     // "Skip for now" — make a placeholder profile so the kid can still play.
     if (opts.firstTime) {
       cancelBtn.addEventListener('click', function () {
-        progress.createProfile({ displayName: 'Friend', avatar: '🦊' }, true);
+        try { progress.createProfile({ displayName: 'Friend', avatar: '🦊' }, true); }
+        catch (e) { alert(e.message || 'Could not save this profile.'); return; }
         if (opts.onCreated) opts.onCreated();
       });
     }
@@ -149,6 +151,11 @@
       limitNote,
       el('div', { class: 'btn-row' }, goBtn, cancelBtn),
     ));
+
+    if (opts.firstTime) root.append(el('button', { type: 'button', class: 'btn btn-muted', onclick: function () {
+      renderParent({ recovery: true, fromFile: true, restorePoints: { points: [], warnings: [] },
+        onStartFresh: function () { renderCreateNew(opts); } });
+    } }, 'Already played? Restore a backup…'));
 
     setTimeout(function () { nameInput.focus(); }, 60);
   }
@@ -197,7 +204,7 @@
         class: 'profile-tile__pick',
         'aria-label': 'Play as ' + p.displayName,
         onclick: function () {
-          progress.setActiveProfile(p.id);
+          if (!progress.setActiveProfile(p.id)) { alert('Could not save the profile switch. Please try again.'); return; }
           location.hash = '';
         },
       },
@@ -270,7 +277,7 @@
       class: 'btn btn-primary',
       onclick: function () {
         const name = (chosenName || '').trim() || profile.displayName;
-        progress.updateProfile(profile.id, { displayName: name, avatar: chosenAvatar });
+        if (!progress.updateProfile(profile.id, { displayName: name, avatar: chosenAvatar })) { alert('Could not save these changes. Please try again.'); return; }
         location.hash = '#/profiles';
       },
     }, 'Save changes');
@@ -281,7 +288,7 @@
       onclick: function () {
         const ok = window.confirm('Delete ' + profile.displayName + ' and all of their progress? This cannot be undone.');
         if (!ok) return;
-        progress.deleteProfile(profile.id);
+        if (!progress.deleteProfile(profile.id)) { alert('The profile could not be deleted. Please try again.'); return; }
         location.hash = '#/profiles';
       },
     }, '🗑️ Delete this profile');
@@ -344,7 +351,9 @@
     return (n / 1024 / 1024).toFixed(2) + ' MB';
   }
 
-  function renderParent() {
+  function renderParent(options) {
+    options = options || {};
+    if (backupStatusUnsubscribe) { backupStatusUnsubscribe(); backupStatusUnsubscribe = null; }
     const root = qs('#hub-root');
     const stage = qs('#stage-root');
     if (stage) stage.hidden = true;
@@ -367,9 +376,9 @@
 
     root.append(
       el('header', { class: 'parent-page__header' },
-        el('h1', {}, 'Parent / Data Page'),
+        el('h1', {}, options.recovery ? 'Restore your saved progress' : 'Parent page'),
         el('p', { class: 'profile-picker__subtitle' },
-          'Everything is stored only in this browser. No accounts, no servers.'),
+          options.fromFile ? 'Choose a backup file to bring back your profiles and game progress.' : options.recovery ? 'We found saved backups. Restore one to continue, or start with new profiles. Automatic backups are paused until you decide.' : 'Progress saves as you play. Backups let you return to an earlier moment.'),
       )
     );
 
@@ -406,219 +415,218 @@
           ),
       el('p', { class: 'parent-page__note' }, 'Approx. local-storage used: ' + fmtBytes(approxBytes)),
     );
-    root.append(summary);
+    if (!options.recovery) root.append(summary);
 
-    // ── Quiet Backup: status card + restore timeline + folder + quiet links ──
     const backup = window.KLS && window.KLS.backup;
-    const fmtRel = (window.KLS.util && window.KLS.util.formatRelative) || function (x) { return new Date(x).toLocaleString(); };
-
+    const fmtRel = window.KLS.util.formatRelative;
     const backupCard = el('div', { class: 'card parent-page__card parent-backup' });
     root.append(backupCard);
+    if (!backup) { backupCard.append(el('p', { role: 'alert' }, 'Backups could not be loaded. Reload to try again.')); return; }
 
-    function renderTimeline(wrap, list) {
-      wrap.innerHTML = '';
-      if (!list.length) { wrap.append(el('p', { class: 'parent-page__note' }, 'No moments yet.')); return; }
-      const groups = backup._internals.groupSnapshotsByPeriod(list, Date.now());
-      const order = [['today', 'Today'], ['yesterday', 'Yesterday'], ['thisWeek', 'This week'], ['older', 'Older']];
-      order.forEach(function (pair) {
-        const items = groups[pair[0]];
-        if (!items.length) return;
-        wrap.append(el('h3', { class: 'timeline__heading' }, pair[1]));
-        items.forEach(function (m) {
-          const time = new Date(m.ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-          const who = ((m.summary && m.summary.profiles) || []).map(function (p) {
-            return p.avatar + ' ' + p.name + ' ⭐ ' + p.stars + ' 🏆 ' + p.stickers;
-          }).join('  ·  ') || 'no progress yet';
-          const row = el('div', { class: 'timeline__moment' },
-            el('div', { class: 'timeline__moment-main' },
-              el('span', { class: 'timeline__time' }, time + (m.label ? ' — ' + m.label : '')),
-              el('span', { class: 'timeline__who' }, who),
-            ),
-            el('button', {
-              type: 'button', class: 'btn btn-secondary btn-tiny',
-              onclick: function () {
-                const when = new Date(m.ts).toLocaleString();
-                if (!window.confirm('Go back to ' + when + '?\n\nEverything on this device will look exactly as it did then. A "Before restore" moment is saved first, so you can undo this.')) return;
-                backup.restoreSnapshot(m.ts).catch(function (e) {
-                  alert('Restore failed: ' + (e && e.message ? e.message : e));
-                });
-              },
-            }, 'Replace everything'),
-          );
-          wrap.append(row);
-        });
+    const status = el('p', { class: 'parent-backup__status', 'aria-live': 'polite' }, 'Checking backup status…');
+    const note = el('p', { class: 'parent-page__note' });
+    const restorePanel = el('div', { class: 'parent-backup__timeline', hidden: !options.recovery });
+    const preview = el('div', { class: 'parent-backup__preview', hidden: true });
+    const fileInput = el('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
+    const restoreError = el('p', { role: 'alert', class: 'parent-backup__error' });
+    let previewVersion = 0;
+    let restoring = false;
+    let catalogVersion = 0;
+    let latestCatalog = options.restorePoints || null;
+
+    function showPreview(preparing, label) {
+      if (restoring) return;
+      const version = ++previewVersion;
+      preview.hidden = false;
+      preview.innerHTML = '';
+      preview.append(el('p', { role: 'status' }, 'Checking the backup before making changes…'));
+      preparing.then(function (prepared) {
+        if (version !== previewVersion || !preview.isConnected) return;
+        preview.innerHTML = '';
+        const confirm = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
+          if (restoring) return;
+          restoring = true; confirm.disabled = true; cancel.disabled = true;
+          backup.restoreFromEnvelope(prepared.envelope).catch(function (e) {
+            restoring = false; confirm.disabled = false; cancel.disabled = false;
+            preview.append(el('p', { role: 'alert', class: 'parent-backup__error' }, e.message));
+            if (e.recoveryRequired || e.undoAvailable) preview.append(el('button', {
+              type: 'button', class: 'btn btn-secondary', onclick: function () { location.reload(); }
+            }, e.recoveryRequired ? 'Recover previous progress' : 'Reload to use Undo'));
+          });
+        } }, 'Replace all profiles and progress');
+        const cancel = el('button', { type: 'button', class: 'btn btn-muted', onclick: function () {
+          previewVersion++; preview.hidden = true; preview.innerHTML = '';
+        } }, 'Cancel restore');
+        const names = prepared.summary.profiles.map(function (p) { return p.avatar + ' ' + p.name; }).join(', ') || 'No profiles';
+        preview.append(el('h3', {}, 'Restore preview'), el('p', {}, label),
+          el('p', {}, 'Profiles in this backup: ' + names),
+          el('p', {}, 'Progress: ⭐ ' + prepared.summary.totalStars + ' · 🏆 ' + prepared.summary.totalStickers),
+          el('p', {}, 'This replaces all current profiles and game progress. A safety copy is kept for Undo restore. Device preferences and standalone saves are preserved.'),
+          ...prepared.warnings.map(function (w) { return el('p', { class: 'parent-page__note' }, w); }),
+          el('div', { class: 'btn-row' }, confirm, cancel));
+        cancel.focus();
+      }).catch(function (e) {
+        if (version !== previewVersion) return;
+        preview.innerHTML = '';
+        preview.append(el('p', { role: 'alert', class: 'parent-backup__error' }, 'Could not open this backup. Progress is unchanged. ' + e.message));
       });
     }
-
-    // Dispatch on where saves go: automatic local server, or picked folder.
-    function renderSaveTarget(row, st) {
-      row.innerHTML = '';
-      if (st && st.mode === 'server') { renderServerRow(row, st); return; }
-      renderFolderRow(row, st || { mode: 'none' });
+    function pointRow(point, newest) {
+      const when = new Date(point.ts).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+      const where = point.source === 'browser' ? 'Browser backup' : 'Folder backup';
+      const who = ((point.summary && point.summary.profiles) || []).map(function (p) {
+        return p.avatar + ' ' + p.name + ' · ⭐ ' + p.stars + ' · 🏆 ' + p.stickers;
+      }).join('  /  ') || 'No profiles';
+      return el('div', { class: 'timeline__moment' },
+        el('div', { class: 'timeline__moment-main' },
+          el('span', { class: 'timeline__time' }, (newest ? 'Latest available · ' : '') + when),
+          el('span', { class: 'timeline__who' }, who),
+          el('span', { class: 'timeline__who' }, where + (point.label ? ' · ' + point.label : ''))),
+        el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
+          if (!restoring) showPreview(backup.prepareRestorePoint(point), where + ' · ' + when);
+        } }, newest ? 'Review latest backup' : 'Review backup'));
     }
-
-    function renderServerRow(row, st) {
-      const n = typeof st.count === 'number' ? st.count : 0;
-      const saveBtn = el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
-        saveBtn.disabled = true;
-        backup.saveHistoryNow()
-          .then(function () { renderBackupCard(); })
-          .catch(function (e) { saveBtn.disabled = false; alert('Save to folder failed: ' + (e && e.message ? e.message : e)); });
-      } }, '💾 Save now');
-      row.append(
-        el('p', { class: 'parent-backup__status' },
-          '📁 Saving to this app’s folder' + (st.folder ? ' (' + st.folder + ')' : '')
-          + ' · saved_status/ has ' + n + ' file' + (n === 1 ? '' : 's')),
-        el('p', { class: 'parent-page__note' },
-          'Every autosave and the button below write into the folder automatically — no folder-picker needed.'),
-        el('div', { class: 'btn-row' }, saveBtn),
-      );
+    function renderCatalog(catalog) {
+      latestCatalog = catalog;
+      restorePanel.innerHTML = '';
+      catalog.warnings.forEach(function (w) { restorePanel.append(el('p', { role: 'alert', class: 'parent-page__note' }, w)); });
+      if (catalog.points.length) {
+        restorePanel.append(pointRow(catalog.points[0], true));
+        if (catalog.points.length > 1) {
+          const earlier = el('details', { class: 'parent-backup__tip' }, el('summary', {}, 'Earlier backups'));
+          catalog.points.slice(1).forEach(function (p) { earlier.append(pointRow(p, false)); });
+          restorePanel.append(earlier);
+        }
+      } else restorePanel.append(el('p', {}, 'No backups are available here yet. You can choose a backup file below.'));
+      restorePanel.append(el('div', { class: 'btn-row' },
+        el('button', { type: 'button', class: 'btn btn-secondary', onclick: function () { fileInput.click(); } }, 'Choose a backup file…'),
+        el('button', { type: 'button', class: 'btn btn-muted', onclick: loadCatalog }, 'Refresh backups')));
     }
-
-    function renderFolderRow(row, st) {
-      row.innerHTML = '';
-      if (!st || !st.supported) {
-        // No save server and no File System Access API (e.g. opened as a plain
-        // file). Be honest about how to enable folder-saving rather than hiding it.
-        row.append(el('p', { class: 'parent-page__note' },
-          'To save into a folder automatically, open the app with “Play Kids Learning Space” (.command / .bat) — it runs a local server that writes the files (any browser). You’re currently opening it as a plain file; progress and “Export a file…” still work here.'));
-        return;
-      }
-      if (!st.connected) {
-        row.append(
-          el('p', { class: 'parent-page__note' }, 'Keep your save history as files in a folder — pick this app’s folder so saves sit next to index.html. Survives a browser wipe or a move to a new computer.'),
-          el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
-            backup.connectBackupFolder().then(function (dh) { if (dh) renderBackupCard(); })
-              .catch(function (e) { alert('Could not connect folder: ' + (e && e.message ? e.message : e)); });
-          } }, '📁 Choose folder…'),
-        );
-        return;
-      }
-      if (st.needsReconnect) {
-        row.append(
-          el('p', { class: 'parent-page__note' }, 'Backup folder “' + st.name + '” lost permission.'),
-          el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
-            backup.connectBackupFolder().then(function (dh) { if (dh) renderBackupCard(); })
-              .catch(function (e) { alert('Could not reconnect: ' + (e && e.message ? e.message : e)); });
-          } }, 'Reconnect folder…'),
-        );
-        return;
-      }
-      const hist = typeof st.historyCount === 'number' ? st.historyCount : 0;
-      const saveBtn = el('button', { type: 'button', class: 'btn btn-secondary btn-tiny', onclick: function () {
-        saveBtn.disabled = true;
-        backup.saveHistoryNow()
-          .then(function () { renderBackupCard(); })
-          .catch(function (e) { saveBtn.disabled = false; alert('Save to folder failed: ' + (e && e.message ? e.message : e)); });
-      } }, '💾 Save to folder now');
-      row.append(
-        el('p', { class: 'parent-page__note' },
-          'Folder connected · ' + st.name + ' · saved_status/ has ' + hist + ' file' + (hist === 1 ? '' : 's')
-          + (st.lastMirrorAt ? ' · updated ' + fmtRel(st.lastMirrorAt) : '')),
-        el('div', { class: 'btn-row' }, saveBtn),
-      );
-    }
-
-    function renderBackupCard() {
-      backupCard.innerHTML = '';
-      const available = backup && backup.snapshotsAvailable && backup.snapshotsAvailable();
-
-      backupCard.append(el('h2', { class: 'parent-page__section' }, 'Backups'));
-
-      if (!backup) { backupCard.append(el('p', {}, 'Backup module not loaded.')); return; }
-
-      // "Save my game" — on Chrome/Edge (even a double-clicked index.html) this
-      // opens a folder picker and writes into a saved_status/ folder; on
-      // Firefox/Safari it downloads a file instead.
-      if (backup.saveMyGame) {
-        const saveNote = el('p', { class: 'parent-page__note' },
-          'Saves your profiles + progress into a “saved_status” folder on Chrome/Edge (even when you just double-click index.html): the first time it asks you to pick a folder — pick this Kids-learning-space folder to keep saves next to the game — then it saves there each time. On Firefox/Safari it downloads a file instead. Restore later with “Import a file…”.');
-        const saveGameBtn = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
-          saveGameBtn.disabled = true;
-          backup.saveMyGame().then(function (r) {
-            saveGameBtn.disabled = false;
-            if (!r || r.mode === 'cancelled') { saveGameBtn.textContent = '💾 Save my game'; return; }
-            saveGameBtn.textContent = r.mode === 'download' ? '✅ Downloaded!' : '✅ Saved to folder!';
-            saveNote.textContent = r.mode === 'folder'
-              ? 'Saved into “' + (r.name || 'your folder') + '/saved_status/”. It saves there again next time.'
-              : r.mode === 'server'
-                ? 'Saved into this app’s saved_status/ folder.'
-                : 'Downloaded a saved_status file to your browser’s downloads.';
-            setTimeout(function () { saveGameBtn.textContent = '💾 Save my game'; }, 2000);
-          }).catch(function (e) { saveGameBtn.disabled = false; alert('Save failed: ' + (e && e.message ? e.message : e)); });
-        } }, '💾 Save my game');
-        backupCard.append(
-          el('div', { class: 'btn-row' }, saveGameBtn),
-          saveNote,
-          el('details', { class: 'parent-backup__tip' },
-            el('summary', {}, 'Where exactly does it save?'),
-            el('p', { class: 'parent-page__note' },
-              'Chrome/Edge (including a double-clicked index.html): Save opens a one-time folder picker and writes kls-backup-latest.json + saved_status/kls-save-*.json into a saved_status/ folder inside the folder you choose. Pick this Kids-learning-space folder to keep saves next to the game. ' +
-              'Firefox/Safari don’t offer that picker from a double-clicked file, so Save downloads a “saved_status_…json” file to your Downloads (restore it with “Import a file…”). ' +
-              'For fully automatic saves into this folder in any browser, open with “Play Kids Learning Space” (local server).'),
-          ),
-        );
-      }
-
-      if (!available) {
-        backupCard.append(el('p', {}, 'Automatic backups aren’t available in this browser. You can still export and import a file below.'));
-      } else {
-        const statusLine = el('p', { class: 'parent-backup__status' }, 'On · loading…');
-        backupCard.append(statusLine);
-        const timelineWrap = el('div', { class: 'parent-backup__timeline', hidden: true });
-        const restoreBtn = el('button', {
-          type: 'button', class: 'btn btn-secondary',
-          onclick: function () {
-            timelineWrap.hidden = !timelineWrap.hidden;
-            restoreBtn.textContent = timelineWrap.hidden ? 'Restore from a moment…' : 'Hide moments';
-          },
-        }, 'Restore from a moment…');
-        backupCard.append(el('div', { class: 'btn-row' }, restoreBtn), timelineWrap);
-
-        backup.getSnapshotsMeta().then(function (list) {
-          statusLine.textContent = list.length
-            ? 'On · last snapshot ' + fmtRel(list[0].ts) + ' · ' + list.length + ' moment' + (list.length === 1 ? '' : 's') + ' kept'
-            : 'On · no snapshots yet — play a game and one appears within ~10 seconds';
-          renderTimeline(timelineWrap, list);
-        });
-      }
-
-      // Where saves go: local save server (automatic) → picked folder → none.
-      const folderRow = el('div', { class: 'parent-backup__folder' });
-      backupCard.append(folderRow);
-      if (backup.getSaveTargetStatus) backup.getSaveTargetStatus().then(function (st) { renderSaveTarget(folderRow, st); });
-      else if (backup.getFolderStatus) backup.getFolderStatus().then(function (st) { renderFolderRow(folderRow, st); });
-
-      // Quiet Export / Import links — the off-device escape hatch. Import keeps
-      // the stronger type-REPLACE confirmation because a file can come from
-      // anywhere.
-      const importInput = el('input', { type: 'file', accept: 'application/json', style: 'display:none' });
-      importInput.addEventListener('change', function (ev) {
-        const file = ev.target.files && ev.target.files[0];
-        ev.target.value = '';
-        if (!file) return;
-        const typed = window.prompt(
-          "Importing will REPLACE all profiles and progress on this device with the file's contents.\n\nType REPLACE to continue:");
-        if (typed !== 'REPLACE') { alert('Import cancelled. Nothing was changed.'); return; }
-        backup.importFromFile(file).catch(function (e) {
-          alert('Import failed: ' + (e && e.message ? e.message : e) + '\n\nNothing on this device was changed.');
-        });
+    function loadCatalog() {
+      const version = ++catalogVersion;
+      restorePanel.innerHTML = '';
+      restorePanel.append(el('p', { role: 'status' }, 'Looking for saved backups…'));
+      backup.getRestorePoints().then(function (catalog) {
+        if (version === catalogVersion && restorePanel.isConnected) renderCatalog(catalog);
+      }).catch(function (e) {
+        if (version === catalogVersion) renderCatalog({ points: [], warnings: [e.message] });
       });
-      backupCard.append(
-        el('p', { class: 'parent-backup__links' },
-          el('a', { href: '#', class: 'parent-backup__link', onclick: function (e) {
-            e.preventDefault();
-            backup.exportToFile().catch(function (err) { alert('Export failed: ' + (err && err.message ? err.message : err)); });
-          } }, 'Export a file…'),
-          el('span', { 'aria-hidden': 'true' }, '  ·  '),
-          el('a', { href: '#', class: 'parent-backup__link', onclick: function (e) { e.preventDefault(); importInput.click(); } }, 'Import a file…'),
-          importInput,
-        ),
-        el('p', { class: 'parent-page__note' }, 'Snapshots and file backups use the same format — either can restore the other.')
-      );
+    }
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (file && !restoring) showPreview(backup.prepareImport(file), file.name || 'Backup file');
+    });
+    const restoreButton = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
+      restorePanel.hidden = !restorePanel.hidden;
+      restoreButton.textContent = restorePanel.hidden ? 'Restore progress' : 'Hide backups';
+      if (!restorePanel.hidden) loadCatalog();
+    } }, options.recovery ? 'Hide backups' : 'Restore progress');
+    backupCard.append(el('h2', { class: 'parent-page__section' }, options.recovery ? 'Available backups' : 'Progress & backups'),
+      status, note, el('div', { class: 'btn-row' }, restoreButton), restorePanel, fileInput, preview, restoreError);
+
+    const undoInfo = backup.getLastRestoreInfo();
+    if (undoInfo.undoAvailable) {
+      const undo = el('button', { type: 'button', class: 'btn btn-secondary', onclick: function () {
+        if (restoring) return;
+        previewVersion++;
+        preview.hidden = false;
+        preview.innerHTML = '';
+        const cancel = el('button', { type: 'button', class: 'btn btn-muted', onclick: function () {
+          if (restoring) return;
+          previewVersion++; preview.hidden = true; preview.innerHTML = '';
+        } }, 'Cancel restore');
+        const apply = el('button', { type: 'button', class: 'btn btn-primary', onclick: function () {
+          restoring = true; apply.disabled = true; cancel.disabled = true;
+          backup.undoLastRestore().catch(function (e) {
+            restoring = false; apply.disabled = false; cancel.disabled = false; restoreError.textContent = e.message;
+          });
+        } }, undoInfo.kind === 'undo' ? 'Confirm redo' : 'Confirm undo');
+        preview.append(el('h3', {}, undoInfo.kind === 'undo' ? 'Redo restore?' : 'Undo restore?'),
+          el('p', {}, 'This replaces all current profiles and game progress with the retained copy.'),
+          el('div', { class: 'btn-row' }, apply, cancel));
+        cancel.focus();
+      } }, undoInfo.kind === 'undo' ? 'Redo restore' : 'Undo restore');
+      backupCard.append(el('div', { class: 'btn-row' }, undo),
+        el('p', { class: 'parent-page__note' }, 'Previous progress retained - ' + fmtRel(undoInfo.at)));
     }
 
-    renderBackupCard();
+    const settings = el('details', { class: 'parent-backup__tip' }, el('summary', {}, 'Backup settings'));
+    const settingsNote = el('p', { class: 'parent-page__note' });
+    const folderButton = el('button', { type: 'button', class: 'btn btn-secondary', hidden: true, onclick: function () {
+      backup.connectBackupFolder().then(function (dh) {
+        if (dh) { updateStatus(); if (!restorePanel.hidden) loadCatalog(); }
+      }).catch(function (e) { restoreError.textContent = e.message; });
+    } }, 'Change backup folder…');
+    const downloadNote = el('p', { role: 'status', class: 'parent-page__note' });
+    settings.append(settingsNote, el('div', { class: 'btn-row' }, el('button', {
+      type: 'button', class: 'btn btn-secondary', onclick: function () {
+        try {
+          if (backup.saveToDownload()) downloadNote.textContent = 'Download requested. Check Downloads for your backup file.';
+        } catch (e) { downloadNote.textContent = 'Download could not be started. ' + e.message; }
+      }
+    }, 'Download backup'), folderButton), downloadNote,
+      el('p', { class: 'parent-page__note' }, 'Backups include every profile and all registered game progress. Keep a downloaded copy to move to another computer.'));
+    if (!options.recovery) backupCard.append(settings);
+    const retry = el('button', { type: 'button', class: 'btn btn-secondary', hidden: true, onclick: function () {
+      retry.disabled = true;
+      backup.saveHistoryNow().catch(function (e) { restoreError.textContent = e.message; })
+        .finally(function () { retry.disabled = false; updateStatus(); });
+    } }, 'Retry folder backup');
+    const retryBrowser = el('button', { type: 'button', class: 'btn btn-secondary', hidden: true, onclick: function () {
+      backup.takeSnapshotNow({ mirror: false }).then(updateStatus);
+    } }, 'Retry browser backups');
+    backupCard.append(el('div', { class: 'btn-row' }, retry, retryBrowser));
+
+    async function refreshHealth() {
+      const results = await Promise.all([backup.getBackupHealth(), backup.getSaveTargetStatus()]);
+      if (!backupCard.isConnected) return;
+      const h = results[0], target = results[1];
+      const writeError = progress.getLastWriteError && progress.getLastWriteError();
+      status.textContent = options.recovery ? 'Automatic backups paused while you choose.'
+        : writeError ? 'Browser progress needs attention: ' + writeError : 'Progress saves automatically in this browser.';
+      const lastFolder = target.mode === 'server' ? target.lastSavedAt : h.lastDiskAt;
+      note.textContent = h.diskState === 'error' ? 'Folder backup needs attention: ' + h.diskError
+        : target.mode === 'server' || (target.mode === 'folder' && target.connected && !target.needsReconnect)
+          ? (lastFolder ? 'Folder backup updated ' + fmtRel(lastFolder) + '.' : 'Automatic folder backups are ready.')
+            + (h.diskState === 'pending' ? ' Recent changes are waiting for the next backup.' : '')
+          : 'For automatic folder backups, open “Play Kids Learning Space”. You can also download a backup in Backup settings.';
+      if (options.recovery) note.textContent = 'Choose a backup to review its profiles before restoring.';
+      settingsNote.textContent = target.mode === 'server'
+        ? 'Automatic backups are kept in this app’s saved_status folder. The newest 30 files are kept; writes are up to three minutes apart.'
+        : target.connected ? 'Backup folder: ' + target.name + (target.needsReconnect ? ' · reconnect to continue.' : '.')
+        : 'The launcher saves backups into this app’s folder. Chrome and Edge can also connect a different folder.';
+      folderButton.hidden = target.mode === 'server' || !target.supported;
+      folderButton.textContent = target.needsReconnect ? 'Reconnect backup folder…' : target.connected ? 'Change backup folder…' : 'Choose backup folder…';
+      retry.hidden = options.recovery || h.diskState !== 'error';
+      retryBrowser.hidden = options.recovery || h.snapshotState !== 'error';
+      if (h.snapshotState === 'error') settingsNote.textContent += ' Browser backup history needs attention: ' + h.snapshotError;
+      if (h.snapshotState === 'unavailable') settingsNote.textContent += ' Browser backup history is unavailable here; folder backups and downloaded files still work.';
+    }
+    function updateStatus() { refreshHealth().catch(function (e) { note.textContent = 'Backup status could not be checked. ' + e.message; }); }
+    backupStatusUnsubscribe = backup.subscribeStatus(function () {
+      if (!backupCard.isConnected) { backupStatusUnsubscribe(); backupStatusUnsubscribe = null; return; }
+      updateStatus();
+    });
+    updateStatus();
+    if (options.recovery) {
+      if (latestCatalog) renderCatalog(latestCatalog); else loadCatalog();
+      if (options.fromFile) {
+        root.append(el('button', { type: 'button', class: 'btn btn-muted', onclick: function () {
+          if (!restoring) options.onStartFresh();
+        } }, 'Back to new profile'));
+        return;
+      }
+      const fresh = el('div', { class: 'btn-row' });
+      fresh.append(el('button', { type: 'button', class: 'btn btn-muted', onclick: function () {
+        if (restoring) return;
+        fresh.innerHTML = '';
+        fresh.append(el('p', {}, 'Create new profiles instead? Your existing backup files remain available in Restore progress.'),
+          el('button', { type: 'button', class: 'btn btn-secondary', onclick: function () { if (!restoring) options.onStartFresh(); } }, 'Create new profiles'));
+      } }, 'Start fresh'));
+      root.append(fresh);
+      return;
+    }
 
     // Danger zone
     const dangerCard = el('div', { class: 'card parent-page__card' },
@@ -630,7 +638,7 @@
           class: 'btn btn-muted',
           onclick: function () {
             if (!window.confirm('Clear everything? All profiles and progress on this device will be erased.')) return;
-            progress.reset();
+            if (!progress.reset()) { alert('Could not clear progress. Please try again.'); return; }
             location.hash = '';
           },
         }, '🗑️ Clear all data'),

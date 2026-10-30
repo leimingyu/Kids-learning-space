@@ -1,0 +1,120 @@
+# Missing pieces | Think about the whole group and the part you know.
+wpa-g2-001|A box holds 20 crayons. There are 8 red crayons. All the rest are blue. How many are blue?|12|crayons|20-8|Take the red crayons away from the whole group.
+wpa-g2-002|Mia needs 15 beads for a chain. She has 9 beads. How many more does she need?|6|beads|15-9|Find the gap between what Mia has and what she needs.
+wpa-g2-003|There are 18 seats on a small bus. Children fill 11 seats. How many seats are empty?|7|seats|18-11|Each filled seat takes one place from the total.
+wpa-g2-004|Sam had some cards. He got 7 more cards and then had 16. How many did he have at first?|9|cards|16-7|Undo the cards Sam got to find his starting number.
+wpa-g2-005|A tree has 14 birds. Some fly away. Now 6 birds are left. How many flew away?|8|birds|14-6|The birds that stayed and the birds that left make 14.
+# Compare carefully | Draw two rows. Which row is longer, and by how much?
+wpa-g2-006|Leo has 13 shells. He has 5 more shells than Ava. How many shells does Ava have?|8|shells|13-5|Leo has the larger group, so take away the extra 5.
+wpa-g2-007|Nora has 6 blocks. Ben has 9 more blocks than Nora. How many blocks does Ben have?|15|blocks|6+9|Ben has Nora's amount plus 9 extra blocks.
+wpa-g2-008|A red ribbon is 17 inches long. A blue ribbon is 10 inches long. How much longer is the red ribbon?|7|inches|17-10|Find the difference between the two lengths.
+wpa-g2-009|Tess has 12 stickers. She has 4 fewer stickers than Omar. How many stickers does Omar have?|16|stickers|12+4|Omar has the larger group. Add the 4 that Tess lacks.
+wpa-g2-010|One shelf has 9 books. A second shelf has 15 books. How many books must be added to the first shelf to make the numbers equal?|6|books|15-9|Fill the gap from 9 to 15.
+# Follow two changes | Keep track of what happens first and what happens next.
+wpa-g2-011|There are 12 ducks in a pond. Then 5 leave and 3 arrive. How many ducks are in the pond now?|10|ducks|12-5+3|Take away the ducks that leave, then add the new ducks.
+wpa-g2-012|Zoe has 8 coins. She finds 6 more and gives 4 to her brother. How many coins does Zoe keep?|10|coins|8+6-4|Add what Zoe finds before taking away what she gives.
+wpa-g2-013|There are 7 children on a bus. At one stop, 5 get on. At the next stop, 2 get off. How many children remain?|10|children|7+5-2|Only the children getting on or off change the count.
+wpa-g2-014|A baker makes 20 rolls. She sells 8 in the morning and 7 later. How many rolls are left?|5|rolls|20-8-7|Remove both groups that were sold.
+wpa-g2-015|Kai reads 9 pages on Monday and 8 on Tuesday. His story has 25 pages. How many pages are left to read?|8|pages|25-9-8|Find how many pages Kai has read, then subtract from 25.
+# Work backward | Start at the end. Undo the last change.
+wpa-g2-016|Some frogs sit on a log. After 6 jump off, 11 remain. How many frogs were on the log at first?|17|frogs|11+6|Put the 6 frogs back to rebuild the starting group.
+wpa-g2-017|I think of a number. I add 8 and get 23. What is my number?|15|number|23-8|Undo adding 8 by taking away 8.
+wpa-g2-018|Lily gives away 5 pencils and then buys 3. She now has 10 pencils. How many did she have at first?|12|pencils|10-3+5|Undo buying 3, then undo giving away 5.
+wpa-g2-019|A jar had some buttons. Dad adds 4 and Mom adds 6. Now there are 22 buttons. How many were in the jar at first?|12|buttons|22-6-4|Take away both added groups to find the start.
+wpa-g2-020|Max walks 7 steps forward, then 2 steps back. He ends 14 steps from the start of a path. How many steps from the start was he before he moved?|9|steps|14+2-7|Undo the backward steps, then undo the forward steps.
+# Number detectives | Use all the clues, not just one.
+wpa-g2-021|I am greater than 20 and less than 30. My ones digit is 4. What number am I?|24|number|20+4|The tens digit must be 2 and the ones digit is 4.
+wpa-g2-022|My number has 3 tens and 7 ones. What is my number?|37|number|3*10+7|Three tens are 30. Add the 7 ones.
+wpa-g2-023|I am an even number between 11 and 15. I am greater than 12. What number am I?|14|number|12+2|The even numbers in that range are 12 and 14. Only 14 is greater than 12.
+wpa-g2-024|A number is 5 less than 40 and 5 more than 30. What is the number?|35|number|40-5|The number must fit both clues: 35 is also 30 plus 5.
+wpa-g2-025|Use the digits 2 and 6 once each to make the largest two-digit number. What number do you make?|62|number|6*10+2|Put the larger digit in the tens place.
+# Growing patterns | Find the same change between nearby numbers.
+wpa-g2-026|A frog lands on stones numbered 3, 6, 9, and 12. It keeps making the same jump. What number comes next?|15|number|12+3|Each jump adds 3.
+wpa-g2-027|Bead rows have 2, 4, 6, and 8 beads. Each new row has 2 more beads. How many beads are in the next row?|10|beads|8+2|Add 2 to the last row.
+wpa-g2-028|A countdown goes 30, 25, 20, 15. It goes down by the same amount each time. What number is next?|10|number|15-5|Take away 5 each time.
+wpa-g2-029|Maya builds towers with 4, 7, and 10 blocks. Each new tower has 3 more blocks. How many blocks are in her fifth tower?|16|blocks|10+3+3|The fourth tower has 13 blocks, so the fifth has 16.
+wpa-g2-030|A robot says 1, 2, 4, 5, 7, 8. It adds 1, then 2, over and over. What number will it say next?|10|number|8+2|After adding 1 to get 8, the robot adds 2.
+# Equal groups | Draw one group, then make the other groups the same size.
+wpa-g2-031|There are 4 nests. Each nest has 2 eggs. How many eggs are there in all?|8|eggs|4*2|Count 2 eggs for each of the 4 nests.
+wpa-g2-032|Three plates each have 5 grapes. How many grapes are on the plates?|15|grapes|3*5|Add three equal groups of 5.
+wpa-g2-033|Five bikes each have 2 wheels. How many wheels do the bikes have altogether?|10|wheels|5*2|Count two wheels for every bike.
+wpa-g2-034|There are 3 bags with 4 apples in each bag. One more apple sits beside the bags. How many apples are there?|13|apples|3*4+1|Count the apples in the bags, then add the loose apple.
+wpa-g2-035|Four children each need 3 paper stars. The class has 10 stars. How many more stars are needed?|2|stars|4*3-10|The children need 12 stars, so compare 12 with 10.
+# Share fairly | Give each group one item at a time until all items are used.
+wpa-g2-036|Twelve cookies are shared equally by 3 children. How many cookies does each child get?|4|cookies|12/3|Make 3 equal groups from the 12 cookies.
+wpa-g2-037|Ten flowers go into 2 vases. Each vase gets the same number. How many flowers go in each vase?|5|flowers|10/2|Split the flowers into two matching groups.
+wpa-g2-038|Sixteen blocks are put into bags of 4. How many bags are needed?|4|bags|16/4|Count how many groups of 4 fit into 16.
+wpa-g2-039|Four friends share 20 grapes equally. One friend eats 2 of her grapes. How many grapes does she have left?|3|grapes|20/4-2|First find one friend's share, then take away 2.
+wpa-g2-040|Eighteen beads are shared equally among 3 cups. How many beads are in 2 of the cups together?|12|beads|18/3*2|Each cup has 6 beads. Two cups have twice that many.
+# Make both sides equal | Both sides must have the same total.
+wpa-g2-041|One tray has 7 red blocks and 5 blue blocks. Another tray has 8 green blocks. How many yellow blocks must be added to the second tray so both trays have the same number?|4|blocks|7+5-8|The first tray has 12 blocks. Fill the gap from 8 to 12.
+wpa-g2-042|A balance holds one toy and 3 cubes on one side. It holds 9 cubes on the other side. The sides balance. How many cubes weigh as much as the toy?|6|cubes|9-3|Remove 3 cubes from both sides of the balance.
+wpa-g2-043|Two bags hold the same number of marbles. Together they hold 14 marbles. How many marbles are in one bag?|7|marbles|14/2|Split the total into two equal parts.
+wpa-g2-044|Ella has 14 beads. Finn has 8 beads. How many beads should Ella give Finn so they have the same number?|3|beads|(14-8)/2|The gap is 6. Each bead moved closes the gap by 2.
+wpa-g2-045|One box has 6 balls. Another has 10 balls. How many balls should move from the second box to the first so the boxes match?|2|balls|(10-6)/2|Move half the difference, because one box loses what the other gains.
+# Think about money | Keep the value of each coin separate from the number of coins.
+wpa-g2-046|A pencil costs 18 cents. You pay with 25 cents. How many cents should you get back?|7|cents|25-18|Change is the amount paid minus the cost.
+wpa-g2-047|You have 3 nickels. Each nickel is worth 5 cents. How many cents do you have?|15|cents|3*5|Add 5 cents for each nickel.
+wpa-g2-048|A sticker costs 8 cents and a card costs 12 cents. You have 30 cents. How many cents remain after you buy both?|10|cents|30-8-12|Add the two costs, then subtract that total from 30.
+wpa-g2-049|Ali has 2 dimes worth 10 cents each and 4 pennies worth 1 cent each. How many cents does Ali have?|24|cents|2*10+4|Count the dimes' value, then add the pennies.
+wpa-g2-050|A toy costs 40 cents. Rose saves 15 cents on Monday and 10 cents on Tuesday. How many more cents does she need?|15|cents|40-15-10|Find her savings first, then find the gap to 40.
+# Time detectives | Count the minutes in each part of the story.
+wpa-g2-051|Reading starts at 3:00 and ends at 3:20. How many minutes does reading last?|20|minutes|20-0|Count from the start of the hour to 20 minutes past.
+wpa-g2-052|It is 2:10. A game lasts 15 minutes. How many minutes past 2 will the game end?|25|minutes|10+15|Move 15 minutes forward from 10 minutes past 2.
+wpa-g2-053|You have 30 minutes before lunch. You draw for 12 minutes and clean up for 5 minutes. How many minutes are left?|13|minutes|30-12-5|Remove both activities from the available time.
+wpa-g2-054|The bus comes at 8:30. You reach the stop at 8:20. How many minutes will you wait?|10|minutes|30-20|Find the difference between the two times in the same hour.
+wpa-g2-055|One song lasts 3 minutes. You play it 4 times with no gaps. How many minutes does that take?|12|minutes|3*4|Count four equal lengths of 3 minutes.
+# Measure and join | Check whether you need a whole length or a difference.
+wpa-g2-056|A green strip is 24 inches long. A yellow strip is 9 inches shorter. How long is the yellow strip?|15|inches|24-9|Take away 9 from the longer strip.
+wpa-g2-057|You join a 15-inch strip and a 12-inch strip end to end. They do not overlap. How long is the new strip?|27|inches|15+12|The joined length is the sum of the two lengths.
+wpa-g2-058|A rope is 40 inches long. You cut off 16 inches. How many inches remain?|24|inches|40-16|Subtract the cut piece from the whole rope.
+wpa-g2-059|Four toy roads are each 5 inches long. They line up end to end with no gaps. How long is the road they make?|20|inches|4*5|Count four lengths of 5 inches.
+wpa-g2-060|A snail moves 8 inches before lunch and 7 inches after lunch. It needs to travel 20 inches. How many more inches must it move?|5|inches|20-8-7|Subtract both parts already traveled from the whole trip.
+# Order and position | Draw the line so you count each person just once.
+wpa-g2-061|There are 4 children ahead of Jo in a line and 3 behind Jo. How many children are in the line, including Jo?|8|children|4+1+3|Count the children ahead, Jo, and the children behind.
+wpa-g2-062|Ten runners finish a race. Ana finishes third. How many runners finish after Ana?|7|runners|10-3|The first three include Ana. The rest finish after her.
+wpa-g2-063|Five books stand in a row. The red book is in the middle. What is its place when you count from the left?|3|place|(5+1)/2|Two books are on each side of the middle book.
+wpa-g2-064|There are 9 stepping stones in a row. You stand on stone 4 and move forward 3 stones. What is the number of your new stone?|7|number|4+3|Moving three stones from 4 takes you to 5, 6, then 7.
+wpa-g2-065|Noah is sixth from the front of a line and fourth from the back. How many people are in the line?|9|people|6+4-1|Both counts include Noah, so subtract one copy of him.
+# Halves and fourths | Equal parts must be the same size.
+wpa-g2-066|A sandwich is cut into 2 equal pieces. You eat one half. How many pieces are left?|1|piece|2-1|One of the two equal pieces remains.
+wpa-g2-067|A pizza is cut into 4 equal slices. Kim eats 1 slice and Jay eats 1 slice. How many slices remain?|2|slices|4-1-1|Take away the two eaten slices.
+wpa-g2-068|There are 18 cherries. Half are put in a bowl. How many cherries go in the bowl?|9|cherries|18/2|Half means one of two equal groups.
+wpa-g2-069|Twenty beads are split into 4 equal groups. How many beads are in one fourth of the beads?|5|beads|20/4|One fourth is one of four equal groups.
+wpa-g2-070|A paper strip is 16 inches long. It is folded in half once. How long is each half?|8|inches|16/2|Split the whole length into two equal lengths.
+# Choose what matters | Find the facts that answer the question. You may not need every number.
+wpa-g2-071|There are 12 red apples and 8 green apples in a bowl. Beside it are 3 cups. How many apples are in the bowl?|20|apples|12+8|The cups do not change the number of apples.
+wpa-g2-072|Milo is 7 years old. He has 14 cards and gives away 5. How many cards does he keep?|9|cards|14-5|Milo's age is not part of his card count.
+wpa-g2-073|A bus has 20 seats. There are 6 girls and 9 boys on it. How many children are on the bus?|15|children|6+9|Count the children, not the seats.
+wpa-g2-074|A shelf is 30 inches long. It holds 7 storybooks and 6 picture books. How many books does it hold?|13|books|7+6|The shelf's length is not needed to count the books.
+wpa-g2-075|On Tuesday, 4 children each bring 3 leaves. Their teacher brings 5 stones. How many leaves do the children bring altogether?|12|leaves|4*3|The stones are not leaves, so count only the children's groups.
+# Small logic puzzles | Make a small drawing or list, then check every clue.
+wpa-g2-076|Two boxes hold 10 balls in all. One box has 2 more balls than the other. How many balls are in the fuller box?|6|balls|(10+2)/2|Set aside the 2 extra balls, split the other 8 equally, then add the extras back.
+wpa-g2-077|I have only red and blue beads. I have 3 red beads and twice as many blue beads. How many beads do I have in all?|9|beads|3+3*2|Twice 3 is 6 blue beads. Add the red beads too.
+wpa-g2-078|There are 3 pairs of socks and 1 single sock in a drawer. How many socks are there?|7|socks|3*2+1|Each pair has 2 socks. Then count the single sock.
+wpa-g2-079|Two dogs and 3 birds are in a yard. Dogs have 4 legs and birds have 2 legs. How many legs are there in all?|14|legs|2*4+3*2|Count the dogs' legs and the birds' legs separately, then join the totals.
+wpa-g2-080|You can choose a red shirt or a blue shirt. You can choose black shorts or white shorts. How many different outfits can you make with one shirt and one pair of shorts?|4|outfits|2*2|Each of the 2 shirts can go with either pair of shorts.
+# Keep track of totals | Moving things between groups does not always change the total.
+wpa-g2-081|Two bowls have 8 nuts each. You move 3 nuts from one bowl to the other. How many nuts are in both bowls together now?|16|nuts|8+8|Moving nuts between bowls does not add or remove any nuts.
+wpa-g2-082|A team has 11 children. Three change from blue hats to red hats. How many children are on the team now?|11|children|11|Changing hats does not change the team size.
+wpa-g2-083|A box has 18 blocks. You put 7 on the floor and 4 on a table. How many blocks are still in the box?|7|blocks|18-7-4|Both groups leave the box, so take both away.
+wpa-g2-084|One basket has 9 pears and another has 5. You move 2 pears from the first basket to the second. How many pears are in the second basket now?|7|pears|5+2|The second basket gains the 2 moved pears.
+wpa-g2-085|There are 6 counters on each side of a mat. You add 4 counters to only the left side. How many counters are on the whole mat now?|16|counters|6+6+4|Count both original groups and the new counters.
+# Plan a little party | Work out what is needed before comparing it with what is ready.
+wpa-g2-086|Six children come to a party. Each needs 2 napkins. You have 9 napkins. How many more napkins do you need?|3|napkins|6*2-9|The children need 12 napkins. Find the shortage.
+wpa-g2-087|You have 15 balloons. Five are red and 4 are yellow. The rest are blue. How many are blue?|6|balloons|15-5-4|Remove both known color groups from the total.
+wpa-g2-088|Four tables each need 3 cups. You put out 8 cups. How many cups still need to be put out?|4|cups|4*3-8|Find the total needed, then subtract those already out.
+wpa-g2-089|A tray has 20 sandwiches. Each of 8 guests takes 2 sandwiches. How many sandwiches remain?|4|sandwiches|20-8*2|The guests take 16 sandwiches altogether.
+wpa-g2-090|You need 18 stars for a party sign. You cut out 7 and your friend cuts out 6. How many more stars are needed?|5|stars|18-7-6|Combine the stars already cut, then find what is missing.
+# Check the rule | Test your idea against every part of the story.
+wpa-g2-091|A machine adds 5 to each number put into it. You put in 17. What number comes out?|22|number|17+5|Follow the machine's rule once.
+wpa-g2-092|A machine takes away 4. The number that comes out is 15. What number went in?|19|number|15+4|Undo taking away 4 by adding 4 back.
+wpa-g2-093|Ben says that 3 bags of 2 marbles hold 5 marbles. How many marbles do the bags really hold?|6|marbles|3*2|Three groups of 2 make 6; adding the number of bags to the group size does not work.
+wpa-g2-094|A tile path repeats red, blue, blue. The first tile is red. What is the number of the next red tile?|4|number|3+1|One complete repeat uses 3 tiles. The next repeat starts at tile 4.
+wpa-g2-095|You write every number from 1 to 10 once. How many of these numbers are even?|5|numbers|10/2|The even numbers are 2, 4, 6, 8, and 10.
+# Meadow challenge | Take your time. Draw, plan, solve, and check.
+wpa-g2-096|Ava has 24 beads. She makes a ring with 6 beads and shares the rest equally between 2 bags. How many beads go in each bag?|9|beads|(24-6)/2|Use the ring beads first, then split the rest into two equal groups.
+wpa-g2-097|One team scores 18 points. This is 7 more points than the other team. How many points did the two teams score altogether?|29|points|18+(18-7)|Find the smaller score before adding both scores.
+wpa-g2-098|You have 10 red blocks and 6 blue blocks. You use 4 red blocks. How many blocks do you have left in all?|12|blocks|10+6-4|Only 4 red blocks are used. All 6 blue blocks remain.
+wpa-g2-099|Three children share 12 cards equally. Then each child gets 2 extra cards. How many cards does each child have now?|6|cards|12/3+2|Find one child's share, then add that child's extra cards.
+wpa-g2-100|A box has 30 beads. You take out 8, put back 3, and take out 5 more. How many beads are in the box at the end?|20|beads|30-8+3-5|Follow the changes in order and check which add beads and which remove them.

@@ -6,6 +6,13 @@ the existing two-mode model.
 
 ## Implementation status
 
+The default [learning journey](LEARNING_JOURNEY.md) records wrong answers and
+division hints immediately in the same profile-scoped queue. It stores the
+latest stuck phase and answer, including when a child leaves mid-equation.
+Its home offers Tricky practice; equations outside the lesson bank replay in
+the classic engine. Optional answer explanations never create a mistake.
+The completion-only behavior described below applies to classic practice.
+
 ✓ Mistake tracking — `longDivisionCoach_wrongs_v1` (profile-scoped)
 ✓ Practice mode + replay queue ("Tricky problems (N)" pill in toolbar)
 ✓ Hub registration as array storageBase

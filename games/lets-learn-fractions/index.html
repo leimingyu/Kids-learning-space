@@ -2385,14 +2385,34 @@
     // when standalone. Stores `records: [ {key, q, attempts, ts} ]`.
     // ====================================================================
     const WRONGS_KEY_BASE = "letsLearnFractions_wrongs_v1";
+    const pendingWrites = new Map();
+    function writeGameStorage(key, value) {
+      if (!key) return false;
+      const raw = JSON.stringify(value), bridge = window.KLS && window.KLS.bridge;
+      try {
+        if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+        localStorage.setItem(key, raw); pendingWrites.delete(key);
+        if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+        return true;
+      } catch (e) {
+        pendingWrites.set(key, raw);
+        if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+        return false;
+      }
+    }
+    function retryGameStorage() {
+      for (const [key, raw] of pendingWrites) writeGameStorage(key, JSON.parse(raw));
+    }
     function wrongsKey(){
       try {
         const pid = (window.KLS && window.KLS.bridge && window.KLS.bridge.getProfileId)
           ? window.KLS.bridge.getProfileId() : null;
+        if (window.parent !== window && !pid) return null;
         return pid ? WRONGS_KEY_BASE + "__" + pid : WRONGS_KEY_BASE;
       } catch(e){ return WRONGS_KEY_BASE; }
     }
     function loadWrongs(){
+      if (!wrongsKey()) return { records: [] };
       try {
         const raw = localStorage.getItem(wrongsKey());
         if(!raw) return { records: [] };
@@ -2401,12 +2421,17 @@
       } catch(e){ return { records: [] }; }
     }
     function saveWrongs(){
-      try { localStorage.setItem(wrongsKey(), JSON.stringify(wrongsStore)); }
-      catch(e){ /* ignore */ }
+      return writeGameStorage(wrongsKey(), wrongsStore);
     }
     function resetWrongs(){
-      try { localStorage.removeItem(wrongsKey()); } catch(e){ /* ignore */ }
+      const key = wrongsKey(), bridge = window.KLS && window.KLS.bridge;
+      try {
+        if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+        localStorage.removeItem(key); pendingWrites.delete(key);
+        if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      } catch(e){ if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key); return false; }
       wrongsStore.records.length = 0;
+      return true;
     }
     /** Push a wrong record (dedup by question key, bump attempts). Caps the
      *  active queue at 20 — oldest fall out, per the spec UX advice. */
@@ -2436,18 +2461,16 @@
     }
     /** Deep-ish copy keeping just the data fields we need to re-present. */
     function cloneQuestion(q){
-      const c = { type: q.type, key: q.key };
-      if(q.type === "ofN"){ c.n = q.n; c.d = q.d; c.ofN = q.ofN; c.ans = q.ans; }
-      else if(q.type === "equiv"){ c.n = q.n; c.d = q.d; c.d2 = q.d2; c.ans = q.ans; }
-      else if(q.type === "spot"){
-        c.n = q.n; c.d = q.d;
-        c.choices = (q.choices || []).map(ch => ({ n: ch.n, d: ch.d }));
-        c.ans = q.ans;
-      }
-      else if(q.type === "compare"){
-        c.a = { n: q.a.n, d: q.a.d };
-        c.b = { n: q.b.n, d: q.b.d };
-        c.ans = q.ans;
+      const c = JSON.parse(JSON.stringify(q));
+      // Repair older mistake snapshots which omitted display/choice metadata.
+      if (c.type === 'ofN') c.text = c.text || `${c.n}/${c.d} of ${c.ofN} = ?`;
+      else if (c.type === 'equiv') c.text = c.text || `${c.n}/${c.d} = ?/${c.d2}`;
+      else if (c.type === 'spot') {
+        c.text = c.text || 'What fraction is shaded?';
+        c.correctIndex = c.choices.findIndex(ch => ch.n === c.n && ch.d === c.d);
+      } else if (c.type === 'compare') {
+        c.text = c.text || 'Which is bigger?';
+        c.biggerSide = c.a.n * c.b.d > c.b.n * c.a.d ? 'a' : 'b';
       }
       return c;
     }
@@ -2558,6 +2581,7 @@
     let streak = 0;        // current correct-answer streak (resets on wrong)
     let bestStreak = 0;    // best streak this session
     let nextCelebrateAt = 3; // next streak count that fires confetti
+    let lastAnswerResult = null;
 
     const goodPhrases = [
       "Great job!", "Awesome!", "You got it right!", "Fantastic!", "Super star!",
@@ -2632,6 +2656,7 @@
     }
 
     function startNewSession(){
+      lastAnswerResult = null;
       idx = 0;
       answered = 0;
       correct = 0;
@@ -3267,6 +3292,7 @@
 
     // Shared scoring path for both the typed and tapped answer flows.
     function registerAnswer(isCorrect, q, kidAnsDisplay){
+      lastAnswerResult = { correct: isCorrect, answer: kidAnsDisplay };
       answered++;
       const fast = (performance.now() - qStartTime) < FAST_MS;
       if(isCorrect){
@@ -3425,6 +3451,7 @@
       // from the chip path, the modal path, or the Enter keyboard fallback.
       clearAutoAdvance();
       hideResultChip();
+      lastAnswerResult = null;
 
       idx++;
       if(idx >= sessionSize){
@@ -3667,7 +3694,7 @@
     }
   </script>
 
-  <script src="../../shared/scripts/game-bridge.js"></script>
+  <script src="../../shared/scripts/game-bridge.js?v=20261011-save-recovery"></script>
   <script>
     // KLS hub wiring: post a "played" event when the Summary screen appears.
     if (window.KLS && window.KLS.bridge) {
@@ -3691,13 +3718,21 @@
         return a ? a.id : 'home';
       }
       function captureState() {
-        return {
-          v: 1,
+        if (__llf_pendingResume && findActiveScreen() === 'homeScreen') return JSON.parse(JSON.stringify(__llf_pendingResume));
+        return JSON.parse(JSON.stringify({
+          v: 2,
           screen: findActiveScreen(),
           level: currentLevel,
           isTrickyPractice: !!isTrickyPractice,
           sessionSize: sessionSize,
-        };
+          currentQ: currentQ, idx: idx, answered: answered, correct: correct, wrong: wrong,
+          streak: streak, bestStreak: bestStreak, nextCelebrateAt: nextCelebrateAt,
+          heat: heat, heatProgress: heatProgress, startHeat: startHeat,
+          selectedLen: selectedLen, selectedOven: selectedOven,
+          trickyQueueIdx: trickyQueueIdx, recentKeys: recentKeys.slice(),
+          input: answerInput.value, elapsed: Math.max(0, performance.now() - qStartTime),
+          result: lastAnswerResult,
+        }));
       }
       // Approach 4: stash, show Continue button on home, kid picks.
       var __llf_pendingResume = null;
@@ -3715,21 +3750,46 @@
         } catch (e) { /* ignore */ }
       }
       function doRestoreFromBlob(blob) {
-        if (!blob || blob.v !== 1) return;
+        if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
         if (blob.level === 'easy' || blob.level === 'medium' || blob.level === 'hard') {
           currentLevel = blob.level;
         }
         if (typeof blob.sessionSize === 'number') sessionSize = blob.sessionSize;
+        if (blob.v === 2) {
+          clearAutoAdvance(); hideResultChip(); modalOverlay.classList.remove('show');
+          currentQ = blob.currentQ ? cloneQuestion(blob.currentQ) : null;
+          idx = blob.idx | 0; answered = blob.answered | 0; correct = blob.correct | 0; wrong = blob.wrong | 0;
+          streak = blob.streak | 0; bestStreak = blob.bestStreak | 0; nextCelebrateAt = blob.nextCelebrateAt | 0;
+          heat = blob.heat | 0; heatProgress = blob.heatProgress | 0; startHeat = blob.startHeat | 0;
+          selectedLen = blob.selectedLen || sessionSize; selectedOven = blob.selectedOven || 'warm';
+          isTrickyPractice = !!blob.isTrickyPractice; trickyQueueIdx = blob.trickyQueueIdx | 0;
+          recentKeys.splice(0, recentKeys.length, ...(blob.recentKeys || []));
+          lastAnswerResult = blob.result || null; locked = false;
+          updateScoreboard(); updateHeatUI(false); updateLevelUI();
+          if (blob.screen === 'gameScreen' && currentQ) {
+            submitBtn.disabled = false; answerInput.disabled = false;
+            updateQuestionUI(); answerInput.value = blob.input || '';
+            qStartTime = performance.now() - Math.max(0, Number(blob.elapsed) || 0);
+            showScreen('game');
+            if (lastAnswerResult) {
+              if (lastAnswerResult.correct) showResultChip(currentQ);
+              else showWrongFeedback(currentQ, lastAnswerResult.answer);
+              lockAnswerInputs();
+            }
+          } else if (blob.screen === 'summaryScreen') showSummary();
+          else showScreen(blob.screen === 'goodbyeScreen' ? 'goodbye' : 'home');
+          return;
+        }
         isTrickyPractice = false;
         trickyQueueIdx = 0;
-        if (blob.screen === 'game') {
+        if (blob.screen === 'game' || blob.screen === 'gameScreen') {
           if (blob.isTrickyPractice && wrongsStore.records.length > 0) {
             startTrickyPractice();
           } else {
             startNewSession();
             showScreen('game');
           }
-        } else if (blob.screen === 'summary') {
+        } else if (blob.screen === 'summary' || blob.screen === 'summaryScreen') {
           showScreen('summary');
         } else {
           showScreen('home');
@@ -3737,7 +3797,7 @@
       }
       function restoreState(blob) {
         // Stash, don't restore — kid will click Continue on the home screen.
-        if (!blob || blob.v !== 1) return;
+        if (!blob || (blob.v !== 1 && blob.v !== 2) || __llf_pendingResume) return;
         __llf_pendingResume = blob;
         showResumeButton(true);
       }
@@ -3750,10 +3810,12 @@
           showResumeButton(false);
           doRestoreFromBlob(blob);
         });
-        var sb = document.getElementById('startBtn');
-        if (sb) sb.addEventListener('click', function () {
-          if (__llf_pendingResume) clearPendingResume();
-        }, true); // capture so we run before the existing startBtn handler
+        ['startBtn','trickyPracticeBtn'].forEach(function (id) {
+          var sb = document.getElementById(id);
+          if (sb) sb.addEventListener('click', function () {
+            if (__llf_pendingResume) clearPendingResume();
+          }, true); // clear before the existing fresh-session handler
+        });
       })();
       rehydrate();
       if (window.KLS && window.KLS.bridge) {
@@ -3765,14 +3827,20 @@
           // Chrome-bar "🏠 Home" → cancel any active session and show home.
           window.KLS.bridge.onHubMessage('goHome', function () {
             try {
+              if (findActiveScreen() === 'gameScreen') {
+                __llf_pendingResume = captureState(); showResumeButton(true);
+              }
+              clearAutoAdvance(); hideResultChip(); modalOverlay.classList.remove('show');
               isTrickyPractice = false;
               trickyQueueIdx = 0;
               showScreen('home');
             } catch (e) { /* ignore */ }
           });
+          window.KLS.bridge.onHubMessage('suspendSession', clearAutoAdvance);
           // Resume-blob contract.
           window.KLS.bridge.onHubMessage('requestState', function () {
-            try { window.KLS.bridge.saveState(captureState()); } catch (e) {}
+            try { retryGameStorage(); window.KLS.bridge.saveState(captureState()); }
+            catch (e) { window.KLS.bridge.saveState(null, { ok: false, error: e.message }); }
           });
           window.KLS.bridge.onHubMessage('resumeState', function (msg) {
             try { if (msg && msg.state) restoreState(msg.state); } catch (e) {}

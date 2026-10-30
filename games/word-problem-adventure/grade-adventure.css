@@ -1,0 +1,126 @@
+/* Scoped so the original adventures keep their own styles. */
+body.grade-mode { background: #f6f4ed; }
+body.grade-mode > .screen { display: none !important; }
+#grade-adventure { --ga-ink: #243d37; --ga-muted: #526760; --ga-paper: #fffef9; --ga-line: #d8e1d6; --ga-green: #1f6753; --ga-soft-green: #e4efe6; --ga-complete: #e0f1e3; --ga-gold: #8d5e00; --ga-gold-soft: #fff0bf; color: var(--ga-ink); max-width: 1020px; margin: auto; padding: 24px 20px 60px; }
+#grade-adventure[hidden] { display: none; }
+#grade-adventure * { box-sizing: border-box; }
+#grade-adventure h1, #grade-adventure h2, #grade-adventure h3 { color: var(--ga-ink); text-shadow: none; text-align: left; line-height: 1.2; }
+#grade-adventure h1 { font-size: clamp(1.8rem, 5vw, 2.7rem); margin: 12px 0; }
+#grade-adventure h1:focus { outline: none; }
+#grade-adventure h2 { font-size: 1.5rem; }
+#grade-adventure p { line-height: 1.55; }
+#grade-adventure button, #grade-adventure input { font: inherit; }
+#grade-adventure button { min-height: 48px; border-radius: 12px; padding: 11px 17px; border: 1px solid var(--ga-line); background: var(--ga-paper); color: var(--ga-ink); cursor: pointer; font-weight: 650; }
+#grade-adventure button:hover { border-color: var(--ga-green); }
+#grade-adventure button:disabled { opacity: .55; cursor: default; }
+#grade-adventure button:focus-visible, #grade-adventure input:focus-visible, #grade-adventure summary:focus-visible { outline: 3px solid #c96a00; outline-offset: 4px; }
+#grade-adventure .ga-primary { background: var(--ga-green); border-color: var(--ga-green); color: white; }
+.ga-eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .76rem; font-weight: 750; color: var(--ga-muted); }
+.ga-intro { max-width: 670px; color: var(--ga-muted); }
+.ga-nav, .ga-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.ga-nav { justify-content: space-between; margin-bottom: 26px; }
+.ga-panel { padding: clamp(18px, 3vw, 30px); border: 1px solid var(--ga-line); border-radius: 22px; background: var(--ga-paper); margin: 22px 0; }
+.ga-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0; }
+#grade-adventure .ga-grade { text-align: left; padding: 20px 16px; min-height: 126px; }
+.ga-grade strong { display: block; font-size: 1.5rem; margin-bottom: 8px; }
+.ga-grade span { display: block; font-size: .85rem; line-height: 1.5; }
+#grade-adventure .ga-grade[aria-pressed="true"] { border: 2px solid var(--ga-green); background: #e4efe6; padding: 19px 15px; }
+.ga-progress { width: 100%; height: 14px; accent-color: var(--ga-green); }
+.ga-progress-label { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; font-size: .95rem; margin: 12px 0; }
+#grade-adventure .ga-status { padding: clamp(18px, 3vw, 30px); border: 2px solid var(--ga-green); border-radius: 22px; background: var(--ga-paper); margin: 22px 0; }
+#grade-adventure .ga-status-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#grade-adventure .ga-kingdom-icon { flex: 0 0 auto; font-size: clamp(2.8rem, 7vw, 4rem); line-height: 1.15; }
+#grade-adventure .ga-status-label { color: var(--ga-muted); font-size: .95rem; font-weight: 750; }
+#grade-adventure .ga-status-title { font-size: clamp(1.5rem, 4vw, 2rem); margin: 5px 0; }
+#grade-adventure .ga-status-count { font-size: clamp(1.8rem, 5vw, 2.5rem); color: var(--ga-green); margin-left: auto; white-space: nowrap; }
+#grade-adventure .ga-segments { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: clamp(3px, 1vw, 8px); margin: 16px 0 12px; }
+#grade-adventure .ga-segment { min-width: 0; height: 22px; border: 1px solid var(--ga-line); border-radius: 6px; background: var(--ga-soft-green); }
+#grade-adventure .ga-segment.filled { background: var(--ga-green); border-color: var(--ga-green); }
+#grade-adventure .ga-status-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+#grade-adventure .ga-stat { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; background: var(--ga-gold-soft); color: var(--ga-ink); border: 1px solid var(--ga-line); border-radius: 16px; padding: 16px; }
+#grade-adventure .ga-stat-icon { font-size: 2.7rem; color: var(--ga-gold); font-weight: 500; line-height: 1.1; }
+#grade-adventure .ga-stat strong { font-size: clamp(1.9rem, 5vw, 2.4rem); line-height: 1.1; }
+#grade-adventure .ga-stat > span { font-size: 1rem; font-weight: 650; }
+#grade-adventure .ga-journey { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin: 20px 0 30px; }
+#grade-adventure .ga-kingdom { display: flex; flex-direction: column; align-items: stretch; text-align: left; padding: 18px 14px; min-height: 238px; border: 2px solid var(--ga-line); border-radius: 18px; }
+#grade-adventure .ga-kingdom-top { display: block; font-size: 1.08rem; font-weight: 800; line-height: 1.4; }
+#grade-adventure .ga-kingdom > .ga-kingdom-icon { font-size: 3rem; margin: 12px 0; }
+#grade-adventure .ga-kingdom h3 { font-size: 1.1rem; margin: 13px 0 10px; }
+#grade-adventure .ga-kingdom-count { display: block; font-size: 1rem; font-weight: 700; margin-top: auto; }
+#grade-adventure .ga-kingdom .ga-progress { height: 16px; margin: 10px 0; }
+#grade-adventure .ga-kingdom-stars { display: block; font-size: clamp(1.35rem, 3vw, 1.65rem); line-height: 1.25; color: var(--ga-gold); letter-spacing: .03em; white-space: nowrap; }
+#grade-adventure .ga-kingdom small { color: var(--ga-muted); font-size: .9rem; font-weight: 650; margin-top: 8px; }
+#grade-adventure .ga-kingdom.current { border: 3px solid var(--ga-green); background: var(--ga-soft-green); padding: 17px 13px; }
+#grade-adventure .ga-kingdom.complete { background: var(--ga-complete); border-color: var(--ga-green); }
+#grade-adventure .ga-kingdom.locked:disabled { opacity: 1; border-style: dashed; color: var(--ga-muted); background: var(--ga-paper); }
+#grade-adventure .ga-badges { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin: 20px 0; }
+#grade-adventure .ga-badge { text-align: center; padding: 20px 10px; border-radius: 16px; border: 1px dashed var(--ga-line); font-size: 1rem; line-height: 1.4; }
+#grade-adventure .ga-badge b { display: block; font-size: 2.7rem; line-height: 1.15; margin-bottom: 12px; }
+#grade-adventure .ga-badge.earned { background: var(--ga-gold-soft); border-style: solid; border-color: var(--ga-gold); color: var(--ga-ink); }
+#grade-adventure .ga-badge small { display: block; font-size: .9rem; margin-top: 8px; }
+.ga-quests { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+#grade-adventure .ga-quest { text-align: left; display: flex; align-items: center; gap: 14px; padding: 18px; }
+.ga-quest-number { background: #e4efe6; color: #243d37; border-radius: 50%; min-width: 40px; height: 40px; display: grid; place-items: center; }
+.ga-quest small { display: block; color: var(--ga-muted); margin-top: 5px; font-weight: 400; }
+#grade-adventure .ga-quest-stars { display: block; font-size: 1.8rem; color: var(--ga-gold); letter-spacing: .08em; line-height: 1.2; margin-top: 8px; }
+#grade-adventure .ga-quest-progress { display: block; font-size: 1rem; color: var(--ga-muted); font-weight: 650; margin-top: 7px; }
+#grade-adventure .ga-session-progress { border: 1px solid var(--ga-line); border-radius: 16px; padding: 16px 18px; margin: 18px 0; background: var(--ga-paper); font-size: 1rem; }
+#grade-adventure .ga-session-progress > strong { display: block; font-size: 1.12rem; line-height: 1.4; }
+#grade-adventure .ga-session-progress > span { display: block; color: var(--ga-muted); font-weight: 650; margin-top: 8px; }
+#grade-adventure .ga-session-progress .ga-segments { margin-bottom: 0; }
+#grade-adventure .ga-summary-stars { display: block; font-size: clamp(2.6rem, 8vw, 4rem); color: var(--ga-gold); line-height: 1.2; letter-spacing: .1em; margin: 12px 0; }
+#grade-adventure .ga-level-reward { border: 2px solid var(--ga-green); background: var(--ga-complete); border-radius: 18px; padding: 20px; margin: 18px 0; }
+#grade-adventure .ga-level-reward > b { display: block; font-size: clamp(1.5rem, 5vw, 2rem); line-height: 1.3; }
+#grade-adventure .ga-level-reward p { font-size: 1.1rem; margin-bottom: 0; }
+.ga-story { font-size: clamp(1.25rem, 3.3vw, 1.6rem); line-height: 1.65 !important; max-width: 760px; }
+.ga-answer { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+.ga-answer label { width: 100%; font-weight: 700; }
+#grade-adventure input { width: 190px; max-width: 100%; padding: 13px; border: 2px solid #879b90; border-radius: 10px; background: var(--ga-paper); color: var(--ga-ink); font-size: 1.35rem; }
+.ga-help { color: var(--ga-muted); font-size: .9rem; }
+.ga-feedback { padding: 16px 18px; border-radius: 12px; background: #edf2eb; margin: 16px 0; line-height: 1.6; }
+.ga-feedback:empty { display: none; }
+.ga-feedback.success { background: #dff2e3; color: #174c32; }
+.ga-feedback.try { background: #fff0d7; color: #65400c; }
+.ga-feedback b { display: block; }
+.ga-feedback:focus { outline: none; }
+.ga-feedback-title { font-size: 1.35rem; }
+.ga-cheer { font-size: 1.12rem; font-weight: 700; margin: 6px 0; }
+.ga-auto-next { font-size: .9rem; margin: 8px 0 14px; }
+.ga-celebration { border: 2px solid #72b67e; animation: ga-celebrate .4s ease-out; }
+@keyframes ga-celebrate { from { transform: scale(.97); } to { transform: scale(1); } }
+.ga-reward { font-size: 1.15rem; background: #fff0bf; color: #4c3b10; border-radius: 14px; padding: 18px; margin: 12px 0; }
+.ga-error { padding: 14px; background: #fff0d7; color: #65400c; border-radius: 12px; }
+#grade-adventure details { margin-top: 25px; }
+#grade-adventure summary { cursor: pointer; padding: 12px 0; }
+@media (max-width: 620px) {
+  #grade-adventure { padding: 18px 14px 40px; }
+  .ga-grades, .ga-quests { grid-template-columns: repeat(2, 1fr); }
+  #grade-adventure .ga-badges { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #grade-adventure .ga-badge { padding: 16px 8px; }
+  #grade-adventure .ga-journey { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #grade-adventure .ga-kingdom { padding: 15px 11px; min-height: 230px; }
+  #grade-adventure .ga-kingdom.current { padding: 14px 10px; }
+  #grade-adventure .ga-kingdom-stars { font-size: 1.35rem; letter-spacing: 0; }
+  #grade-adventure .ga-status-top { gap: 10px; }
+  #grade-adventure .ga-stat { padding: 13px 10px; gap: 7px; }
+  #grade-adventure .ga-quest { padding: 13px 10px; gap: 9px; font-size: .92rem; }
+  .ga-quest-number { min-width: 28px; height: 28px; }
+  .ga-nav { margin-bottom: 18px; }
+}
+@media (max-width: 390px) {
+  .ga-quests { grid-template-columns: 1fr; }
+  #grade-adventure .ga-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #grade-adventure .ga-status-count { margin-left: 0; }
+  #grade-adventure .ga-kingdom-top { font-size: 1rem; }
+  #grade-adventure .ga-kingdom-stars { font-size: 1.18rem; }
+}
+@media (prefers-color-scheme: dark) {
+  body.grade-mode { background: #172821; }
+  #grade-adventure { --ga-ink: #e7f1e9; --ga-muted: #bacbbf; --ga-paper: #22382d; --ga-line: #4b6554; --ga-green: #78cfa5; --ga-soft-green: #31543e; --ga-complete: #2c4c3b; --ga-gold: #f3c762; --ga-gold-soft: #4b4227; }
+  #grade-adventure .ga-primary { background: #267960; border-color: #78cfa5; }
+  #grade-adventure .ga-grade[aria-pressed="true"] { background: #31543e; }
+  .ga-feedback { background: #31543e; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #grade-adventure *, body.grade-mode { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

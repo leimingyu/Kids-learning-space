@@ -1,0 +1,120 @@
+# Plan with larger numbers | Break the story into useful parts before calculating.
+wpa-g4-001|A library has 248 storybooks and 175 science books. It lends 96 books. How many books remain?|327|books|248+175-96|Combine both kinds of books, then subtract all books lent.
+wpa-g4-002|A school wants 600 pencils. It has 275 and receives 168 more. How many pencils does it still need?|157|pencils|600-275-168|Find the total already available before comparing with the target.
+wpa-g4-003|A theater has 18 rows with 12 seats in each row. If 157 seats are filled, how many are empty?|59|seats|18*12-157|Find the theater's capacity, then remove the filled seats.
+wpa-g4-004|A shop sells 125 postcards on Friday and twice as many on Saturday. How many postcards does it sell on both days?|375|postcards|125+2*125|Saturday's amount is twice Friday's; count both days.
+wpa-g4-005|A farmer picks 480 pears. She sets aside 36 and divides the rest equally among 12 crates. How many pears go in each crate?|37|pears|(480-36)/12|Only the pears not set aside go into crates.
+# Hidden beginnings | Reverse the operations in the opposite order.
+wpa-g4-006|A number is multiplied by 6, then 18 is added. The result is 90. What was the number?|12|number|(90-18)/6|Undo addition before undoing multiplication.
+wpa-g4-007|A club spends 48 dollars, then receives 75 dollars. It now has 160 dollars. How many dollars did it have at first?|133|dollars|160-75+48|Remove the money received and put back the money spent.
+wpa-g4-008|After 24 students leave a hall, the remaining students make 8 groups of 15. How many students were in the hall at first?|144|students|8*15+24|Rebuild the remaining group, then include the students who left.
+wpa-g4-009|A ribbon is cut into 5 equal pieces after a 12-centimeter piece is removed. Each equal piece is 18 centimeters long. How long was the ribbon at first?|102|centimeters|5*18+12|Join the five equal pieces and the removed piece.
+wpa-g4-010|I divide a number by 4 and then subtract 9. The result is 16. What was my starting number?|100|number|(16+9)*4|Undo subtracting 9, then multiply by 4.
+# Comparison chains | Follow each relationship without confusing a difference with a multiple.
+wpa-g4-011|A birch tree is 7 meters tall. An oak is 3 times as tall. How many meters taller is the oak?|14|meters|7*3-7|Find the oak's height, then compare the two heights.
+wpa-g4-012|Uma has 18 cards. Vic has twice as many as Uma. Wen has 7 fewer than Vic. How many cards does Wen have?|29|cards|18*2-7|Use Vic's amount as the starting point for Wen's comparison.
+wpa-g4-013|A small tank holds 24 liters. A large tank holds 5 times as much. How many liters do both tanks hold together?|144|liters|24+24*5|The total includes one small-tank amount and five more equal amounts.
+wpa-g4-014|Rosa walks 840 meters. This is 4 times as far as Eli walks. How many meters farther does Rosa walk?|630|meters|840-840/4|Find Eli's distance by dividing, then subtract it from Rosa's.
+wpa-g4-015|Blue team scores 36 points. Red team scores 9 fewer. Green team scores twice as many as Red team. How many points does Green team score?|54|points|(36-9)*2|Find Red team's score before doubling it.
+# Sum and difference | Remove the difference to leave two equal amounts.
+wpa-g4-016|Two boxes hold 86 books altogether. One holds 14 more than the other. How many books are in the smaller box?|36|books|(86-14)/2|Remove the extra 14, then split the remaining books equally.
+wpa-g4-017|Two paths have a combined length of 150 meters. One is 26 meters longer. How long is the longer path?|88|meters|(150+26)/2|Half the total plus half the difference gives the longer length.
+wpa-g4-018|A class buys 42 red and blue pens. There are 8 more red pens than blue pens. How many red pens are there?|25|pens|(42+8)/2|The red group contains one equal share plus the extra 8.
+wpa-g4-019|Two numbers have a sum of 100 and a difference of 34. What is the smaller number?|33|number|(100-34)/2|Removing the difference leaves twice the smaller number.
+wpa-g4-020|Two teams earn 128 points altogether. One team earns 3 times as many as the other. How many points does the higher-scoring team earn?|96|points|128/4*3|Split the total into four equal parts; the higher score uses three.
+# Fractions of groups | Find one equal part before finding several parts.
+wpa-g4-021|A box holds 48 beads. Three fourths are blue. How many beads are blue?|36|beads|48/4*3|Find one fourth, then take three of those equal parts.
+wpa-g4-022|Two thirds of a class of 27 students walk to school. How many students do not walk?|9|students|27-27/3*2|Find the walkers, then subtract them from the class.
+wpa-g4-023|A gardener plants flowers in 5 equal rows. There are 60 flowers altogether. Two fifths are yellow. How many are yellow?|24|flowers|60/5*2|One fifth is 12 flowers, so two fifths is 24.
+wpa-g4-024|Three eighths of a collection is 18 shells. How many shells are in the whole collection?|48|shells|18/3*8|Find one eighth by dividing by 3, then rebuild all eight parts.
+wpa-g4-025|A book has 120 pages. Nia reads one fourth on Monday and one third on Tuesday. How many pages remain?|50|pages|120-120/4-120/3|Both fractions refer to the whole book. Remove both amounts read.
+# Fractions on a whole | Use equal-sized parts before adding or subtracting fractions.
+wpa-g4-026|A ribbon is 1 meter long. You cut off 3/8 meter. How many meters remain? Give a fraction.|5/8|meter|1-3/8|One whole is eight eighths. Remove three eighths.
+wpa-g4-027|Luca walks 2/6 mile to a park and 3/6 mile through it. How many miles does Luca walk altogether? Give a fraction.|5/6|mile|2/6+3/6|The parts have the same size, so combine their counts.
+wpa-g4-028|A jug contains 7/10 liter of juice. You pour out 2/10 liter. How many liters remain? Give a fraction.|1/2|liter|7/10-2/10|Five tenths remain, which is equal to one half.
+wpa-g4-029|Maya uses 1/4 meter of string, then another 2/4 meter. How many meters does she use altogether? Give a fraction.|3/4|meter|1/4+2/4|Combine one fourth and two fourths.
+wpa-g4-030|Four friends each drink 1/8 liter of juice. How many liters do they drink altogether? Give a fraction.|1/2|liter|4*1/8|Four eighths make one half.
+# Remainder decisions | Ask whether the answer needs full groups, leftovers, or an extra group.
+wpa-g4-031|Ninety-five students travel in vans with room for 8 students each. What is the fewest number of vans needed?|12|vans|11+1|Eleven vans seat 88 students; the remaining 7 need one more van.
+wpa-g4-032|A ribbon is 130 centimeters long. You cut as many 12-centimeter pieces as possible. How many centimeters are left?|10|centimeters|130-10*12|Ten full pieces use 120 centimeters.
+wpa-g4-033|A shop puts 146 eggs in cartons of 12. How many full cartons can it fill?|12|cartons|144/12|Twelve cartons use 144 eggs. The last 2 do not fill another carton.
+wpa-g4-034|A camp has 73 campers. Cabins hold 6 campers each. After using the fewest cabins possible, how many empty camper spaces are there?|5|spaces|13*6-73|Thirteen cabins are needed and have 78 spaces in total.
+wpa-g4-035|You have 100 dollars. Notebooks cost 7 dollars each. How many dollars remain after you buy as many notebooks as possible?|2|dollars|100-14*7|Fourteen notebooks cost 98 dollars; a fifteenth would cost too much.
+# Factor clues | List the small groups that divide the total evenly.
+wpa-g4-036|A class has 24 children. Teams must have the same size, with more than 4 but fewer than 8 children on each team. How many children must be on each team?|6|children|24/4|Of 5, 6, and 7, only 6 divides 24 evenly.
+wpa-g4-037|A number is greater than 20 and less than 30. It can be divided evenly by both 3 and 4. What is the number?|24|number|3*8|The multiples of 4 in the range are 24 and 28. Only 24 is also a multiple of 3.
+wpa-g4-038|Two bells ring together now. One rings every 4 minutes and one every 6 minutes. In how many minutes will they next ring together?|12|minutes|4*3|The first shared future multiple of 4 and 6 is 12.
+wpa-g4-039|Thirty tiles form a rectangle with whole-number side lengths. One side is 5 tiles long. How many tiles long is the other side?|6|tiles|30/5|Find the factor that pairs with 5 to make 30.
+wpa-g4-040|A number is between 40 and 50. It is a multiple of 7 and its digits add to 6. What is the number?|42|number|7*6|Both 42 and 49 are multiples of 7, but only 42 has digit sum 6.
+# Growing designs | Count how many changes happen after the first design.
+wpa-g4-041|A fence design starts with 4 posts. Each new section adds 3 posts. How many posts are there after 6 new sections are added?|22|posts|4+6*3|Keep the original 4 and add six groups of 3.
+wpa-g4-042|A pattern has 3 dots in stage 1. Each new stage doubles the dots. How many dots are in stage 5?|48|dots|3*2*2*2*2|There are four doublings from stage 1 to stage 5.
+wpa-g4-043|A tile border has 6 tiles at first. Each step adds 4 tiles. After how many steps will it have 30 tiles?|6|steps|(30-6)/4|Find the increase needed, then count groups of 4.
+wpa-g4-044|A robot adds 2, then 5, repeatedly. Starting at 1, it says 1, 3, 8, 10, 15. What number comes next?|17|number|15+2|The last step added 5, so the next adds 2.
+wpa-g4-045|Ben saves 8 dollars in week 1. Each week he saves 3 dollars more than the week before. How many dollars does he save in week 4 alone?|17|dollars|8+3*3|Week 4 comes after three increases. The question asks only for that week's savings.
+# Perimeter puzzles | Sketch the outside boundary and count each side once.
+wpa-g4-046|A rectangle has a perimeter of 50 meters and a length of 16 meters. What is its width?|9|meters|50/2-16|Half the perimeter is one length plus one width.
+wpa-g4-047|A square garden has a perimeter of 64 meters. What is the length of one side?|16|meters|64/4|All four sides of a square are equal.
+wpa-g4-048|A rectangular field is 25 meters long and 18 meters wide. A fence surrounds it except for a 4-meter gate. How many meters of fence are needed?|82|meters|2*(25+18)-4|Find the full boundary, then replace the gate section.
+wpa-g4-049|Two squares with 5-centimeter sides are joined along one full side. What is the perimeter of the rectangle they form?|30|centimeters|2*(10+5)|The shared side is inside the new shape, not on its boundary.
+wpa-g4-050|A rectangle is 12 centimeters long and 7 centimeters wide. Its length increases by 3 centimeters. How many centimeters does its perimeter increase?|6|centimeters|2*3|Both long sides increase by 3 centimeters.
+# Area puzzles | Divide a shape into rectangles or subtract the missing part.
+wpa-g4-051|A rectangular floor is 9 meters long and 7 meters wide. A rug covers 20 square meters. How many square meters of floor are uncovered?|43|square meters|9*7-20|Subtract the rug's area from the whole floor's area.
+wpa-g4-052|A garden has an area of 96 square meters and a width of 8 meters. What is its length?|12|meters|96/8|Divide the area by the known width.
+wpa-g4-053|A 10-by-6 rectangle of square tiles has a 3-by-2 rectangle removed from one corner. How many tiles remain?|54|tiles|10*6-3*2|Subtract the missing rectangle's tiles from the full rectangle.
+wpa-g4-054|A square has sides 9 centimeters long. A rectangle has sides 12 and 6 centimeters. How many square centimeters larger is the square's area?|9|square centimeters|9*9-12*6|Calculate each area before comparing them.
+wpa-g4-055|A wall is covered by 8 rows of 15 tiles. Each box holds 10 tiles. How many boxes are needed?|12|boxes|8*15/10|Count the tiles, then group them into boxes of 10.
+# Time across hours | Use the next whole hour as a useful stopping point.
+wpa-g4-056|A movie begins at 2:35 and ends at 4:10. How many minutes does it last?|95|minutes|25+60+10|Count 25 minutes to 3:00, one hour to 4:00, then 10 minutes.
+wpa-g4-057|A bus leaves at 9:48 and arrives at 10:23. How many minutes is the trip?|35|minutes|12+23|Count 12 minutes to 10:00 and 23 more afterward.
+wpa-g4-058|A class has 90 minutes for art. Setup takes 12 minutes and cleanup takes 8 minutes. The rest is split equally between 2 projects. How many minutes does each project get?|35|minutes|(90-12-8)/2|Remove setup and cleanup before sharing the working time.
+wpa-g4-059|Four games each last 18 minutes. There is a 5-minute break between games. How many minutes pass from the start of the first game to the end of the fourth?|87|minutes|4*18+3*5|Four games have three breaks between them.
+wpa-g4-060|You must arrive at 3:00. Travel takes 45 minutes. You leave at 2:05. How many minutes early do you arrive?|10|minutes|55-45|There are 55 minutes until 3:00, and 45 are used for travel.
+# Convert before solving | Put all quantities into the same unit first.
+wpa-g4-061|A rope is 3 meters long. One meter is 100 centimeters. You cut off 85 centimeters. How many centimeters remain?|215|centimeters|3*100-85|Convert the whole rope to centimeters before subtracting.
+wpa-g4-062|A bag holds 2 kilograms of rice. One kilogram is 1,000 grams. You use 650 grams. How many grams remain?|1350|grams|2*1000-650|Express the full bag in grams.
+wpa-g4-063|A jug holds 4 liters of water. One liter is 1,000 milliliters. You fill cups with 250 milliliters each. How many full cups can you fill?|16|cups|4*1000/250|Convert liters to milliliters, then count cupfuls.
+wpa-g4-064|A trail is 2 kilometers long. One kilometer is 1,000 meters. You walk 750 meters, rest, then walk 680 meters. How many meters remain?|570|meters|2*1000-750-680|Subtract both walked distances from 2,000 meters.
+wpa-g4-065|Each small package weighs 125 grams. Eight packages go in a box weighing 200 grams. How many grams does the filled box weigh?|1200|grams|8*125+200|Include the box itself as well as all its contents.
+# Money plans | Separate a per-item price from a price for a whole group.
+wpa-g4-066|A family buys 3 adult tickets at 12 dollars each and 2 child tickets at 7 dollars each. How many dollars do they pay?|50|dollars|3*12+2*7|Find each ticket group's cost and combine them.
+wpa-g4-067|A club has 150 dollars. It buys 8 kits at 14 dollars each. How many dollars remain?|38|dollars|150-8*14|Subtract the total kit cost from the budget.
+wpa-g4-068|Four friends share a 36-dollar meal bill equally. Each also pays 2 dollars for a drink. How many dollars does each friend pay?|11|dollars|36/4+2|Share the meal first, then add one person's drink.
+wpa-g4-069|Pens cost 3 dollars each or 10 dollars for a pack of 4. How many dollars do you save by buying one pack instead of 4 single pens?|2|dollars|4*3-10|Compare costs for the same number of pens.
+wpa-g4-070|A shop earns 96 dollars by selling 12 identical notebooks at the same price. How many dollars would 5 notebooks cost?|40|dollars|96/12*5|Find the price of one notebook, then price five.
+# Count without repeats | Organize a list by one choice at a time.
+wpa-g4-071|You can choose one of 4 main dishes and one of 3 side dishes. How many different meals are possible?|12|meals|4*3|Each main dish pairs with all three sides.
+wpa-g4-072|Five players each play every other player once. How many games are played?|10|games|4+3+2+1|Count each pair once, so do not count the return order again.
+wpa-g4-073|A code has a first digit of 1, 2, or 3 and a second digit of 4 or 5. How many codes are possible?|6|codes|3*2|There are two second-digit choices for each first digit.
+wpa-g4-074|There are 3 routes from home to a park and 2 routes from the park to a library. How many trips can use one route for each part?|6|trips|3*2|Pair each first route with both second routes.
+wpa-g4-075|Four friends sit in a row. Sam must sit first and Lee must sit last. In how many ways can the other two friends sit?|2|ways|2|Only the two middle seats can change: either order works.
+# Invariants and transfers | A transfer changes two amounts but may leave their total unchanged.
+wpa-g4-076|Ava has 46 counters and Bo has 22. How many counters must Ava give Bo so they have equal amounts?|12|counters|(46-22)/2|A transfer closes the gap by twice the amount moved.
+wpa-g4-077|Two tanks contain 35 liters each. You move 9 liters from one to the other. How many liters are in both tanks together?|70|liters|35+35|No water enters or leaves the pair of tanks.
+wpa-g4-078|A jar holds 60 beads. You replace 8 red beads with 8 blue beads. How many beads are in the jar afterward?|60|beads|60-8+8|Removing and adding equal numbers keeps the total unchanged.
+wpa-g4-079|Two baskets hold 32 and 18 apples. After 5 apples move from the fuller basket to the other, what is the difference between the amounts?|4|apples|(32-5)-(18+5)|Update both baskets before comparing them.
+wpa-g4-080|A team has 125 points. It gains 18, loses 18, and gains 7. What is its final score?|132|points|125+18-18+7|The equal gain and loss cancel, leaving a net gain of 7.
+# Use the clues | Check a possible answer against every condition.
+wpa-g4-081|There are chickens and rabbits in a pen. There are 6 animals and 20 legs. Chickens have 2 legs and rabbits have 4. How many rabbits are there?|4|rabbits|(20-6*2)/2|Six chickens would have 12 legs. Each rabbit adds 2 more legs, so the extra 8 legs mean 4 rabbits.
+wpa-g4-082|A number has two digits. Its digits add to 9. Its tens digit is 3 more than its ones digit. What is the number?|63|number|6*10+3|The digits 6 and 3 have sum 9 and difference 3.
+wpa-g4-083|Three consecutive whole numbers add to 48. What is the middle number?|16|number|48/3|The number below and the number above balance around the middle.
+wpa-g4-084|Two identical bags and 8 loose marbles hold 38 marbles altogether. How many marbles are in one bag?|15|marbles|(38-8)/2|Remove the loose marbles, then split the rest equally.
+wpa-g4-085|A number is greater than 30 and less than 40. Dividing it by 5 leaves a remainder of 2. It is even. What is the number?|32|number|6*5+2|The remainder clue gives 32 or 37. Only 32 is even.
+# Choose a strategy | A drawing, a table, or a smaller first step may help.
+wpa-g4-086|A line has 12 fence posts, with 3 meters between each pair of neighboring posts. How many meters are between the first and last posts?|33|meters|(12-1)*3|Twelve posts create eleven gaps.
+wpa-g4-087|Nine children stand in a circle. Each passes one ball to the child on the right. If each child starts with 2 balls, how many balls are there altogether after the pass?|18|balls|9*2|Passing balls changes who holds them, not the total number.
+wpa-g4-088|A rope needs to be cut into 8 pieces. Each cut splits just one piece into two. How many cuts are needed?|7|cuts|8-1|Start with one piece; each cut increases the piece count by one.
+wpa-g4-089|A staircase has 7 steps. You put 2 tiles on the first step and 2 more tiles on each next step. How many tiles go on the seventh step?|14|tiles|2+6*2|The seventh step comes after six increases.
+wpa-g4-090|A number machine subtracts 7 and then doubles the result. What output does it give for an input of 25?|36|number|(25-7)*2|Follow the stated order; double only after subtracting.
+# Plan an event | Connect counts, costs, and capacity in a sensible order.
+wpa-g4-091|A fair expects 84 children. Each table seats 6 children and costs 9 dollars to rent. How many dollars does it cost to rent enough tables?|126|dollars|84/6*9|Find the table count before finding the rental cost.
+wpa-g4-092|A class makes 120 cookies. It keeps one fourth and packs the rest in bags of 6. How many bags does it fill?|15|bags|(120-120/4)/6|Remove the class's share before packing the rest.
+wpa-g4-093|A trip costs 240 dollars in all. The club pays 60 dollars. Nine families share the rest equally. How many dollars does each family pay?|20|dollars|(240-60)/9|Subtract the club's contribution before dividing the remaining cost.
+wpa-g4-094|Seventy children each need 2 tickets. Tickets come in strips of 12. What is the fewest number of strips needed?|12|strips|11+1|The children need 140 tickets. Eleven strips give 132; twelve give 144.
+wpa-g4-095|A stall sells 18 drinks at 3 dollars each. Supplies cost 22 dollars altogether. How many dollars are left after paying for supplies?|32|dollars|18*3-22|Find the sales money, then subtract the one total supply cost.
+# Summit challenge | Use all the relationships and check that the answer fits.
+wpa-g4-096|Three boxes contain 90 marbles altogether. The second has twice as many as the first. The third has three times as many as the first. How many marbles are in the first box?|15|marbles|90/(1+2+3)|The boxes contain one, two, and three equal parts, making six parts in all.
+wpa-g4-097|A rectangular garden has a perimeter of 36 meters. Its length is twice its width. What is its area in square meters?|72|square meters|6*12|Length plus width is 18 meters. Three equal width-parts make 18, so the sides are 6 and 12.
+wpa-g4-098|After giving away one third of her 72 cards, Maya puts the rest into 4 equal piles. How many cards are in each pile?|12|cards|(72-72/3)/4|Remove one third before splitting the cards that remain.
+wpa-g4-099|Two friends have 80 dollars altogether. After the first gives the second 10 dollars, they have equal amounts. How many dollars did the first friend have before the transfer?|50|dollars|80/2+10|Each ends with 40 dollars. Add back the 10 the first friend gave away.
+wpa-g4-100|A school orders 15 boxes of pencils with 12 pencils in each box. It gives 8 pencils to each of 20 students. How many pencils remain?|20|pencils|15*12-8*20|Find the supply and the total handed out, then subtract.

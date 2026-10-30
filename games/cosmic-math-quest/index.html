@@ -1562,9 +1562,26 @@
   function saveProgress(data) {
     const key = storageKey();
     if (!key) return;  // embedded, profile not known yet — skip (avoid auto-migration)
+    return writeGameStorage(key, data);
+  }
+
+  var pendingWrites = new Map();
+  function writeGameStorage(key, value) {
+    if (!key) return false;
+    var raw = JSON.stringify(value), bridge = window.KLS && window.KLS.bridge;
     try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (e) { /* ignore */ }
+      if (bridge && bridge.assertCanWrite) bridge.assertCanWrite();
+      localStorage.setItem(key, raw); pendingWrites.delete(key);
+      if (bridge && bridge.clearStorageError) bridge.clearStorageError(key);
+      return true;
+    } catch (e) {
+      pendingWrites.set(key, raw);
+      if (bridge && bridge.reportStorageError) bridge.reportStorageError(e, key);
+      return false;
+    }
+  }
+  function retryGameStorage() {
+    pendingWrites.forEach(function (raw, key) { writeGameStorage(key, JSON.parse(raw)); });
   }
 
   let progress = loadProgress();
@@ -1731,9 +1748,7 @@
   function saveWrongAnswerHistory() {
     const key = wrongsKey();
     if (!key) return;
-    try {
-      localStorage.setItem(key, JSON.stringify(wrongAnswerStore));
-    } catch (e) { /* ignore */ }
+    return writeGameStorage(key, wrongAnswerStore);
   }
 
   wrongAnswerStore = loadWrongAnswerHistory();
@@ -3939,9 +3954,9 @@
     if (fill) fill.style.width = ((s / LIGHTNING_SECONDS) * 100) + '%';
   }
 
-  function startLightningTimer() {
+  function startLightningTimer(secondsLeft) {
     clearLightningTimer();
-    GameState.lightningSecondsLeft = LIGHTNING_SECONDS;
+    GameState.lightningSecondsLeft = typeof secondsLeft === 'number' ? secondsLeft : LIGHTNING_SECONDS;
     updateLightningTimerUI();
     GameState.lightningTimerId = setInterval(function () {
       GameState.lightningSecondsLeft -= 1;
@@ -4074,8 +4089,10 @@
   }
 
   // ========== QUESTION RENDER ==========
+  var lastRenderedQuestion = null;
   function renderQuestion() {
     var q = GameState.currentQuestion;
+    lastRenderedQuestion = q;
     // Band questions are validated by GradeBands at generation time; review
     // mode replays stored snapshots verbatim. No regenerate-on-invalid loop.
     GameState.answered = false;
@@ -4922,9 +4939,15 @@
       keepGrade = progress.grade;
     }
     try {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.assertCanWrite) window.KLS.bridge.assertCanWrite();
       var k1 = storageKey(); if (k1) localStorage.removeItem(k1);
       var k2 = wrongsKey();  if (k2) localStorage.removeItem(k2);
-    } catch (e) { /* ignore */ }
+      pendingWrites.delete(k1); pendingWrites.delete(k2);
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.clearStorageError) { window.KLS.bridge.clearStorageError(k1); window.KLS.bridge.clearStorageError(k2); }
+    } catch (e) {
+      if (window.KLS && window.KLS.bridge && window.KLS.bridge.reportStorageError) window.KLS.bridge.reportStorageError(e, storageKey());
+      window.alert('Your browser could not reset progress. Try again.'); return;
+    }
     progress = defaultProgress();
     if (keepGrade) {
       progress.grade = keepGrade;
@@ -4953,23 +4976,36 @@
   // Chrome-bar "🏠 Home" → return to the menu screen. Cancels any active
   // game/practice screen without resetting progress.
   window.__cmq_onGoHome = function () {
-    try { clearLightningTimer(); showScreen('menu'); } catch (e) { /* ignore */ }
-  };
-
-  // Resume-blob contract — entry-context only: { v: 2, screen, playMode,
-  // grade }. Captures which screen the kid is on plus mode/grade.
-  // Restoring lands them at the same screen (a fresh round at the same
-  // grade/mode); we don't try to rebuild the in-progress question queue.
-  window.__cmq_captureState = function () {
     try {
       var active = document.querySelector('.screen.active');
-      return {
-        v: 2,
-        screen: active ? active.id : 'screen-menu',
-        playMode: (GameState && GameState.playMode) || 'mission',
-        grade: (progress && progress.grade) || null,
-      };
-    } catch (e) { return { v: 2, screen: 'screen-menu', playMode: 'mission', grade: null }; }
+      if (active && active.id === 'screen-game') {
+        __cmq_pendingResume = window.__cmq_captureState(); __cmq_showResumeRow(true);
+      }
+      clearLightningTimer(); showScreen('menu');
+    } catch (e) { /* ignore */ }
+  };
+  window.__cmq_flushStorage = retryGameStorage;
+  window.__cmq_onSuspend = function () { clearLightningTimer(); };
+
+  // Exact checkpoint. Timer handles and device-level sound preferences are excluded.
+  window.__cmq_captureState = function () {
+    var active = document.querySelector('.screen.active'), session = {};
+    // Leaving while the kid is still choosing Continue must retain the offer.
+    if (__cmq_pendingResume && active && active.id === 'screen-menu') return JSON.parse(JSON.stringify(__cmq_pendingResume));
+    Object.keys(GameState).forEach(function (k) {
+      if (k !== 'lightningTimerId' && k !== 'soundOn') session[k] = GameState[k];
+    });
+    var text = {};
+    ['feedback', 'feedback-extra', 'results-title', 'results-stars', 'results-rating',
+      'res-score', 'res-correct', 'res-accuracy', 'res-streak', 'res-stars'].forEach(function (id) {
+      var node = document.getElementById(id); if (node) text[id] = node.textContent;
+    });
+    return JSON.parse(JSON.stringify({ v: 3, screen: active ? active.id : 'screen-menu',
+      playMode: GameState.playMode, grade: progress.grade, session: session,
+      displayedQuestion: lastRenderedQuestion, askedKeys: Array.from(sessionAskedKeys), text: text,
+      input: document.getElementById('answer-input').value,
+      remainderInput: document.getElementById('answer-input-r').value,
+      feedbackClass: document.getElementById('feedback').className }));
   };
   // Approach 4: stash the blob; the kid clicks Continue or the Mission
   // tile on the menu to decide. We don't auto-restore.
@@ -4988,8 +5024,45 @@
     } catch (e) { /* ignore */ }
   }
   function __cmq_doRestoreFromBlob(blob) {
-    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2 && blob.v !== 3)) return;
     try {
+      if (blob.v === 3 && blob.session) {
+        clearLightningTimer();
+        var saved = JSON.parse(JSON.stringify(blob.session));
+        Object.keys(GameState).forEach(function (k) {
+          if (k !== 'soundOn' && k !== 'lightningTimerId' && Object.prototype.hasOwnProperty.call(saved, k)) GameState[k] = saved[k];
+        });
+        sessionAskedKeys = new Set(blob.askedKeys || []);
+        if (blob.screen === 'screen-game' && GameState.currentQuestion) {
+          var current = GameState.currentQuestion, answeredBefore = GameState.answered;
+          // A successful review answer can already point currentQuestion at the next item.
+          GameState.currentQuestion = blob.displayedQuestion || current;
+          renderQuestion();
+          GameState.currentQuestion = current;
+          GameState.answered = answeredBefore;
+          document.getElementById('answer-input').value = blob.input || '';
+          document.getElementById('answer-input-r').value = blob.remainderInput || '';
+          setAnswerControlsEnabled(!answeredBefore && !GameState.isGameOver);
+          document.getElementById('btn-hint').disabled = answeredBefore || GameState.isGameOver;
+          document.getElementById('btn-next').hidden = !answeredBefore || GameState.isGameOver;
+          setReviewBannerVisible(GameState.isReviewMode);
+          setGameTitle(GameState.isReviewMode ? '🔧 Fix-It practice' : '🛸 Mission in progress');
+          updateBossHpUI(); updateLightningTimerUI();
+          setGameOverModalOpen(GameState.isGameOver);
+          if (GameState.isGameOver) updateGameOverPracticeUi();
+          showScreen('game');
+          if (GameState.playMode === 'lightning' && !GameState.isReviewMode && !GameState.isGameOver) startLightningTimer(GameState.lightningSecondsLeft);
+        } else if (blob.screen === 'screen-results') { showScreen('results'); updateResultsExportButtons(); }
+        else if (blob.screen === 'screen-progress') { renderProgressScreen(); showScreen('progress'); }
+        else showScreen('menu');
+        Object.keys(blob.text || {}).forEach(function (id) {
+          if (['feedback', 'feedback-extra', 'results-title', 'results-stars', 'results-rating', 'res-score', 'res-correct', 'res-accuracy', 'res-streak', 'res-stars'].indexOf(id) !== -1) {
+            var node = document.getElementById(id); if (node) node.textContent = blob.text[id];
+          }
+        });
+        document.getElementById('feedback').className = blob.feedbackClass === 'feedback success' ? 'feedback success' : blob.feedbackClass === 'feedback gentle' ? 'feedback gentle' : 'feedback neutral';
+        return;
+      }
       if (blob.v === 2) {
         if (blob.playMode) GameState.playMode = blob.playMode;
         // The per-profile progress blob is authoritative for grade; only
@@ -5007,7 +5080,7 @@
     } catch (e) { /* corrupted blob */ }
   }
   window.__cmq_restoreState = function (blob) {
-    if (!blob || (blob.v !== 1 && blob.v !== 2)) return;
+    if (!blob || (blob.v !== 1 && blob.v !== 2 && blob.v !== 3) || __cmq_pendingResume) return;
     __cmq_pendingResume = blob;
     __cmq_showResumeRow(true);
   };
@@ -5020,17 +5093,19 @@
       __cmq_showResumeRow(false);
       __cmq_doRestoreFromBlob(blob);
     });
-    var play = document.getElementById('btn-tile-mission');
-    if (play) play.addEventListener('click', function () {
-      if (__cmq_pendingResume) __cmq_clearPendingResume();
-    }, true);
+    ['btn-tile-mission','btn-tile-boss','btn-tile-lightning','btn-tile-fixit'].forEach(function (id) {
+      var play = document.getElementById(id);
+      if (play) play.addEventListener('click', function () {
+        if (__cmq_pendingResume) __cmq_clearPendingResume();
+      }, true);
+    });
   })();
 })();
 
 </script>
 
 
-  <script src="../../shared/scripts/game-bridge.js"></script>
+  <script src="../../shared/scripts/game-bridge.js?v=20261011-save-recovery"></script>
   <script>
     // KLS hub wiring.
     if (window.KLS && window.KLS.bridge) {
@@ -5047,11 +5122,13 @@
       // Chrome-bar "🏠 Home" — return to this game's menu screen.
       if (window.KLS.bridge.onHubMessage && window.__cmq_onGoHome) {
         window.KLS.bridge.onHubMessage('goHome', window.__cmq_onGoHome);
+        window.KLS.bridge.onHubMessage('suspendSession', window.__cmq_onSuspend);
       }
       // Resume-blob contract — Save button + hub Resume item.
       if (window.KLS.bridge.onHubMessage && window.__cmq_captureState) {
         window.KLS.bridge.onHubMessage('requestState', function () {
-          try { window.KLS.bridge.saveState(window.__cmq_captureState()); } catch (e) {}
+          try { window.__cmq_flushStorage(); window.KLS.bridge.saveState(window.__cmq_captureState()); }
+          catch (e) { window.KLS.bridge.saveState(null, { ok: false, error: e.message }); }
         });
       }
       if (window.KLS.bridge.onHubMessage && window.__cmq_restoreState) {

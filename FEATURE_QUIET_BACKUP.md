@@ -5,6 +5,20 @@
 **Builds on:** `BACKUP_RESTORE.md` (envelope format, REPLACE semantics, versioning rules — all unchanged)
 **Replaces:** the hub's 💾 chip + popover menu, the "back up your data" nudge banner, and the habit of manually exporting `kls-backup-*.json` files.
 
+## Current interface (2026-10-29)
+
+The launcher is now the recommended entry point. The hub has no manual Save
+button. Parent page → **Restore progress** combines browser snapshots and
+launcher folder backups, with the latest backup first and older entries
+collapsed. Every source uses a read-only preview and an explicit replacement
+button; typed REPLACE has been removed. Journal safety and Undo/Redo remain.
+**Backup settings** contains Download backup and optional folder setup.
+Startup offers existing backups before creating profiles or starting automatic
+writes. Fresh setup also offers a backup-file restore entry point. The v1
+backup envelope and existing per-profile storage keys are unchanged.
+See `BACKUP_RESTORE.md` and `README.md` for the current workflow. The sections
+below record the original Quiet Backup rollout and its previous interface.
+
 ## Implemented
 
 All hub/shared-layer only; no game file was touched. `BACKUP_VERSION` stays `1`.

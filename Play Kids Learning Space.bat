@@ -7,14 +7,13 @@ rem back to opening index.html directly (file://) if Python isn't installed
 rem (the app still works; only folder-saving needs the server).
 cd /d "%~dp0"
 set "PYCMD="
-where py >nul 2>nul && set "PYCMD=py"
+where py >nul 2>nul && set "PYCMD=py -3"
 if not defined PYCMD where python >nul 2>nul && set "PYCMD=python"
 if defined PYCMD (
-  start "" "http://localhost:8000/index.html"
-  %PYCMD% tools\kls_server.py 8000
+  %PYCMD% tools\kls_server.py 8000 --open
 ) else (
   echo Python not found - opening the file directly.
   echo (Automatic folder-saving needs the local server. Install Python 3, or
-  echo  use Parent page -^> Choose folder... in Chrome/Edge.^)
+  echo  use Parent page -^> Backup settings in Chrome/Edge.^)
   start "" "index.html"
 )

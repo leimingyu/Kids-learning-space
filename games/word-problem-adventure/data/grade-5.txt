@@ -1,0 +1,120 @@
+# Plan before calculating | Identify the intermediate amount you need first.
+wpa-g5-001|A museum sells 145 adult tickets at 8 dollars each and 96 child tickets at 5 dollars each. How many dollars does it collect?|1640|dollars|145*8+96*5|Find the money from each ticket group, then combine the totals.
+wpa-g5-002|A school buys 24 boxes of 36 pencils. It shares them equally among 18 classes. How many pencils does each class receive?|48|pencils|24*36/18|Find the total pencils before sharing them among classes.
+wpa-g5-003|A truck carries 18 crates weighing 25 kilograms each. The empty truck weighs 2,350 kilograms. What is its total weight in kilograms?|2800|kilograms|18*25+2350|Include both the cargo and the truck itself.
+wpa-g5-004|A library wants 1,200 new books. It receives 375 donated books and buys 28 boxes of 24 books. How many more books does it need?|153|books|1200-375-28*24|Combine the donated and purchased books before finding the gap.
+wpa-g5-005|A club earns 720 dollars and spends 135 dollars on supplies. It divides the remaining money equally among 9 projects. How many dollars does each project receive?|65|dollars|(720-135)/9|Only the money left after supplies is available for projects.
+# Reverse a chain | Undo the final operation first, then keep working backward.
+wpa-g5-006|A number is multiplied by 5, then 18 is subtracted. The result is 107. What is the number?|25|number|(107+18)/5|Undo subtracting 18 before undoing multiplication.
+wpa-g5-007|I add 12 to a number and divide the sum by 6. The result is 9. What was my number?|42|number|9*6-12|Rebuild the sum, then remove the added 12.
+wpa-g5-008|After spending one fourth of her money, Inez has 45 dollars left. How many dollars did she have at first?|60|dollars|45/3*4|The 45 dollars represents three fourths. Find one fourth, then all four parts.
+wpa-g5-009|A ribbon is cut into 3 equal pieces. Then 4 centimeters are trimmed from each piece, leaving three 18-centimeter pieces. How long was the ribbon before any cuts?|66|centimeters|(18+4)*3|Restore 4 centimeters to each piece before combining the three pieces.
+wpa-g5-010|A machine doubles a number, adds 9, and divides the result by 3. It outputs 17. What number went in?|21|number|(17*3-9)/2|Undo division, then addition, then doubling.
+# Fractions with different parts | Rename fractions using equal-sized parts.
+wpa-g5-011|Nora walks 1/2 mile to a park and 1/3 mile farther to a pond. How many miles does she walk altogether? Give a fraction.|5/6|mile|1/2+1/3|Use sixths: one half is three sixths and one third is two sixths.
+wpa-g5-012|A jug contains 3/4 liter of juice. You pour out 1/6 liter. How many liters remain? Give a fraction.|7/12|liter|3/4-1/6|Use twelfths so the pieces are the same size.
+wpa-g5-013|A ribbon is 5/6 meter long. You use 1/4 meter. How many meters are left? Give a fraction.|7/12|meter|5/6-1/4|Ten twelfths minus three twelfths leaves seven twelfths.
+wpa-g5-014|A recipe needs 2/3 cup of oats and 1/4 cup of seeds. How many cups of oats and seeds are needed altogether? Give a fraction.|11/12|cup|2/3+1/4|Eight twelfths plus three twelfths makes eleven twelfths.
+wpa-g5-015|Lee paints 2/5 of a wall on Monday and 1/4 of the same wall on Tuesday. What fraction of the wall is still unpainted?|7/20|of the wall|1-2/5-1/4|Lee paints eight twentieths plus five twentieths. Seven twentieths remain.
+# Mixed amounts | Treat a mixed number as a whole amount plus a fraction.
+wpa-g5-016|A board is 3 1/2 meters long. You cut off 1 3/4 meters. How many meters remain? Give a fraction or mixed number.|7/4|meters|3+1/2-(1+3/4)|Rename three and one half as three and two fourths, then subtract one and three fourths.
+wpa-g5-017|Two walks are 2 1/3 miles and 1 1/6 miles long. How many miles are they together? Give a fraction or mixed number.|7/2|miles|2+1/3+1+1/6|Combine the whole miles, then add two sixths and one sixth.
+wpa-g5-018|A jug has 4 liters of water. You fill a bottle with 1 2/5 liters. How many liters remain? Give a fraction or mixed number.|13/5|liters|4-(1+2/5)|Four wholes can be renamed as three wholes and five fifths before subtracting.
+wpa-g5-019|Mina has 5 1/4 meters of yarn. She buys 2 1/2 meters more. How many meters does she have now? Give a fraction or mixed number.|31/4|meters|5+1/4+2+1/2|Rename one half as two fourths, then combine whole and fractional parts.
+wpa-g5-020|A trail is 6 1/2 miles long. You walk 2 3/4 miles before lunch and 1 1/4 miles afterward. How many miles remain? Give a fraction or mixed number.|5/2|miles|6+1/2-(2+3/4)-(1+1/4)|The two walks total 4 miles. Subtract that from the trail length.
+# Fractions of fractions | Ask what the whole is for each fraction.
+wpa-g5-021|Half of a garden grows vegetables. Two thirds of that vegetable area grows carrots. What fraction of the whole garden grows carrots?|1/3|of the garden|1/2*2/3|Split the half-garden into three parts and take two of them.
+wpa-g5-022|A bottle holds 3/4 liter of water. You drink 2/3 of that water. How many liters do you drink? Give a fraction.|1/2|liter|3/4*2/3|Two of three equal shares of three fourths is one half.
+wpa-g5-023|A class uses 3/5 of a roll of paper. Half of the used paper is blue. What fraction of the original roll is used blue paper?|3/10|of the roll|3/5*1/2|Half of three fifths is three tenths.
+wpa-g5-024|Each small cake needs 2/3 cup of flour. How many cups are needed for 6 cakes?|4|cups|6*2/3|Six groups of two thirds make twelve thirds, or four wholes.
+wpa-g5-025|An artist uses 3/4 of a 2/3-meter strip. How many meters does the artist use? Give a fraction.|1/2|meter|3/4*2/3|Three quarters of two thirds is six twelfths, or one half.
+# Divide into small parts | Think about how many equal pieces fit, or how much one share holds.
+wpa-g5-026|You cut 3 meters of ribbon into pieces that are each 1/4 meter long. How many pieces do you get?|12|pieces|3/(1/4)|Each meter makes four quarter-meter pieces.
+wpa-g5-027|Two liters of juice fill cups that each hold 1/5 liter. How many full cups can be filled?|10|cups|2/(1/5)|Each liter fills five cups.
+wpa-g5-028|One third of a pizza is shared equally among 2 children. What fraction of the whole pizza does each child get?|1/6|of a pizza|(1/3)/2|Split one third into two equal parts to make sixths.
+wpa-g5-029|One half meter of string is shared equally among 4 children. How many meters does each child get? Give a fraction.|1/8|meter|(1/2)/4|Dividing a half into four equal lengths makes eighths.
+wpa-g5-030|Five kilograms of rice are packed in bags that each hold 1/2 kilogram. How many bags are filled?|10|bags|5/(1/2)|There are two half-kilogram bags in each kilogram.
+# Decimal money | Line up place values and keep track of the unit.
+wpa-g5-031|A notebook costs 2.75 dollars and a pen costs 1.60 dollars. How many dollars do they cost together?|4.35|dollars|2.75+1.60|Add dollars to dollars and cents to cents.
+wpa-g5-032|You pay 10 dollars for a book costing 6.85 dollars. How many dollars should you receive in change?|3.15|dollars|10-6.85|Subtract the price from the amount paid.
+wpa-g5-033|Four identical cards cost 1.25 dollars each. How many dollars do they cost altogether?|5|dollars|4*1.25|Four groups of one dollar and twenty-five cents total five dollars.
+wpa-g5-034|Three friends share a 14.40-dollar bill equally. How many dollars does each pay?|4.8|dollars|14.40/3|Share both the whole dollars and the remaining cents equally.
+wpa-g5-035|A bag of fruit costs 3.65 dollars. A loaf of bread costs 2.80 dollars. You have 8 dollars. How many dollars remain after buying both?|1.55|dollars|8-3.65-2.80|Add the costs before subtracting from the budget.
+# Decimal measures | Use the same unit and match the decimal places.
+wpa-g5-036|A rope is 5.2 meters long. You cut off 1.85 meters. How many meters remain?|3.35|meters|5.2-1.85|Write 5.2 as 5.20 to align the hundredths.
+wpa-g5-037|A runner travels 1.35 kilometers in the morning and 2.4 kilometers in the evening. How many kilometers does the runner travel in all?|3.75|kilometers|1.35+2.4|Combine the two distances in kilometers.
+wpa-g5-038|Each bottle holds 0.75 liter. How many liters do 6 full bottles hold?|4.5|liters|0.75*6|Count six equal amounts of three quarters of a liter.
+wpa-g5-039|A 4.8-meter ribbon is cut into 6 equal pieces. How many meters long is each piece?|0.8|meter|4.8/6|Share 48 tenths equally among six pieces.
+wpa-g5-040|An empty box weighs 0.35 kilogram. Five items inside it each weigh 0.12 kilogram. How many kilograms does the filled box weigh?|0.95|kilogram|0.35+5*0.12|Add the box's weight to the combined weight of the five items.
+# Fraction relationships | Build the whole from a known fractional part.
+wpa-g5-041|Three fifths of a school's club members is 42 students. How many students belong to the club?|70|students|42/3*5|Find one fifth by dividing by three, then count all five fifths.
+wpa-g5-042|Two thirds of a trail is 18 kilometers. How many kilometers is the full trail?|27|kilometers|18/2*3|One third is 9 kilometers, so the whole is three such parts.
+wpa-g5-043|After reading 3/8 of a 160-page book, how many pages are left to read?|100|pages|160-160*3/8|Find the pages read, then subtract from the whole book.
+wpa-g5-044|A team uses 2/5 of its 90 markers. It gives half of the remaining markers to another team. How many markers does it give away?|27|markers|(90-90*2/5)/2|The second fraction refers to the remaining markers, not the original 90.
+wpa-g5-045|A jar is 3/4 full and contains 900 milliliters. How many more milliliters are needed to fill it?|300|milliliters|900/3|The missing quarter is one of three equal parts of the water already in the jar.
+# Equal-part comparisons | Represent each amount with equal-sized parts.
+wpa-g5-046|Two teams have 84 players altogether. One team has twice as many players as the other. How many players are on the larger team?|56|players|84/3*2|Three equal parts make the total; the larger team has two parts.
+wpa-g5-047|Maya has 3 times as many beads as Niko. Together they have 96 beads. How many more beads does Maya have than Niko?|48|beads|96/4*2|One part is 24 beads. The difference is two parts.
+wpa-g5-048|Two ribbons are 72 centimeters long altogether. One is 18 centimeters longer than the other. How long is the shorter ribbon?|27|centimeters|(72-18)/2|Remove the extra length, then divide what remains equally.
+wpa-g5-049|In a box, there are 2 red beads for every 3 blue beads. There are 45 beads altogether. How many red beads are there?|18|beads|45/5*2|Each set has five beads, of which two are red.
+wpa-g5-050|A long path is 4 times the length of a short path. The long path is 135 meters longer. How long is the short path?|45|meters|135/3|The difference is three short-path lengths.
+# Volume builders | Count a layer first, then count the layers.
+wpa-g5-051|A box is 6 centimeters long, 4 centimeters wide, and 3 centimeters high. What is its volume in cubic centimeters?|72|cubic centimeters|6*4*3|Each layer holds 24 unit cubes, and there are three layers.
+wpa-g5-052|A stack has 5 layers with 18 unit cubes in each layer. How many unit cubes are in the stack?|90|cubes|5*18|Count all five identical layers.
+wpa-g5-053|A rectangular tank has a base area of 24 square centimeters and a height of 7 centimeters. What is its volume in cubic centimeters?|168|cubic centimeters|24*7|Multiply the area of one layer by the number of layers.
+wpa-g5-054|A box has a volume of 120 cubic centimeters. Its length is 10 centimeters and its width is 4 centimeters. How high is it?|3|centimeters|120/(10*4)|Divide the volume by the base area to find the height.
+wpa-g5-055|Two solid blocks have volumes of 36 and 48 cubic centimeters. They are joined without overlapping. What is their total volume?|84|cubic centimeters|36+48|Since the blocks do not overlap, add their volumes.
+# Area and boundary | Keep square units for area and length units for the boundary.
+wpa-g5-056|A rectangular garden is 14 meters long and 9 meters wide. A square pond with 4-meter sides sits inside it. How many square meters are left for plants?|110|square meters|14*9-4*4|Subtract the pond's area from the garden's whole area.
+wpa-g5-057|A rectangle has an area of 144 square centimeters and a width of 9 centimeters. What is its perimeter in centimeters?|50|centimeters|2*(144/9+9)|Find the missing length first, then add all four sides.
+wpa-g5-058|A square has sides of 2.5 meters. What is its perimeter in meters?|10|meters|4*2.5|All four sides are 2.5 meters long.
+wpa-g5-059|A floor is 8 meters long and 6 meters wide. Half its area is covered by a rug. How many square meters does the rug cover?|24|square meters|8*6/2|Find the whole area before taking half.
+wpa-g5-060|Two 3-by-4-meter rectangles are joined along their 4-meter sides. What is the perimeter of the rectangle they form?|20|meters|2*(6+4)|The new rectangle is 6 by 4 meters. The joined edge is inside it.
+# Rates in stories | Find the amount for one equal time interval or one equal group.
+wpa-g5-061|A printer makes 24 pages in 3 minutes at a steady rate. How many pages does it make in 7 minutes?|56|pages|24/3*7|Find pages per minute, then count seven minutes.
+wpa-g5-062|A cyclist travels 36 kilometers in 3 hours at a steady speed. How many kilometers does the cyclist travel in 5 hours?|60|kilometers|36/3*5|Find the distance in one hour, then multiply by five.
+wpa-g5-063|A tap fills 18 liters in 6 minutes at a steady rate. How many minutes will it take to fill 45 liters?|15|minutes|45/(18/6)|Find liters per minute, then the time needed for 45 liters.
+wpa-g5-064|Four identical notebooks cost 14 dollars. At the same price per notebook, how many dollars do 10 notebooks cost?|35|dollars|14/4*10|Use the one-notebook price before scaling to ten.
+wpa-g5-065|A train travels 90 kilometers in one hour at a steady speed. How many kilometers does it travel in 20 minutes?|30|kilometers|90/3|Twenty minutes is one third of an hour, so take one third of the hourly distance.
+# Time and scheduling | Count only the breaks or intervals that actually occur.
+wpa-g5-066|A workshop starts at 10:25 and lasts 1 hour 50 minutes. How many minutes before 12:30 does it end?|15|minutes|125-110|There are 125 minutes from 10:25 to 12:30. The workshop uses 110 of them.
+wpa-g5-067|Five lessons each last 35 minutes. There is a 10-minute break between lessons. How many minutes does the full program take?|215|minutes|5*35+4*10|There are four breaks between five lessons.
+wpa-g5-068|A bus leaves every 12 minutes, starting at 9:00. How many buses leave from 9:00 through 10:00, including both endpoints?|6|buses|60/12+1|Five intervals separate six departures, including the first and last.
+wpa-g5-069|A cooking task takes 25 minutes of preparation and 40 minutes in the oven. You start at 4:10. How many minutes after 5:00 will it finish?|15|minutes|25+40-50|The task takes 65 minutes; 50 minutes pass before 5:00.
+wpa-g5-070|A trip lasts 2 hours 15 minutes, including a 20-minute stop. How many minutes are spent moving?|115|minutes|2*60+15-20|Convert the trip to minutes, then remove the stopped time.
+# Unit conversions | Convert everything to one unit before comparing or dividing.
+wpa-g5-071|A bag contains 2.5 kilograms of flour. One kilogram is 1,000 grams. A recipe uses 350 grams. How many grams remain?|2150|grams|2.5*1000-350|Convert 2.5 kilograms to 2,500 grams before subtracting.
+wpa-g5-072|A trail is 3.2 kilometers long. One kilometer is 1,000 meters. You walk 1,850 meters. How many meters remain?|1350|meters|3.2*1000-1850|Convert the full trail to meters, then subtract the walked distance.
+wpa-g5-073|A container holds 1.5 liters. One liter is 1,000 milliliters. How many 250-milliliter cups can it fill?|6|cups|1.5*1000/250|Express the capacity in milliliters before counting cups.
+wpa-g5-074|A board is 2.4 meters long. One meter is 100 centimeters. It is cut into 8 equal pieces. How many centimeters long is each piece?|30|centimeters|2.4*100/8|Convert the board to 240 centimeters, then divide equally.
+wpa-g5-075|A package weighs 1 kilogram 250 grams. One kilogram is 1,000 grams. How many grams do 4 identical packages weigh?|5000|grams|(1000+250)*4|Each package weighs 1,250 grams; count four packages.
+# Patterns and coordinates | Track how one quantity changes with another.
+wpa-g5-076|A pattern starts at 7 and adds 6 each time. What is its tenth number?|61|number|7+9*6|The tenth number comes after nine additions to the first number.
+wpa-g5-077|A machine follows the rule: multiply the input by 3, then add 2. What input gives an output of 35?|11|number|(35-2)/3|Reverse the rule to find the input.
+wpa-g5-078|On a grid, a robot starts at (2, 3). It moves 5 squares right and 4 squares up. What is its new first coordinate?|7|first coordinate|2+5|The first coordinate changes with right-left movement; upward movement changes the second.
+wpa-g5-079|A plant is 15 centimeters tall on day 1. It grows 3 centimeters each day. On which day will it first be 36 centimeters tall?|8|day|(36-15)/3+1|Seven growth intervals are needed after day 1, so the target is reached on day 8.
+wpa-g5-080|A tile pattern uses 4 tiles in stage 1, 7 in stage 2, and 10 in stage 3. Each stage adds 3 tiles. How many tiles are used in stages 4 and 5 together?|29|tiles|(10+3)+(10+6)|Find both stages, then combine their separate tile counts.
+# Count systematically | Separate ordered choices from pairs that do not have an order.
+wpa-g5-081|A lunch has one of 3 soups, one of 4 sandwiches, and one of 2 drinks. How many different lunches are possible?|24|lunches|3*4*2|For every soup there are four sandwich choices and two drink choices.
+wpa-g5-082|Six players each play every other player once. How many games are played?|15|games|5+4+3+2+1|Count each pair once, not once for each order.
+wpa-g5-083|A code uses two different digits from 1, 2, 3, and 4. The order matters. How many codes are possible?|12|codes|4*3|There are four choices first and only three unused digits second.
+wpa-g5-084|You choose 2 different books from 5 books to take on a trip. The order does not matter. How many pairs can you choose?|10|pairs|5*4/2|Ordered choices count each pair twice, so divide by two.
+wpa-g5-085|Three different flags go on three poles in a row, one flag per pole. How many different arrangements are possible?|6|arrangements|3*2*1|There are three choices for the first pole, two for the next, and one for the last.
+# Logical constraints | Build a simple model and test every clue.
+wpa-g5-086|A pen holds 10 chickens and rabbits altogether. There are 28 legs. Chickens have 2 legs and rabbits have 4. How many rabbits are there?|4|rabbits|(28-10*2)/2|Ten chickens would have 20 legs. Each rabbit adds two extra legs.
+wpa-g5-087|Three consecutive whole numbers have a sum of 87. What is the largest number?|30|number|87/3+1|The middle number is 29, so the largest is one more.
+wpa-g5-088|A number between 50 and 70 is a multiple of both 4 and 6. What is the number?|60|number|12*5|Shared multiples are multiples of 12. Only 60 lies in the range.
+wpa-g5-089|Two identical boxes and 15 loose beads hold 73 beads altogether. How many beads do 3 such boxes hold?|87|beads|(73-15)/2*3|Remove the loose beads, find one box's amount, then count three boxes.
+wpa-g5-090|Three friends have 90 cards altogether. Ana has 10 more than Ben. Cara has 10 fewer than Ben. How many cards does Ben have?|30|cards|90/3|Ana's extra 10 and Cara's missing 10 balance around Ben's amount.
+# Budgets and decisions | Compare plans using the same quantity or the same goal.
+wpa-g5-091|Markers cost 2.40 dollars each or 10 dollars for a pack of 5. How many dollars do you save by buying one pack instead of 5 single markers?|2|dollars|5*2.40-10|Compare the cost of five markers under each plan.
+wpa-g5-092|A club has 85 dollars. It buys 6 kits at 9.50 dollars each and pays 8 dollars for delivery. How many dollars remain?|20|dollars|85-6*9.50-8|Delivery is one cost for the whole order, not one cost per kit.
+wpa-g5-093|A school needs 156 seats. Tables seat 8 children each. What is the fewest number of tables needed?|20|tables|19+1|Nineteen tables seat 152 children, so four children still need another table.
+wpa-g5-094|A class buys 12 packs of 15 stickers. It gives 7 stickers to each of 24 students. How many stickers remain?|12|stickers|12*15-7*24|Compare the total supply with the total handed out.
+wpa-g5-095|A fair earns 240 dollars. It spends 3/8 of that money on supplies and 45 dollars on prizes. How many dollars remain?|105|dollars|240-240*3/8-45|Find the supply cost from the original earnings, then subtract both costs.
+# Thinker's final challenge | Use a drawing or equal parts, and check the final answer in the story.
+wpa-g5-096|After giving away 1/3 of her cards, Lena gives away 1/4 of the remaining cards. She has 30 cards left. How many cards did she start with?|60|cards|30/(2/3*3/4)|Two thirds remain after the first gift; three fourths of those remain after the second. Together, that is half the starting amount.
+wpa-g5-097|A rectangle has a perimeter of 60 meters. Its length is twice its width. What is its area in square meters?|200|square meters|10*20|Length plus width is 30 meters. Three width-parts make 30, so the sides are 10 and 20.
+wpa-g5-098|Two friends have 120 marbles altogether. After Sam gives Jo 15 marbles, Jo has twice as many as Sam. How many marbles did Sam have before the transfer?|55|marbles|120/3+15|After the transfer, Sam has one of three equal parts, or 40. Add back the 15 Sam gave.
+wpa-g5-099|A tank holds 80 liters when full. It is 3/4 full. Then 18 liters are used and 12 liters are added. What fraction of the full tank is filled now?|27/40|of the tank|(80*3/4-18+12)/80|Track the liters first to get 54, then compare 54 with the full capacity of 80.
+wpa-g5-100|A box contains 96 beads. Half are red. One third of the beads that are not red are blue. The rest are green. How many green beads are there?|32|beads|(96-96/2)*(1-1/3)|After removing the red half, two thirds of the remaining 48 beads are green.

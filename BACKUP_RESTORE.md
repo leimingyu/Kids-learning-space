@@ -90,45 +90,57 @@ backup. This is the chosen mode (over merge / per-profile picker) because:
   the file.
 - No merge-conflict UI to build, design, or explain.
 
-Restore flow:
+Restore flow (reliable-save update, 2026-10-08):
 
-1. **Confirm destructively.** The Import button opens a dialog: "This will
-   replace ALL profiles and progress on this device. Profiles currently on
-   this device that are NOT in the backup will be deleted. Type REPLACE to
-   continue." Two-step confirmation keeps kids from triggering it.
-2. **Validate the envelope.**
-   - `type === 'kls.backup'` — else: friendly "this doesn't look like a
-     Kids Learning Space backup file" message; abort, no state change.
-   - `version` is known to this build — else: friendly "this backup was made
-     on a newer version of Kids Learning Space; update the app first" or
-     run a version-N → version-current migration. Abort on unknown.
-   - `hub.version` is known — same handling.
-3. **Wipe.** Delete all `kls.*` keys; delete all keys matching any
-   registered game's `<base>__<anything>` prefix.
-4. **Write hub.** Store `kls.progress.v2` from `backup.hub`.
-5. **Write game state.** For each `games.<slug>.<pid>` entry, write
-   `<storageKeyBase(slug)>__<pid>` with the opaque payload.
-6. **Reload.** Force a full page reload so every iframe re-reads the new
-   state from scratch and the active profile id is re-pushed.
+1. Parse and validate the complete v1 envelope, v2 hub/profile shape, and
+   JSON text for all game payloads. Reject unsupported or malformed data.
+2. Show a preview with profile names, saved games, and unknown-game warnings.
+   Require a separate **Replace all profiles and progress** button before
+   applying any backup. File, browser, and folder restores share this preview;
+   Undo/Redo also require a separate confirmation.
+3. Flush/detach active games. Serialize restores, using Web Locks when
+   available and a prepared-journal guard for profile writers.
+4. Persist and read back `kls.restore.journal.v1`, containing exact current
+   progress values and staged replacement values. If the browser cannot
+   retain this mandatory safety copy, cancel without changing progress.
+5. Replace only hub progress keys and registered profile-scoped game keys.
+   Preserve preferences, folder handles, backup history, and standalone saves.
+   Verify every resulting key/value before marking the journal committed.
+6. On application failure, replay the prior values. If recovery cannot write,
+   keep the journal and block gameplay/profile creation until recovery succeeds.
+   Startup recovers expired interrupted journals before reading progress.
+7. Retain the committed journal for Undo last restore (and Redo), then reload.
+   This undo copy works even without IndexedDB. A separate Before restore
+   timeline snapshot is attempted, but never replaces the mandatory journal.
+
+localStorage has no multi-key database transaction. The journal provides
+verified replacement, rollback, and crash recovery; it does not claim that
+individual physical writes are atomic as a group. The safety copy temporarily
+uses additional browser quota. Insufficient space cancels before mutation.
 
 ## UI surface
 
-**Parent / Data Page** (`#/parent`, already routed in `hub.js`) gets two
-cards:
+The **Parent page** (`#/parent`) has one **Progress & backups** card:
 
-- **Export all progress** → downloads `kls-backup-…json`. No confirmation
-  needed; export is always safe.
-- **Restore from backup** → opens a file picker, then the confirmation
-  dialog described above.
+- Browser saving and the last confirmed folder backup have separate status.
+- **Restore progress** lists the latest available backup, **Earlier backups**,
+  and **Choose a backup file…**. Browser snapshots and launcher folder backups
+  use the same read-only preview and explicit replacement confirmation.
+- **Backup settings** contains **Download backup** and optional folder setup.
+- **Undo restore** / **Redo restore** use the persistent safety journal.
 
-The Parent page is the right home because it's the "grown-ups" section, low
-risk of a kid accidentally tapping Import. The profile manager
-(`#/profiles`) deliberately does **not** get these buttons — too easy to
-mis-tap.
+The launcher is the recommended entry point. There is no manual save button
+on the hub. The local server exposes a same-origin, read-only backup catalog
+(`GET /__kls_backups__`) and allowlisted backup reads
+(`GET /__kls_backups__/<id>`). IDs are `latest` or recognized history filenames;
+client paths are never accepted. Catalogs skip unreadable files with a warning
+and deduplicate identical payloads. Reading a backup does not apply it.
 
-Empty-state copy: if there's only one profile and no stars yet, the Export
-card explains "There's nothing to back up yet — come back after some
-practice!" but the button still works.
+Before profile setup or snapshot scheduling, startup checks for missing browser
+profiles and existing backups. If found (or folder listing fails), it shows
+recovery with automatic writes paused. Only restoring or explicitly choosing
+**Start fresh → Create new profiles** continues. Existing profiles open normally.
+Direct HTML opening remains supported; old JSON backups remain importable.
 
 ## Failure modes & messages
 
@@ -143,8 +155,10 @@ practice!" but the button still works.
 | `games.<slug>` references a slug whose schema has changed | Pass through as-is; that game's own loader handles its internal migration on next open. |
 | Backup contains profile ids that collide with existing ones | Not applicable — REPLACE wipes everything before writing. |
 
-The cardinal rule: **on any failure, the device's state must be unchanged**.
-Wipe-and-write only begins after all validation has passed.
+Validation and staging failures leave progress untouched. Application
+failures roll back; a persistent storage failure retains the recovery copy
+and blocks use of partial data. UI errors distinguish these outcomes instead
+of claiming that nothing changed after every possible failure.
 
 ## Versioning rules
 
@@ -161,38 +175,27 @@ Wipe-and-write only begins after all validation has passed.
 
 ## Implementation (shipped)
 
-Implemented files:
-
-- `shared/scripts/backup.js` — `window.KLS.backup` with:
-  - `exportToFile()` → builds the envelope, triggers a Blob download, stores
-    `kls.backup.lastExportedAt`.
-  - `importFromFile(file)` → returns a Promise; on success the page reloads
-    so iframes re-read state. Validation happens before any state change.
-  - `getLastExportedAt()` for the hub nudge banner.
-  - `BACKUP_VERSION = 1`.
-- `shared/scripts/hub.js` — `GAMES` registry gained a `storageBase` field
-  (set to `'wordProblemAdventure_v1'` on WPA). The `GAMES` array is exposed
-  as `window.KLS.GAMES` for `backup.js` to discover keys. A "back up your
-  data" nudge banner renders on the hub when the active profile has earned
-  stars/stickers AND no export has been recorded in the last 7 days (or
-  ever). Dismissal is sticky for 1 day.
-- `shared/scripts/profile-ui.js` — Parent page's Backup & Restore card uses
-  `window.KLS.backup`. Restore requires typing `REPLACE` to confirm. The
-  old partial per-profile Export button was removed because it produced an
-  incomplete backup (no per-game state).
-- `index.html` — `<script src="shared/scripts/backup.js">` loads after
-  `profile-ui.js` and before `hub.js`.
+- `shared/scripts/backup.js` owns v1 envelopes, portable downloads, browser
+  snapshots, folder mirroring, read-only restore catalogs/preflight, and the
+  persistent restore journal. Older public save/import helpers are retained.
+- `shared/scripts/hub.js` exposes the registered `GAMES[].storageBase` values
+  and checks startup recovery before profile setup. Automatic snapshots start
+  only after an active profile is ready.
+- `shared/scripts/profile-ui.js` renders the unified Parent restore flow,
+  inline Undo/Redo, backup settings, and first-time backup-file entry point.
+- `tools/kls_server.py` writes the newest 30 folder backups and exposes
+  same-origin catalog/read APIs. Launchers use `--open` for browser startup.
+- `index.html` loads `backup.js` after `profile-ui.js` and before `hub.js`.
 
 No changes were needed inside any individual game: the bridge already
 exposes `getProfileId()`, and games read their own profile-scoped keys.
 Restore writes those keys directly to `localStorage`; the game picks them
 up on its next load.
 
-Other games (Cosmic Math Quest, Let's Learn Fractions, Long Division Coach)
-are not yet profile-scoped — their state is excluded from the backup until
-they adopt `KLS.bridge.getProfileId()` and a `storageBase` is added to
-their `GAMES` entry. Adding the field is the trigger that pulls a game's
-data into future backups.
+All four current games register profile-scoped storage bases in GAMES,
+including their mistakes stores. Arrays of bases are exported as maps of base
+name to raw JSON for each profile; legacy single-base string payloads still
+import. Their exact session checkpoint versions remain owned by the games.
 
 ## Out of scope (intentionally)
 

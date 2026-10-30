@@ -14,62 +14,76 @@ macOS and Windows.
 
 | | Game | Topic | Audience |
 |---|---|---|---|
-| 📚 | **Word Problem Adventure** | Addition / subtraction / multi-step word stories | grades 2–3 |
+| 📚 | **Word Problem Adventure** | 400 reasoning stories, 100 per grade; ten kingdoms with visible progress, stars, and badges | grades 2–5 |
 | 🚀 | **Cosmic Math Quest**       | Multiplication & division mastery missions     | ages 8–10  |
 | 🍕 | **Let's Learn Fractions!**  | Fractions and equivalence                       | grades 2–4 |
-| ➗ | **Long Division Coach**     | Step-by-step long division                      | grades 3–5 |
+| ➗ | **Long Division Coach**     | Animated sharing → coached equations → solo practice | grades 3–5 |
 
 ## Run
 
-Pick whichever is easiest — no install, works offline:
+Word Problem Adventure now opens with a grade chooser and twenty five-story
+quests per grade. Children earn quest stars and badges at 5, 10, 25, 50, 75,
+and 100 independent solves. Hints, worked solutions, saved sessions, and a
+tricky-story practice queue support learning at the child's own pace.
+Earlier adventures remain under **Grown-up notes & more adventures**.
+Every profile opens the current ten-kingdom interface. Older saved sessions
+remain available through **Continue earlier adventure**, with progress kept.
+See the [feature and verification record](games/word-problem-adventure/docs/GRADE_ADVENTURE_RELEASE.md).
 
-- **Double-click `index.html`** to just play. Saves become a download (see below).
-- **Double-click `Play Kids Learning Space`** (`.command` on macOS, `.bat` on
-  Windows) to play **with saves written into this folder** — it starts a tiny
-  local server (needs Python 3) and opens the game. This is the way to get a real
-  `saved_status/` folder next to the game.
-- **Serve locally** yourself (equivalent to the launcher):
+**Recommended: double-click “Play Kids Learning Space”** (`.bat` on Windows,
+`.command` on macOS). It starts a local server with Python 3, then opens the
+app in your browser. Keep its window open while playing. Progress saves in
+the browser, and backups are written automatically into this app's
+`saved_status/` folder. There is no Save button to remember.
 
-  ```bash
-  python3 tools/kls_server.py 8000
-  # open http://localhost:8000
-  ```
+Opening the launcher again reuses the same folder's running server. It opens
+the browser after binding the port, avoiding a browser/server startup race.
+If a different app is using port 8000, close that app and launch again.
 
-That's it. Requires a modern browser (Chrome 111+, Safari 15.4+, Firefox 113+)
-because tokens use `oklch()` and components use `:focus-visible`.
+You can also start the same server yourself:
 
-### A note on backups when opening from a file
+```bash
+python3 tools/kls_server.py 8000 --open
+```
 
-Progress and the **Export a file…** backup work in every browser, whether you
-open via a launcher (`file://`) or a local server. The *silent, automatic*
-snapshots use IndexedDB: on `file://` they work in **Chrome / Edge**, but
-Firefox and Safari disable IndexedDB for `file://` — there, progress is still
-saved and you can still Export a file manually. For fully automatic backups in
-**any** browser, run the local server above (`http://localhost`) instead of
-opening the file directly. See `FEATURE_QUIET_BACKUP.md` for the backup design.
+**Without Python:** double-click `index.html`. The games still work offline
+and progress saves in that browser. On the Parent page, use **Backup settings
+→ Download backup** to keep a separate file. Chrome and Edge can also choose
+a backup folder there. Browser backup history depends on IndexedDB support;
+Firefox and Safari may not offer that history when opening a file directly.
+A regular `python3 -m http.server` serves the site but does not write backups.
 
-### Saving your game to a folder
+Requires Chrome 111+, Safari 15.4+, or Firefox 113+.
 
-Everyday progress **auto-saves in the browser** (survives closing/reopening and
-restarts). To save into a **`saved_status` folder on disk**, click
-**💾 Save my game** (on the hub, or Parent page → Backups).
+### Save and restore
 
-**On Chrome or Edge — just double-click `index.html`, no launcher needed:**
-the first time you Save, the browser asks you to **pick a folder** (pick the
-`Kids-learning-space` folder to keep saves next to the game). It then writes
-`kls-backup-latest.json` + `saved_status/kls-save-<time>.json` into a
-`saved_status/` folder there. Every later Save writes to the same place
-(after a browser restart it may ask once to re-confirm access). Verified: the
-File System Access API works on `file://` in Chrome/Edge.
+- **Play normally.** Folder backups run after changes, with up to three
+  minutes between writes. Browser snapshots are kept after about ten seconds
+  without another change. The Parent page shows browser saving and the last
+  confirmed folder backup separately.
+- **Restore:** Parent page → **Restore progress** → review the latest backup
+  (or expand **Earlier backups**) → **Replace all profiles and progress**.
+  Browser history and launcher folder backups appear together. **Choose a
+  backup file…** accepts previously downloaded JSON backups.
+- **Undo:** a completed restore offers **Undo restore** on the Parent page.
+  Validation, a mandatory safety copy, rollback, and interrupted-restore
+  recovery protect the replacement. Restoring replaces every profile and
+  registered game's progress; it does not merge profiles.
+- **Move computers:** use **Backup settings → Download backup**, move the
+  downloaded file, and choose it in **Restore progress** on the other computer (or choose **Already played? Restore a backup…**
+  during first-time setup).
+  Old backup files remain compatible; the backup format is still v1.
 
-**On Firefox or Safari** (which don't support that folder API from a
-double-clicked file): Save **downloads** the backup as a `saved_status_…json`
-file to your Downloads instead. To get a real folder there too, open with
-**`Play Kids Learning Space`** (starts a tiny local server, `tools/kls_server.py`,
-needs Python 3) — it writes into `Kids-learning-space/saved_status/` in any
-browser, automatically.
+If browser profiles are missing but backups exist, startup offers to restore
+before creating new profiles or starting automatic backups. **Start fresh →
+Create new profiles** explicitly continues without restoring. Your existing
+backup files remain available (normal retention keeps the newest 30).
+Opening via `file://` and via the launcher uses separate browser storage;
+use a downloaded backup to move progress between them. The launcher cannot
+silently access another browser or origin's progress.
 
-Restore any of these with **Import a file…**.
+For confirmed in-game session saves, see the
+[save reliability record](docs/SAVE_RELIABILITY_RELEASE.md).
 
 ## What's where
 
@@ -212,38 +226,10 @@ is left untouched — the hub keeps its own summary layer.
 
 ## Saving / loading accounts
 
-The hub has **Save all account info** and **Load all account info** buttons
-below the game tiles. "Save" writes a single JSON file with every profile and
-all per-game progress; "Load" restores from that file (REPLACE-only — type
-`REPLACE` to confirm). See [BACKUP_RESTORE.md](BACKUP_RESTORE.md) for the
-full spec.
-
-### Where the save file lands
-
-Browsers don't let a static `file://` page choose its own save folder — that's
-a security boundary. Two ways to control where backups end up:
-
-1. **Run via local server, then a Save As dialog appears** (Chrome/Edge only):
-   ```bash
-   python3 -m http.server 8000
-   # → http://localhost:8000
-   ```
-   Over `localhost`, Chrome/Edge open a native Save As dialog when you click
-   Save. Navigate to this project folder and the JSON lands right next to
-   `index.html`. Safari and Firefox still use their default Downloads folder.
-
-2. **Change the browser's default download folder to this project folder.**
-   Works in any browser, `file://` or `http://`, and applies to every save.
-   - **Chrome / Edge:** Settings → Downloads → Location → pick this folder.
-     Optionally toggle "Ask where to save each file before downloading" so
-     you can confirm per-file.
-   - **Safari:** Settings → General → File download location → pick this
-     folder.
-   - **Firefox:** Settings → General → Files and Applications → Downloads →
-     choose this folder, or pick "Always ask you where to save files."
-
-If neither is set up, backups land in the browser's regular Downloads folder
-and you can move them yourself.
+Open the **Parent page** for **Restore progress** and **Backup settings**.
+All backups include every profile, journey, and registered mistakes store.
+See [BACKUP_RESTORE.md](BACKUP_RESTORE.md) for the file format and recovery
+rules, and the save-and-restore walkthrough above for everyday use.
 
 ## Accessibility
 

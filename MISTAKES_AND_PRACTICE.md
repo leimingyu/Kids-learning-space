@@ -146,6 +146,13 @@ storageBase: ['<gameSlug>_v1', '<gameSlug>_wrongs_v1'],
 
 Update this table when you ship the feature in a game.
 
+Word Problem Adventure's default grade 2–5 path also stores rich records in
+the same wrongs key, namespaced by grade and skill, with stable question IDs
+and snapshots. Its home offers five-story exact replay practice. Independent
+retries clear records and may earn unique-solve milestone badges; practice
+does not add quest stars. Earlier adventures keep their existing practice
+picker. See the game's `docs/GRADE_ADVENTURE_RELEASE.md` for the full record.
+
 ---
 
 ## When you add it to a game

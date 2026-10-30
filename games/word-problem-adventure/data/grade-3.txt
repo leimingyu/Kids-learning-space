@@ -1,0 +1,120 @@
+# Hidden totals | Decide whether the story gives the starting amount or the ending amount.
+wpa-g3-001|A library lends 28 books and has 47 left. How many books did it have before lending any?|75|books|28+47|The books lent and the books left make the starting total.
+wpa-g3-002|Lena collects 36 leaves. This is 14 more than Hugo collects. How many leaves does Hugo collect?|22|leaves|36-14|Lena has the larger amount, so remove the extra 14.
+wpa-g3-003|A shop has 85 cards. It sells some and has 39 left. How many cards does it sell?|46|cards|85-39|The difference between the starting and ending amounts is the number sold.
+wpa-g3-004|Noor needs 90 points for a badge. She earns 34 points in one game and 27 in another. How many more points does she need?|29|points|90-34-27|Combine the points earned, then compare with the goal.
+wpa-g3-005|A train has 64 riders after 19 riders get on. No one gets off. How many riders were on the train before the stop?|45|riders|64-19|Undo the new riders joining the train.
+# Groups with extras | Find the equal groups first, then handle any extras.
+wpa-g3-006|Six baskets each hold 7 peaches. There are also 5 loose peaches. How many peaches are there altogether?|47|peaches|6*7+5|Find the peaches in the baskets, then add the loose ones.
+wpa-g3-007|Eight teams each have 4 players. Three coaches join them. How many people are there in all?|35|people|8*4+3|Count the players before adding the coaches.
+wpa-g3-008|Five shelves each hold 9 jars. Seven jars are taken away. How many jars remain?|38|jars|5*9-7|Start with all five equal shelf groups and subtract the jars removed.
+wpa-g3-009|A farmer plants 7 rows of 6 seeds. Four seeds do not grow. How many seeds grow?|38|seeds|7*6-4|Subtract the seeds that fail from the number planted.
+wpa-g3-010|A class needs 50 pencils. The teacher buys 6 packs with 8 pencils in each. How many more pencils are needed?|2|pencils|50-6*8|The packs supply 48 pencils. Find the shortfall.
+# Division detectives | Decide whether you are finding a group size or a number of groups.
+wpa-g3-011|Forty-two beads are shared equally among 7 children. How many beads does each child get?|6|beads|42/7|Split 42 beads into seven equal shares.
+wpa-g3-012|A baker packs 56 rolls into bags of 8. How many bags does the baker fill?|7|bags|56/8|Count the groups of 8 in 56.
+wpa-g3-013|Sixty-three students sit in 9 equal rows. How many students sit in each row?|7|students|63/9|The row count is known, so find the size of one row.
+wpa-g3-014|Thirty-six photos fill an album with 6 photos on each page. How many pages are used?|6|pages|36/6|Divide the photo total by the number on a page.
+wpa-g3-015|Five boxes hold the same number of balls. Together they hold 45 balls. How many balls do 2 boxes hold?|18|balls|45/5*2|Find the number in one box, then double it.
+# Two-step plans | Say what you must find before you can answer the question.
+wpa-g3-016|A school buys 4 packs of 9 markers. It gives 12 markers to one class. How many markers are left?|24|markers|4*9-12|First find all the markers, then remove the class's share.
+wpa-g3-017|There are 28 red beads and 20 blue beads. They are shared equally among 6 bags. How many beads go in each bag?|8|beads|(28+20)/6|Join the beads before sharing the whole collection.
+wpa-g3-018|Seven children each pick 8 apples. They use 14 apples for a pie. How many apples remain?|42|apples|7*8-14|Count all the picked apples, then take away the pie apples.
+wpa-g3-019|Four friends each pay 6 dollars for tickets. They also pay 9 dollars altogether for snacks. How many dollars do they spend in all?|33|dollars|4*6+9|The snack cost is one shared total, so add it only once.
+wpa-g3-020|A store has 72 cans. It sells 3 packs with 8 cans in each pack. How many cans remain?|48|cans|72-3*8|Find how many cans are sold before subtracting.
+# Reverse the steps | Undo the last step first.
+wpa-g3-021|I double a number and then add 6. My answer is 24. What was my starting number?|9|number|(24-6)/2|Remove the added 6, then split the remaining number in half.
+wpa-g3-022|Sara gives away 15 cards, then shares the rest equally among 5 boxes. Each box has 6 cards. How many cards did Sara have at first?|45|cards|5*6+15|Rebuild the cards in the boxes, then put back those given away.
+wpa-g3-023|A machine multiplies a number by 3. Then it takes away 4. It gives the answer 23. What number went in?|9|number|(23+4)/3|Undo subtracting 4, then undo multiplying by 3.
+wpa-g3-024|After buying a 7-dollar book, Amir has 18 dollars. Before shopping, he earned 10 dollars. How many dollars did he have before earning that money?|15|dollars|18+7-10|Put back the book money, then remove the money he earned.
+wpa-g3-025|Some children form 4 teams of 8. Before making teams, 5 children go home. How many children were there before anyone went home?|37|children|4*8+5|Count those on the teams and add back those who left.
+# Compare groups | Find one amount before combining or comparing both amounts.
+wpa-g3-026|Iris has 8 stamps. Paul has 3 times as many. How many stamps does Paul have?|24|stamps|8*3|Paul has three groups the size of Iris's group.
+wpa-g3-027|A small box holds 7 toys. A large box holds 4 times as many. How many toys do both boxes hold together?|35|toys|7+7*4|Include the small box as well as the four equal groups in the large box.
+wpa-g3-028|Ravi reads 27 pages. This is 3 times the number Ella reads. How many pages does Ella read?|9|pages|27/3|Split Ravi's pages into three equal groups to find Ella's amount.
+wpa-g3-029|A red rope is 8 meters long. A blue rope is 3 times as long. How many meters longer is the blue rope?|16|meters|8*3-8|Find the blue length, then subtract the red length.
+wpa-g3-030|One tree has 18 birds. Another has half as many. How many birds are on both trees?|27|birds|18+18/2|Find half of 18, then add the two tree groups.
+# Remainders have meaning | Decide what happens to the items left after making full groups.
+wpa-g3-031|Twenty-nine children ride in vans with 6 seats for children in each van. What is the fewest number of vans needed?|5|vans|4+1|Four vans carry 24 children. The other 5 children need one more van.
+wpa-g3-032|A baker has 38 muffins. Each full box holds 6 muffins. How many full boxes can be packed?|6|boxes|36/6|Six full boxes use 36 muffins; the last 2 cannot fill another box.
+wpa-g3-033|Thirty-one beads are made into groups of 5. How many beads are left after making as many full groups as possible?|1|bead|31-6*5|Six groups use 30 beads, leaving one bead.
+wpa-g3-034|Seventeen children sit at tables that each seat 4 children. If as many tables as possible are full, how many children sit at the partly filled table?|1|child|17-4*4|Four full tables seat 16 children. One child is left.
+wpa-g3-035|You have 50 cents. Each sticker costs 8 cents. After buying as many stickers as you can, how many cents remain?|2|cents|50-6*8|Six stickers cost 48 cents. There is not enough money for a seventh.
+# Fraction stories | Split the whole into equal parts before counting the parts you need.
+wpa-g3-036|There are 24 buttons. One third are green. How many buttons are green?|8|buttons|24/3|One third is one of three equal groups.
+wpa-g3-037|A tray has 20 cookies. One fourth have icing. How many cookies have no icing?|15|cookies|20-20/4|Find the iced cookies first, then remove them from the total.
+wpa-g3-038|Eighteen flowers are split into 3 equal bunches. Two bunches are sold. How many flowers are sold?|12|flowers|18/3*2|Find one bunch, then count two bunches.
+wpa-g3-039|A ribbon is 32 inches long. Half is used for a gift. How many inches remain?|16|inches|32-32/2|Using half leaves the other half.
+wpa-g3-040|One fourth of a collection is 7 shells. How many shells are in the whole collection?|28|shells|7*4|Four equal parts of 7 rebuild the whole.
+# Time on the move | Break a trip across the hour into smaller time spans.
+wpa-g3-041|A lesson starts at 9:15 and ends at 9:50. How many minutes does it last?|35|minutes|50-15|Both times are in the same hour, so subtract the minutes.
+wpa-g3-042|A walk begins at 10:45 and ends at 11:10. How many minutes does it take?|25|minutes|15+10|There are 15 minutes to 11:00 and 10 more after that.
+wpa-g3-043|A game lasts 40 minutes. You have played for 18 minutes. How many minutes remain?|22|minutes|40-18|Subtract the time already used from the total time.
+wpa-g3-044|Three songs each last 4 minutes. There is a 2-minute break between songs. How many minutes pass from the start of the first song to the end of the third?|16|minutes|3*4+2*2|Three songs have only two breaks between them.
+wpa-g3-045|School starts at 8:30. The walk takes 20 minutes. If you leave at 8:05, how many minutes before school starts will you arrive?|5|minutes|30-5-20|The time from 8:05 to 8:30 is 25 minutes. Use 20 of them to walk.
+# Around the edge | Perimeter means the distance all the way around a shape.
+wpa-g3-046|A square garden has sides 6 meters long. What is its perimeter in meters?|24|meters|4*6|A square has four equal sides.
+wpa-g3-047|A rectangle is 8 inches long and 5 inches wide. What is its perimeter in inches?|26|inches|2*(8+5)|Count two long sides and two short sides.
+wpa-g3-048|A triangular sign has sides of 7, 9, and 10 inches. What is the total distance around it?|26|inches|7+9+10|Add all three sides.
+wpa-g3-049|A square has a perimeter of 36 inches. How long is one side?|9|inches|36/4|Divide the whole perimeter among four equal sides.
+wpa-g3-050|A rectangular pen is 9 meters long and 4 meters wide. A 2-meter gate replaces part of the fence. How many meters of fence are needed?|24|meters|2*(9+4)-2|Find the perimeter, then remove the part filled by the gate.
+# Cover the space | Area counts how many unit squares cover a surface.
+wpa-g3-051|A mat has 5 rows of 7 square tiles. How many tiles cover the mat?|35|tiles|5*7|Count equal rows of tiles.
+wpa-g3-052|A rectangle is 6 meters long and 4 meters wide. What is its area in square meters?|24|square meters|6*4|Each of the 4 rows has 6 unit squares.
+wpa-g3-053|A board has an area of 40 square inches. It is 8 inches long. How wide is it?|5|inches|40/8|Find how many rows of 8 squares make 40.
+wpa-g3-054|A wall has 7 rows of 6 tiles. Nine tiles are blue and the rest are white. How many tiles are white?|33|tiles|7*6-9|Find all the tiles, then subtract the blue ones.
+wpa-g3-055|Two square mats each have sides 3 feet long. They do not overlap. What is their total area in square feet?|18|square feet|2*3*3|One mat covers 9 square feet. Count both mats.
+# Patterns with a rule | Track both the position and the amount in the pattern.
+wpa-g3-056|The first tower has 5 blocks. Each new tower has 4 more blocks than the one before it. How many blocks are in the fourth tower?|17|blocks|5+3*4|From the first tower to the fourth, there are three increases.
+wpa-g3-057|A row repeats star, moon, sun. The first shape is a star. What is the position of the fourth star?|10|place|1+3*3|Stars are in positions 1, 4, 7, and 10.
+wpa-g3-058|A robot counts backward by 6, starting at 50. It says 50, 44, 38. What number does it say next?|32|number|38-6|Subtract another 6.
+wpa-g3-059|On day 1, a plant is 12 centimeters tall. It grows 2 centimeters each day. How tall is it on day 5?|20|centimeters|12+4*2|There are four days of growth after day 1.
+wpa-g3-060|A machine sends 2 to 7, 4 to 9, and 6 to 11. It always adds the same number. What does it send 10 to?|15|number|10+5|Each output is 5 greater than its input.
+# Organize the choices | Make a list so each choice is counted once.
+wpa-g3-061|You can choose one of 3 sandwiches and one of 2 drinks. How many different lunches can you make?|6|lunches|3*2|Each sandwich can be matched with either drink.
+wpa-g3-062|Four children each shake hands with every other child once. How many handshakes happen?|6|handshakes|3+2+1|Count 3 new handshakes for the first child, then 2, then 1.
+wpa-g3-063|A flag uses one of 2 colors on top and one of 3 shapes below. How many different flags can be made?|6|flags|2*3|Each top color allows all three shape choices.
+wpa-g3-064|You have shirts in 3 colors and hats in 4 colors. How many outfits use one shirt and one hat?|12|outfits|3*4|Pair every shirt with each of the four hats.
+wpa-g3-065|You may choose exactly 2 different fruits from an apple, a pear, and a plum. How many different pairs can you choose?|3|pairs|2+1|The pairs are apple-pear, apple-plum, and pear-plum. Order does not make a new pair.
+# Sum and difference | Set aside the extra amount, then split the equal parts.
+wpa-g3-066|Two jars hold 30 beads in all. One jar has 6 more beads than the other. How many beads are in the fuller jar?|18|beads|(30-6)/2+6|Set aside the extra 6, split the other 24 equally, then add the extras back.
+wpa-g3-067|Mia and Leo have 24 cards altogether. Mia has 4 more cards than Leo. How many cards does Leo have?|10|cards|(24-4)/2|Remove Mia's extra cards before dividing into equal groups.
+wpa-g3-068|Two ribbons have a total length of 40 inches. One is 10 inches longer than the other. How long is the shorter ribbon?|15|inches|(40-10)/2|Take away the extra length, then split the remaining length equally.
+wpa-g3-069|Two baskets hold 28 apples. One basket holds 3 times as many apples as the other. How many apples are in the smaller basket?|7|apples|28/4|The smaller basket is one equal part and the larger is three parts.
+wpa-g3-070|A class has 32 children. There are 2 more girls than boys. How many boys are in the class?|15|boys|(32-2)/2|Set aside the two extra girls, then split the other 30 children equally.
+# Balance the clues | Equal totals let you replace one group with another.
+wpa-g3-071|Two identical toy cars weigh as much as 14 cubes. How many cubes weigh as much as one car?|7|cubes|14/2|The two cars have equal weight, so each matches half the cubes.
+wpa-g3-072|One bag and 5 beads weigh as much as 17 beads. How many beads weigh as much as the bag?|12|beads|17-5|Remove 5 beads from both sides.
+wpa-g3-073|Three identical boxes and 6 cubes weigh as much as 30 cubes. How many cubes weigh as much as one box?|8|cubes|(30-6)/3|Remove the loose cubes, then divide the weight among the boxes.
+wpa-g3-074|Four equal bags hold 36 marbles. A fifth bag holds 7 marbles. How many marbles do one equal bag and the fifth bag hold together?|16|marbles|36/4+7|Find the size of an equal bag, then add the fifth bag's marbles.
+wpa-g3-075|A red rod is as long as 2 blue rods. Each blue rod is 9 centimeters long. How long are 3 red rods end to end?|54|centimeters|2*9*3|One red rod is 18 centimeters long. Count three of them.
+# Useful facts only | Choose the quantities needed for the question.
+wpa-g3-076|A 9-year-old child buys 3 books for 7 dollars each. How many dollars do the books cost altogether?|21|dollars|3*7|Age does not affect the price of the books.
+wpa-g3-077|A bus has 48 seats. It carries 19 adults and 16 children. How many empty seats are there?|13|seats|48-19-16|Count all riders before finding the empty seats.
+wpa-g3-078|A 5-meter shelf holds 8 boxes. Each box contains 6 balls. How many balls are there?|48|balls|8*6|The shelf's length is not needed to count the balls.
+wpa-g3-079|There are 24 students in a class. On Monday, 9 bring apples and 7 bring pears. Everyone else brings a banana. How many bring bananas?|8|students|24-9-7|Remove both known fruit groups from the class total.
+wpa-g3-080|A park has 6 benches and 4 trees. Each bench seats 3 people. How many people can sit on all the benches?|18|people|6*3|Trees do not add seats.
+# Think about changes | Ask what changes and what stays the same.
+wpa-g3-081|Two boxes hold 15 balls each. You move 4 balls from one box to the other. What is the difference between the two new amounts?|8|balls|(15+4)-(15-4)|One box gains 4 while the other loses 4, making a gap of 8.
+wpa-g3-082|There are 52 counters on a table. You arrange them in rows without adding or removing any. How many counters are there afterward?|52|counters|52|Changing the arrangement does not change the total.
+wpa-g3-083|Nina has 25 cards and Omar has 13. How many cards must Nina give Omar so they have equal amounts?|6|cards|(25-13)/2|Moving half the difference makes both amounts equal.
+wpa-g3-084|A team earns 6 points in each of 4 rounds. It loses 5 points for a penalty. What is its final score?|19|points|6*4-5|Combine the round scores, then apply the penalty once.
+wpa-g3-085|A tank contains 40 liters of water. Eight liters flow out and 13 flow in. How many liters are in the tank now?|45|liters|40-8+13|Track the outflow and inflow as opposite changes.
+# Measure in parts | Convert equal units or combine equal lengths.
+wpa-g3-086|A ribbon is 1 meter long. One meter is 100 centimeters. You cut off 35 centimeters. How many centimeters remain?|65|centimeters|100-35|Express the whole ribbon in centimeters before subtracting.
+wpa-g3-087|Three bags each weigh 4 kilograms. An empty cart weighs 7 kilograms. What is the total weight of the cart and bags?|19|kilograms|3*4+7|Find the bags' total weight, then include the cart.
+wpa-g3-088|A jug holds 2 liters. How many liters fill 8 such jugs?|16|liters|2*8|Count eight equal amounts of 2 liters.
+wpa-g3-089|A path is 90 meters long. Flags are placed at 0, 30, 60, and 90 meters. How many equal gaps are between the flags?|3|gaps|90/30|Four flags make three gaps. Count the spaces, not the flags.
+wpa-g3-090|A rope is cut into 6 equal pieces. Each piece is 8 centimeters long. How long was the rope before it was cut?|48|centimeters|6*8|Join six equal lengths to rebuild the original rope.
+# Number clues | Try a short list of possible numbers and test each clue.
+wpa-g3-091|I am a multiple of 5 between 20 and 40. My digits add to 8. What number am I?|35|number|5*7|The choices are 25, 30, and 35. Only 35 has digits that add to 8.
+wpa-g3-092|A number has 4 tens. Its ones digit is half its tens digit. What is the number?|42|number|4*10+4/2|Half of 4 is 2, so the ones digit is 2.
+wpa-g3-093|I am greater than 30 and less than 40. I can be split into equal groups of 4 with none left over. My ones digit is 6. What number am I?|36|number|4*9|The number 36 fits all three clues.
+wpa-g3-094|Two even numbers come one after the other in the even-number list. The smaller is 18. What is their sum?|38|number|18+20|The next even number after 18 is 20, so add 18 and 20.
+wpa-g3-095|Three consecutive whole numbers add to 27. What is the smallest number?|8|number|27/3-1|The middle number is 9. The smallest is one less.
+# Trail challenge | Find a plan, solve one step at a time, and check the story.
+wpa-g3-096|A class has 6 tables with 4 students at each. Each student needs 3 sheets of paper. How many sheets are needed?|72|sheets|6*4*3|First count students, then count three sheets for each student.
+wpa-g3-097|A shop packs 54 apples into bags of 6. It sells 5 bags. How many bags remain?|4|bags|54/6-5|Find the number of bags before removing those sold.
+wpa-g3-098|Jade has 36 beads. She uses one third for a bracelet and shares the rest equally between 4 friends. How many beads does each friend get?|6|beads|(36-36/3)/4|Use the bracelet beads first, then share only what remains.
+wpa-g3-099|A ticket costs 8 dollars for an adult and 5 dollars for a child. Two adults and 3 children visit. How many dollars do their tickets cost?|31|dollars|2*8+3*5|Find the adult and child costs separately, then add them.
+wpa-g3-100|A group needs 40 bottles of water. It has 3 packs of 9 bottles and 5 loose bottles. How many more bottles are needed?|8|bottles|40-3*9-5|Count the packed and loose bottles before finding the shortage.

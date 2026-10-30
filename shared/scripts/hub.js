@@ -9,7 +9,7 @@
       slug: 'word-problem-adventure',
       title: 'Word Problem Adventure',
       emoji: '📚',
-      subtitle: 'Read the story. Add, subtract, compare, share.',
+      subtitle: '400 thinking stories. Grades 2–5. One small quest at a time.',
       topics: ['word-problems'],
       tag: 'Word Problems',
       tagClass: 'tile__tag--reading',
@@ -39,7 +39,7 @@
       slug: 'long-division-coach',
       title: 'Long Division Coach',
       emoji: '➗',
-      subtitle: 'Divide, multiply, subtract, bring down.',
+      subtitle: 'Watch sharing, solve together, then try solo.',
       topics: ['long-division', 'mul-div'],
       tag: 'Long Division',
       tagClass: 'tile__tag--logic',
@@ -225,32 +225,10 @@
     const slot = qs('#hub-account-actions');
     if (!slot) return;
     slot.innerHTML = '';
-    const backup = window.KLS && window.KLS.backup;
-    const saveBtn = el('button', {
-      type: 'button',
-      class: 'btn btn-secondary btn-tiny',
-      title: 'Save your game into a saved_status folder (or a download)',
-      onclick: function () {
-        if (!backup || !backup.saveMyGame) { alert('Backup module not loaded.'); return; }
-        saveBtn.disabled = true;
-        backup.saveMyGame().then(function (r) {
-          saveBtn.disabled = false;
-          if (r && r.mode !== 'cancelled') flashSavedGame(saveBtn, r.mode);
-        }).catch(function (e) { saveBtn.disabled = false; alert('Save failed: ' + (e && e.message ? e.message : e)); });
-      },
-    }, '💾 Save my game');
     slot.append(
-      saveBtn,
+      el('span', { class: 'parent-page__note' }, 'Progress saves as you play'),
       el('a', { class: 'hub__parent-link', href: '#/parent' }, '👨‍👧 Parent page')
     );
-  }
-
-  /** Brief confirmation on the Save button, worded to match where it landed. */
-  function flashSavedGame(btn, mode) {
-    const prev = '💾 Save my game';
-    btn.textContent = mode === 'download' ? '✅ Downloaded!' : '✅ Saved to folder!';
-    btn.disabled = true;
-    setTimeout(function () { btn.textContent = prev; btn.disabled = false; }, 1800);
   }
 
   function renderGame(slug) {
@@ -263,10 +241,11 @@
       stage.hidden = false;
       playEnter(stage);
       chrome.mount();
+      chrome.startSession(slug, progress.get().activeProfileId, resumeBlob);
 
       // Explicit index.html so this works on file:// (which has no directory
       // index resolution) as well as HTTP servers.
-      const desired = 'games/' + slug + '/index.html';
+      const desired = 'games/' + slug + '/index.html?v=20261028-division-journey';
       // Force reload even if same src (so resumeBlob delivery is deterministic).
       frame.setAttribute('src', desired);
 
@@ -291,8 +270,28 @@
     actuallyStart(progress.getGameState(slug));
   }
 
-  function route() {
+  let routeVersion = 0;
+  let appReady = false;
+  async function route() {
+    if (!appReady) return;
+    const version = ++routeVersion;
     const r = parseHash();
+    const current = chrome.getSession();
+    // A failed navigation restores this URL without reloading the live game.
+    if (current && r.route === 'game' && r.slug === current.slug && progress.get().activeProfileId === current.profileId) return;
+    if (current) {
+      const result = await chrome.flushSession();
+      if (version !== routeVersion) return;
+      const live = chrome.getSession();
+      if (!live || live.sessionId !== current.sessionId || progress.get().activeProfileId !== current.profileId) return;
+      if (!result.ok) {
+        location.hash = '#/games/' + current.slug;
+        return;
+      }
+      // A hidden iframe still runs timers. Remove its document only after
+      // the acknowledged checkpoint, before any profile picker is shown.
+      chrome.detachSession();
+    }
     if (r.route === 'game') {
       renderGame(r.slug);
       return;
@@ -309,20 +308,65 @@
     renderHub();
   }
 
-  function boot() {
+  async function boot() {
+    appReady = false;
+    try {
+      const backup = window.KLS.backup;
+      if (backup && backup.recoverInterruptedRestore) backup.recoverInterruptedRestore();
+      if (backup && backup.checkStartupRecovery) {
+        const root = qs('#hub-root');
+        root.hidden = false;
+        root.innerHTML = '';
+        root.append(el('p', { role: 'status' }, 'Looking for saved progress…'));
+        const recovery = await backup.checkStartupRecovery();
+        if (recovery) {
+          document.title = 'Restore progress — Kids Learning Space';
+          profileUI.renderParent({ recovery: true, restorePoints: recovery, onStartFresh: startApp });
+          return;
+        }
+      }
+    } catch (e) {
+      enterRecovery(e);
+      return;
+    }
+    startApp();
+  }
+  function startApp() {
+    // Recovery is resolved before any profile creation or automatic disk write.
     // Start silent background snapshots (Quiet Backup). GAMES is already on
     // window.KLS.GAMES by now, so buildEnvelope can discover every game's keys.
-    if (window.KLS.backup && window.KLS.backup.initSnapshots) window.KLS.backup.initSnapshots();
     // First-visit gate: ensure there's an active profile before showing anything.
     profileUI.ensureProfileOrPick(function () {
+      if (window.KLS.backup && window.KLS.backup.initSnapshots) window.KLS.backup.initSnapshots();
+      appReady = true;
       route();
     });
   }
+  function enterRecovery(error) {
+    appReady = false;
+    chrome.detachSession(); chrome.unmount();
+    const root = qs('#hub-root');
+    qs('#stage-root').hidden = true;
+    root.hidden = false; root.innerHTML = '';
+    root.append(el('h1', {}, 'Restore recovery needs attention'),
+      el('p', { role: 'alert' }, error && error.message || 'Previous progress is retained but could not be recovered yet.'),
+      el('button', { type: 'button', class: 'btn btn-primary', onclick: boot }, 'Retry recovery'));
+    document.title = 'Restore recovery — Kids Learning Space';
+  }
+  function returnToHubUsingLastSave() {
+    // This explicit recovery action preserves every stored value. It does not
+    // replace the last good checkpoint with an empty or unconfirmed reply.
+    routeVersion += 1;
+    chrome.detachSession();
+    location.hash = '';
+    route();
+  }
+  window.KLS.hub = { enterRecovery, returnToHubUsingLastSave };
 
   // Live-refresh tiles when progress changes (so "Played 2m ago" stays current
   // and new stars appear without a manual reload).
   progress.subscribe(() => {
-    if (parseHash().route === 'hub') renderTiles();
+    if (appReady && parseHash().route === 'hub') renderTiles();
   });
 
   window.addEventListener('hashchange', route);

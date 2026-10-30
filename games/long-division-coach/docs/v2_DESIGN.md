@@ -1,5 +1,10 @@
 # Long Division Coach — v2 design notes
 
+The default experience now uses the approved sharing-to-equations lesson.
+See [LEARNING_JOURNEY.md](LEARNING_JOURNEY.md) for its UI, save contract and
+verification. The classic engine described below remains available through
+Daily mission and More practice; its advanced problems and saves are retained.
+
 This document captures what the game became after the 2026-05-28 session
 and the rules future contributors (human or Claude) must keep intact.
 Read this **before** changing anything inside `games/long-division-coach/`.
@@ -118,8 +123,11 @@ Profile-scoped via the hub bridge:
 - Reset button wipes the profile-scoped key AND calls
   `bridge.resetProgress()` to clear the hub's per-game record. Other
   profiles and other games are never touched.
-- Game's own internal state (mission in-flight, draft input) is kept in
-  RAM only; we don't persist mid-problem state via `bridge.saveState`.
+- The hub's Save manager captures mid-problem state via `bridge.saveState`:
+  engine/work, draft input, undo history, mission sequence/index, replay identity,
+  and attempt/help counters. A saved session offers Continue before restoring.
+  See [`SESSION_CHECKPOINTS.md`](../../docs/SESSION_CHECKPOINTS.md) for the contract
+  and regression tests.
 
 ## Hub integration
 

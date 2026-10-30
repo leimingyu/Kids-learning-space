@@ -2,6 +2,12 @@
    Goals: friendly, readable, responsive, big tap targets.
    No external dependencies. */
 
+[hidden] { display: none !important; }
+.ldc-classic-home { max-width: 1400px; margin: 16px auto 0; padding: 0 20px; }
+#ldc-saved-classic { max-width: 1120px; padding: 0 16px; }
+#ldc-learning-root { max-width: 1120px; margin: 24px auto; padding: 0 16px; }
+@media (max-width: 480px) { #ldc-learning-root { margin: 8px auto; padding: 0 6px; } }
+
 :root {
   --bg: #0b1220;
   --panel: #121c33;
