@@ -42,6 +42,19 @@
 #division-play-lab .ds-detail{min-height:48px;font-size:15px;margin-top:12px}
 #division-play-lab .dp-watch-finish{margin-top:16px;padding:16px;background:var(--dp-green-soft);border-radius:12px}
 #division-play-lab .dp-watch-finish .dp-actions{margin-top:12px}
+#division-play-lab .dp-lesson-picker{min-width:0;margin:20px 0 24px}
+#division-play-lab .dp-lesson-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px;min-width:0}
+#division-play-lab .dp-lesson-card{display:flex;flex-direction:column;gap:10px;min-width:0;padding:14px 12px;background:var(--dp-paper);border:1px solid var(--dp-line);border-radius:12px}
+#division-play-lab .dp-lesson-card[data-selected=true]{border:2px solid var(--dp-blue);padding:13px 11px;background:var(--dp-blue-soft)}
+#division-play-lab .dp-lesson-card h4{font-size:15px;line-height:1.35;margin:0;min-height:40px}
+#division-play-lab .dp-lesson-card .dp-caption{font-size:12px;margin:0;flex:1}
+#division-play-lab .dp-lesson-card .dp-button{font-size:13px;width:100%;padding:9px 5px}
+#division-play-lab .dp-lesson-card .dp-button[aria-pressed=true]{background:var(--dp-blue);border-color:var(--dp-blue);color:var(--dp-paper)}
+#division-play-lab .dp-lesson-status{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--dp-muted)}
+#division-play-lab .dp-lesson-status [data-done=true]{color:var(--dp-green);font-weight:650}
+#division-play-lab .dp-picker-mobile-hint{display:none;font-size:12px;color:var(--dp-muted);margin-top:8px}
+#division-play-lab .dp-lesson-path{font-size:13px;color:var(--dp-muted);margin:16px 0 12px}
+#division-play-lab .dp-practice-navigation{margin:-4px 0 16px}
 #division-play-lab .dp-practice-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(210px,.85fr);gap:16px;align-items:start}
 #division-play-lab .dp-board{position:relative;background:var(--dp-paper);border:1px solid var(--dp-line);border-radius:14px;padding:16px 6px 20px;min-width:0}
 #division-play-lab .dp-board-title{font-size:13px;color:var(--dp-muted);margin:0 12px 12px}
@@ -109,6 +122,9 @@
  #division-play-lab .dp-header{padding-right:0}
  #division-play-lab .dp-sharing{padding:12px 8px}
  #division-play-lab .dp-under-board{align-items:flex-start}
+ #division-play-lab .dp-lesson-grid{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:8px;max-width:100%}
+ #division-play-lab .dp-lesson-card{flex:0 0 176px;scroll-snap-align:start}
+ #division-play-lab .dp-picker-mobile-hint{display:block}
 }
 @media(max-width:360px){
  #division-play-lab{padding:12px;border-radius:14px}

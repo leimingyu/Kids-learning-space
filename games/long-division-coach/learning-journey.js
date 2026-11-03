@@ -14,6 +14,16 @@
   const view=document.createElement('div');view.setAttribute('id','dp-view');
   const saveNote=document.createElement('p');saveNote.setAttribute('id','dp-save-note');saveNote.className='dp-save-note';saveNote.setAttribute('role','status');
 
+  const lessons=[
+    {id:'equal',dividend:84,divisor:4,title:'Share without exchanging',skill:'Equal sharing without regrouping',similarDividend:96,similarDivisor:3,steps:3},
+    {id:'exchange',dividend:96,divisor:4,title:'Exchange a ten',skill:'Turn one ten into ten ones',similarDividend:84,similarDivisor:3,steps:4},
+    {id:'regroup',dividend:432,divisor:3,title:'Exchange hundreds and tens',skill:'Regroup into the next smaller place',similarDividend:528,similarDivisor:3,steps:6},
+    {id:'zero',dividend:804,divisor:4,title:'Keep a zero in the answer',skill:'A place can have zero full shares',similarDividend:816,similarDivisor:4,steps:4},
+    {id:'remainder',dividend:553,divisor:4,title:'Discover a remainder',skill:'Understand what is left over',similarDividend:565,similarDivisor:4,steps:6}
+  ];
+  const lessonById=id=>lessons.find(lesson=>lesson.id===id);
+  const lessonKey=(id,kind)=>'lesson-'+id+'-'+kind;
+  const equation=problem=>problem.dividend+' ÷ '+problem.divisor;
   const problems={
     together:{dividend:528,divisor:3,title:'Solve together'},
     solo1:{dividend:672,divisor:4,title:'Solo problem 1'},
@@ -23,11 +33,16 @@
     remainder:{dividend:553,divisor:4,title:'Extra challenge: a remainder'},
     extra:{dividend:435,divisor:3,title:'Another sharing problem'}
   };
+  lessons.forEach(lesson=>{
+    problems[lessonKey(lesson.id,'guided')]={dividend:lesson.dividend,divisor:lesson.divisor,title:lesson.title,lessonId:lesson.id,practiceKind:'guided'};
+    problems[lessonKey(lesson.id,'similar')]={dividend:lesson.similarDividend,divisor:lesson.similarDivisor,title:'Try a similar problem',lessonId:lesson.id,practiceKind:'similar'};
+    problems[lessonKey(lesson.id,'retry')]={dividend:lesson.dividend,divisor:lesson.divisor,title:'Tricky problem replay',lessonId:lesson.id,practiceKind:'retry'};
+  });
   const round=['solo1','solo2','solo3'],phases=['divide','multiply','subtract','bringDown'];
   const phaseLabels={divide:'Divide',multiply:'Multiply',subtract:'Subtract',bringDown:'Bring down'};
-  let player=null,generation=0,advanceTimer=0,advanceEpoch=0,focusFrame=0,arrowFrame=0,advancePending=false,feedback={text:'',kind:'neutral'};
+  let player=null,generation=0,advanceTimer=0,advanceEpoch=0,focusFrame=0,arrowFrame=0,pickerFrame=0,pickerScrollLeft=0,advancePending=false,feedback={text:'',kind:'neutral'};
   function freshPractice(id){return {id,replay:false,hintsUsed:0,answers:[],draft:'',verifyDraft:'',verifiedValue:null,usedHelp:false,divisionHelpUsed:false,explanationViewed:false,explanationOpen:false,wrong:0,helpDepth:0,checked:false};}
-  function fresh(){return {version:1,revision:0,screen:'home',mode:'sharing',shareStep:0,shareSeen:false,guided:freshPractice('together'),solo:freshPractice('solo1'),records:{},mistakes:{}};}
+  function fresh(){return {version:1,revision:0,screen:'home',mode:'sharing',shareStep:0,shareSeen:false,selectedLesson:'equal',lessonWatch:Object.fromEntries(lessons.map(lesson=>[lesson.id,{step:0,seen:false}])),lessonWork:{},lessonContext:null,guided:freshPractice('together'),solo:freshPractice('solo1'),records:{},mistakes:{}};}
   let state=fresh();
   const copy=value=>JSON.parse(JSON.stringify(value));
   const usable=()=>!destroyed&&!suspended;
@@ -44,11 +59,19 @@
   const homeButton=button('🏠 Home',goHome);homeButton.className+=' dp-home-button';
   const mainHeader=node('header',{class:'dp-header'},node('div',{},node('span',{class:'dp-eyebrow'},'Share · understand · solve'),node('h2',{},'Long Division Coach')),homeButton);
   const nav=node('nav',{class:'dp-nav','aria-label':'Learning activity'});
-  [['sharing','1','Watch sharing'],['guided','2','Solve together'],['solo','3','Try solo']].forEach(([mode,number,label])=>nav.append(node('button',{type:'button','data-mode':mode,onclick:()=>setMode(mode)},node('span',{},number),label)));
+  [['sharing','1','Watch sharing'],['guided','2','Solve together'],['solo','3','Try solo']].forEach(([mode,number,label])=>nav.append(node('button',{type:'button','data-mode':mode,onclick:()=>{
+    if(mode==='guided'&&(state.lessonContext||state.mode==='sharing'))startLessonPractice(state.lessonContext?state.lessonContext.lessonId:state.selectedLesson,'guided');
+    else if(mode==='solo'&&(state.lessonContext||state.mode==='sharing'))startLessonPractice(state.lessonContext?state.lessonContext.lessonId:state.selectedLesson,'similar');
+    else setMode(mode);
+  }},node('span',{},number),label)));
   root.append(mainHeader,nav,view,saveNote);
 
   function engine(p){const problem=problems[p.id];return Core.replay(problem.dividend,problem.divisor,p.answers);}
-  function active(){return state.mode==='guided'?state.guided:state.solo;}
+  function active(){
+    const context=state.lessonContext;
+    if(context&&state.mode===(context.kind==='guided'?'guided':'solo'))return state.lessonWork[lessonKey(context.lessonId,context.kind)];
+    return state.mode==='guided'?state.guided:state.solo;
+  }
   function currentProblem(){return problems[active().id];}
   function goodInteger(n,min,max){return Number.isInteger(n)&&n>=min&&n<=max;}
   function cleanPractice(raw,fallback){
@@ -68,8 +91,24 @@
     if(!raw||raw.version!==1)return null;
     const next=fresh();next.revision=goodInteger(raw.revision,0,Number.MAX_SAFE_INTEGER)?raw.revision:0;
     next.mode=['sharing','guided','solo'].includes(raw.mode)?raw.mode:'sharing';next.screen=['home','activity','summary'].includes(raw.screen)?raw.screen:'activity';next.shareStep=goodInteger(raw.shareStep,0,5)?raw.shareStep:0;next.shareSeen=raw.shareSeen===true;
+    next.selectedLesson=lessonById(raw.selectedLesson)?raw.selectedLesson:'regroup';
+    lessons.forEach(lesson=>{
+      const watched=raw.lessonWatch&&raw.lessonWatch[lesson.id];
+      if(watched)next.lessonWatch[lesson.id]={step:goodInteger(watched.step,0,lesson.steps-1)?watched.step:0,seen:watched.seen===true};
+      else if(lesson.id==='regroup')next.lessonWatch.regroup={step:next.shareStep,seen:next.shareSeen};
+      ['guided','similar','retry'].forEach(kind=>{
+        const key=lessonKey(lesson.id,kind),work=raw.lessonWork&&raw.lessonWork[key];
+        if(work)next.lessonWork[key]=cleanPractice({...work,id:key},key);
+      });
+    });
+    next.shareStep=next.lessonWatch.regroup.step;next.shareSeen=next.lessonWatch.regroup.seen;
+    const context=raw.lessonContext;
+    if(context&&lessonById(context.lessonId)&&['guided','similar','retry'].includes(context.kind)&&next.mode===(context.kind==='guided'?'guided':'solo')){
+      next.lessonContext={lessonId:context.lessonId,kind:context.kind};
+      const key=lessonKey(context.lessonId,context.kind);if(!next.lessonWork[key])next.lessonWork[key]=freshPractice(key);
+    }
     next.guided=cleanPractice(raw.guided,'together');if(next.guided.id!=='together')next.guided=freshPractice('together');
-    next.solo=cleanPractice(raw.solo,'solo1');if(next.solo.id==='together')next.solo=freshPractice('solo1');
+    next.solo=cleanPractice(raw.solo,'solo1');
     Object.keys(problems).forEach(id=>{
       const record=raw.records&&raw.records[id];if(!record)return;
       const p=cleanPractice({...record,id},id);if(p.checked)next.records[id]={...p};
@@ -77,7 +116,7 @@
     Object.keys(problems).forEach(id=>{
       const m=raw.mistakes&&raw.mistakes[id];if(m&&phases.includes(m.phase))next.mistakes[id]={phase:m.phase,count:goodInteger(m.count,1,999)?m.count:1};
     });
-    [next.guided,next.solo].forEach(p=>{if(p.checked&&!next.records[p.id])next.records[p.id]=JSON.parse(JSON.stringify(p));});
+    [next.guided,next.solo,...Object.values(next.lessonWork)].forEach(p=>{if(p.checked&&!next.records[p.id])next.records[p.id]=JSON.parse(JSON.stringify(p));});
     return next;
   }
   function persist(){
@@ -90,16 +129,54 @@
     return saved;
   }
   function cancelAdvance(){clearTimeout(advanceTimer);advanceTimer=0;advancePending=false;advanceEpoch++;}
-  function destroyView(){generation++;cancelAnimationFrame(focusFrame);cancelAnimationFrame(arrowFrame);if(player){player.destroy();player=null;}view.replaceChildren();}
-  function setMode(mode){if(!usable()||!['sharing','guided','solo'].includes(mode))return;cancelAdvance();feedback={text:'',kind:'neutral'};state.mode=mode;state.screen='activity';persist();render();focusAnswer();}
+  function destroyView(){const picker=view.querySelector('.dp-lesson-grid');if(picker&&picker.clientWidth>0)pickerScrollLeft=picker.scrollLeft||0;generation++;cancelAnimationFrame(focusFrame);cancelAnimationFrame(arrowFrame);cancelAnimationFrame(pickerFrame);if(player){player.destroy();player=null;}view.replaceChildren();}
+  function setMode(mode){if(!usable()||!['sharing','guided','solo'].includes(mode))return;cancelAdvance();feedback={text:'',kind:'neutral'};state.lessonContext=null;state.mode=mode;state.screen='activity';persist();render();focusAnswer();}
+  function selectLesson(id){
+    if(!usable()||!lessonById(id))return;cancelAdvance();state.selectedLesson=id;state.lessonContext=null;state.mode='sharing';state.screen='activity';feedback={text:'',kind:'neutral'};persist();render();
+  }
+  function startLessonPractice(id,kind,restart=false){
+    if(!usable()||!lessonById(id)||!['guided','similar','retry'].includes(kind))return;
+    cancelAdvance();const key=lessonKey(id,kind);if(!state.lessonWork[key]||restart){state.lessonWork[key]=freshPractice(key);state.lessonWork[key].replay=isQueued(problems[key]);}
+    state.selectedLesson=id;state.lessonContext={lessonId:id,kind};state.mode=kind==='guided'?'guided':'solo';state.screen='activity';feedback={text:'',kind:'neutral'};persist();render();focusAnswer();
+  }
   function header(title,subtitle,chip){return node('div',{class:'dp-topline'},node('div',{},node('h3',{},title),node('p',{class:'dp-caption'},subtitle)),chip?node('span',{class:'dp-chip'},chip):null);}
   function showFeedback(parent){const n=node('div',{class:'dp-feedback','data-kind':feedback.kind,role:feedback.kind==='error'?'alert':'status','aria-live':'polite'},feedback.text);parent.append(n);}
   function render(){
     if(!usable())return;destroyView();nav.hidden=state.screen==='home';homeButton.hidden=state.screen==='home';root.querySelectorAll('[data-mode]').forEach(b=>{const selected=b.getAttribute('data-mode')===state.mode;b.setAttribute('aria-current',selected?'step':'false');});
     if(state.screen==='home')renderHome();else if(state.screen==='summary')renderSummary();else if(state.mode==='sharing')renderSharing();else renderPractice();
   }
+  function renderLessonPicker(){
+    const picker=node('section',{class:'dp-lesson-picker','aria-label':'Choose a sharing example'},node('h3',{},'Choose an example to watch'),node('p',{class:'dp-caption'},'Pick any example. Each one shows a different division idea.'),node('p',{class:'dp-picker-mobile-hint'},'Swipe the cards to see all five examples.'));
+    const cards=node('div',{class:'dp-lesson-grid'}),refs={};
+    lessons.forEach(lesson=>{
+      const watched=state.lessonWatch[lesson.id].seen,coached=!!state.records[lessonKey(lesson.id,'guided')],solved=!!state.records[lessonKey(lesson.id,'similar')];
+      const choice=node('button',{type:'button',class:'dp-button','data-lesson':lesson.id,'aria-pressed':String(state.selectedLesson===lesson.id),onclick:()=>selectLesson(lesson.id)},'Watch '+equation(lesson));
+      const watchStatus=node('span',{'data-done':String(watched)},watched?'✓ Watched':'○ Not watched');
+      const card=node('article',{class:'dp-lesson-card','data-lesson-id':lesson.id,'data-selected':String(state.selectedLesson===lesson.id),'data-watched':String(watched),'data-solved':String(solved)},node('h4',{},lesson.title),node('p',{class:'dp-caption'},lesson.skill),choice,node('div',{class:'dp-lesson-status'},watchStatus,node('span',{'data-done':String(coached)},coached?'✓ With coach':'○ With coach'),node('span',{'data-done':String(solved)},solved?'✓ Similar solved':'○ Similar unsolved')));
+      refs[lesson.id]={card,watchStatus};cards.append(card);
+    });
+    picker.append(cards);view.append(picker);
+    // Rebuilding the activity must not jump a phone's card strip back to its
+    // first example. Adjust only the strip, never the document's scroll.
+    const token=generation,previousScroll=pickerScrollLeft;
+    const placePicker=()=>{
+      if(!usable()||token!==generation||!(cards.clientWidth>0))return;
+      cards.scrollLeft=previousScroll;
+      if(cards.scrollWidth>cards.clientWidth){
+        const bounds=cards.getBoundingClientRect(),chosen=refs[state.selectedLesson].card.getBoundingClientRect();
+        if(chosen.left<bounds.left)cards.scrollLeft+=chosen.left-bounds.left;
+        else if(chosen.right>bounds.right)cards.scrollLeft+=chosen.right-bounds.right;
+      }
+      pickerScrollLeft=cards.scrollLeft||0;
+    };
+    placePicker();pickerFrame=requestAnimationFrame(placePicker);
+    return refs;
+  }
   function renderSharing(){
-    view.append(header('432 ÷ 3','Watch the blocks become a written answer.','6 small steps'));
+    const cards=renderLessonPicker();
+    const lesson=lessonById(state.selectedLesson),watched=state.lessonWatch[lesson.id];
+    const totalSteps=typeof global.DivisionSharingPlayer.createPlan==='function'?global.DivisionSharingPlayer.createPlan(lesson.dividend,lesson.divisor).stages.length:lesson.steps;
+    view.append(header(equation(lesson),lesson.skill,totalSteps+' small steps'));
     const panel=node('section',{class:'dp-sharing'}),title=node('div',{class:'dp-row'}),stageTitle=node('strong'),stageCount=node('span',{class:'dp-chip'});
     title.append(stageTitle,stageCount);
     const mount=node('div',{id:'dp-sharing-mount'}),answer=node('div',{class:'dp-sharing-answer','aria-live':'polite'});
@@ -107,18 +184,17 @@
     const prev=button('Previous',()=>{interacted=true;player.previous();});
     const replay=button('Replay motion',()=>{interacted=true;if(shareStatus.busy)player.finish();else player.replay();});
     const next=button('Next step',()=>{interacted=true;player.next();},true);
-    const continueButton=button(state.guided.checked?'Solve 528 ÷ 3 again →':'Your turn: 528 ÷ 3 →',()=>{
-      if(state.guided.checked)state.guided=freshPractice('together');setMode('guided');focusAnswer();
-    },true);
-    const done=node('div',{class:'dp-watch-finish',hidden:true},node('h3',{},'Three equal groups of 144!'),node('p',{class:'dp-caption'},'Now use the same ideas on a long-division board.'),node('div',{class:'dp-actions'},continueButton));
+    const continueButton=button('Solve '+equation(lesson)+' with help →',()=>startLessonPractice(lesson.id,'guided'),true);
+    const quotient=Math.floor(lesson.dividend/lesson.divisor),remainder=lesson.dividend%lesson.divisor;
+    const done=node('div',{class:'dp-watch-finish',hidden:true},node('h3',{},lesson.divisor+' equal groups of '+quotient+(remainder?', with '+remainder+' left over!':'!')),node('p',{class:'dp-caption'},'Watched! Now write the steps yourself with your coach.'),node('div',{class:'dp-actions'},continueButton));
     const details=node('details',{},node('summary',{},'See the written division'));
-    let demo=Core.create(432,3);while(demo.phase!=='done')demo=Core.submit(demo,Core.expectation(demo).expected).next;
+    let demo=Core.create(lesson.dividend,lesson.divisor);while(demo.phase!=='done')demo=Core.submit(demo,Core.expectation(demo).expected).next;
     details.append(makeBoard(demo,null));done.append(details);
     panel.append(title,mount,node('div',{class:'dp-sharing-controls'},answer,node('div',{class:'dp-actions'},prev,replay,next)),done);view.append(panel);
-    player=window.DivisionSharingPlayer.mount(mount,{initialStep:state.shareStep,onStep:s=>{
-      if(!usable()||token!==generation)return;shareStatus=s;stageTitle.textContent=s.title;stageCount.textContent='Step '+(s.step+1)+' of 6';answer.textContent='Answer: '+s.quotient;
+    player=window.DivisionSharingPlayer.mount(mount,{dividend:lesson.dividend,divisor:lesson.divisor,initialStep:watched.step,onStep:s=>{
+      if(!usable()||token!==generation)return;shareStatus=s;stageTitle.textContent=s.title;stageCount.textContent='Step '+(s.step+1)+' of '+(s.stageCount||totalSteps);answer.textContent='Answer: '+s.quotient+(s.complete&&s.remainder?' remainder '+s.remainder:'');
       prev.disabled=!s.canPrevious;replay.disabled=s.step===0;replay.textContent=s.busy?'Finish step':'Replay motion';next.disabled=!s.canNext;next.hidden=s.complete;done.hidden=!s.complete;
-      if(!s.busy){state.shareStep=s.completedStep;if(s.complete)state.shareSeen=true;if(interacted)persist();}
+      if(!s.busy){watched.step=s.completedStep;if(s.complete&&interacted){watched.seen=true;cards[lesson.id].card.setAttribute('data-watched','true');cards[lesson.id].watchStatus.setAttribute('data-done','true');cards[lesson.id].watchStatus.textContent='✓ Watched';}if(lesson.id==='regroup'){state.shareStep=watched.step;state.shareSeen=watched.seen;}if(interacted)persist();}
     }});
   }
   function gridRow(e,content,{sign='',product=false,bracket=false,places=false}={}){
@@ -246,7 +322,10 @@
   function renderPractice(){
     const p=active(),e=engine(p),problem=problems[p.id],guided=state.mode==='guided';
     const doneCount=round.filter(id=>state.records[id]).length;
-    view.append(header(problem.dividend+' ÷ '+problem.divisor,guided?'Your turn. Write every step with your coach.':problem.title, guided?'Together':round.includes(p.id)?'Round · '+(round.indexOf(p.id)+1)+' of 3':'Extra challenge'));
+    const context=state.lessonContext,lesson=context&&lessonById(context.lessonId);
+    if(lesson)view.append(node('p',{class:'dp-lesson-path'},'Watch '+equation(lesson)+' → Solve with help → Try a similar problem'));
+    view.append(header(equation(problem),guided?'Your turn. Write every step with your coach.':p.replay?'Solve this tricky problem on your own. Hints are here if you need them.':problem.title,guided?'With coach':p.replay?'Tricky replay':lesson?(context.kind==='retry'?'Tricky replay':'Similar problem'):round.includes(p.id)?'Round · '+(round.indexOf(p.id)+1)+' of 3':'Extra challenge'));
+    if(lesson)view.append(node('div',{class:'dp-actions dp-practice-navigation'},button('Watch '+equation(lesson)+' again',()=>selectLesson(lesson.id)),guided?(p.checked?null:button('Try a similar problem →',()=>startLessonPractice(lesson.id,'similar'))):button('Solve '+equation(lesson)+' with help',()=>startLessonPractice(lesson.id,'guided'))));
     if(!guided&&p.id==='zero'&&p.answers.length===0)view.append(node('div',{class:'dp-feedback','data-kind':'neutral'},'A zero can belong inside the answer. Keep every place, even when no group fits.'));
     if(!guided&&p.id==='remainder'&&p.answers.length===0)view.append(node('div',{class:'dp-feedback','data-kind':'neutral'},'This problem has a leftover amount. Finish the last subtraction to find the remainder.'));
     const form=node('form',{class:'dp-practice-layout',id:'dp-answer-form',novalidate:true}),board=makeBoard(e,p.checked?null:p),coach=node('section',{class:'dp-coach','aria-label':'Division coach'});
@@ -275,7 +354,9 @@
       const undo=button('Undo last step',()=>{cancelAdvance();if(!p.answers.length)return;p.answers.pop();p.draft='';p.verifyDraft='';p.helpDepth=0;feedback={text:'Back one step. Your earlier work is still here.',kind:'neutral'};persist();render();focusAnswer();});undo.disabled=p.answers.length===0;
       view.append(node('div',{class:'dp-under-board'},undo,node('span',{class:'dp-chip'},guided?'Coaching is on':p.usedHelp?'Hints opened for this problem':'Hints available anytime')));
     }
-    if(!guided){
+    if(lesson){
+      view.append(node('p',{class:'dp-progress-label'},'This lesson: '+(state.lessonWatch[lesson.id].seen?'Watched':'Not watched')+' · '+(state.records[lessonKey(lesson.id,'guided')]?'Completed with coach':'Coached equation ready')+' · '+(state.records[lessonKey(lesson.id,'similar')]?'Similar problem solved':'Similar problem ready')));
+    }else if(!guided){
       view.append(node('p',{class:'dp-progress-label'},'Equations completed so far: '+doneCount+' of 3'),node('div',{class:'dp-progress','aria-label':doneCount+' of 3 equations completed'},round.map(id=>node('span',{'data-complete':!!state.records[id]}))));
     }
   }
@@ -292,12 +373,13 @@
       p.checked=true;
       const previous=state.records[p.id],quality=x=>x.divisionHelpUsed===false?(x.wrong===0?4:3):x.divisionHelpUsed===true?(x.wrong===0?2:1):0;
       if(!previous||quality(p)>quality(previous))state.records[p.id]=JSON.parse(JSON.stringify(p));
-      if(p.wrong===0&&p.divisionHelpUsed===false)delete state.mistakes[p.id];
+      if(state.mode==='solo'&&p.wrong===0&&p.divisionHelpUsed===false){const solved=problems[p.id];Object.keys(state.mistakes).forEach(id=>{const prior=problems[id];if(prior&&prior.dividend===solved.dividend&&prior.divisor===solved.divisor)delete state.mistakes[id];});}
       persist();notify('onCompleted',{id:p.id,problem:problemFor(p),mode:state.mode,usedHelp:p.divisionHelpUsed!==false,wrong:p.wrong,replay:p.replay||!!previous,record:copy(p)});scheduleAdvance();render();return;
     }
     persist();render();focusAnswer();
   }
   function nextDestination(){
+    if(state.lessonContext)return state.lessonContext.kind==='guided'?{mode:'solo',id:lessonKey(state.lessonContext.lessonId,'similar'),lessonId:state.lessonContext.lessonId,kind:'similar'}:null;
     if(state.mode==='guided')return {mode:'solo',id:round.find(id=>!state.records[id])||'solo1'};
     const index=round.indexOf(active().id);return index>=0&&index<round.length-1?{mode:'solo',id:round[index+1]}:null;
   }
@@ -308,16 +390,18 @@
   }
   function goNext(){
     const destination=nextDestination();cancelAdvance();feedback={text:'',kind:'neutral'};
-    if(destination){state.screen='activity';state.mode=destination.mode;if(state.solo.id!==destination.id||state.solo.checked)state.solo=freshPractice(destination.id);persist();render();focusAnswer();}
+    if(destination&&destination.lessonId){startLessonPractice(destination.lessonId,destination.kind);}
+    else if(destination){state.screen='activity';state.mode=destination.mode;if(state.solo.id!==destination.id||state.solo.checked)state.solo=freshPractice(destination.id);persist();render();focusAnswer();}
+    else if(state.lessonContext){selectLesson(state.lessonContext.lessonId);}
     else{state.screen='summary';persist();render();}
   }
-  function startSolo(id,replay=false){if(!usable())return;cancelAdvance();state.screen='activity';state.mode='solo';state.solo=freshPractice(id);state.solo.replay=replay;feedback={text:'',kind:'neutral'};persist();render();focusAnswer();}
-  function repeatCurrent(){const p=active();cancelAdvance();if(state.mode==='guided')state.guided=freshPractice('together');else state.solo=freshPractice(p.id);feedback={text:'',kind:'neutral'};persist();render();focusAnswer();}
+  function startSolo(id,replay=false){if(!usable())return;cancelAdvance();state.lessonContext=null;state.screen='activity';state.mode='solo';state.solo=freshPractice(id);state.solo.replay=replay;feedback={text:'',kind:'neutral'};persist();render();focusAnswer();}
+  function repeatCurrent(){const p=active();cancelAdvance();if(state.lessonContext){state.lessonWork[p.id]=freshPractice(p.id);state.lessonWork[p.id].replay=isQueued(problems[p.id]);}else if(state.mode==='guided')state.guided=freshPractice('together');else state.solo=freshPractice(p.id);feedback={text:'',kind:'neutral'};persist();render();focusAnswer();}
   function renderCompletion(p,e){
     const a=Core.answer(e),guided=state.mode==='guided';
     const card=node('section',{class:'dp-completion','aria-live':'polite'},node('h3',{},'You solved it! 🎉'),node('p',{class:'dp-result'},a.text),node('p',{},guided?'You connected sharing to every written step.':p.divisionHelpUsed===false?'You finished every division step without opening hints!':'You completed all the division steps. Well done!'));
     card.append(node('p',{class:'dp-caption'},guided?'Completed with coaching':p.divisionHelpUsed===true?'Completed with division hints':p.divisionHelpUsed===false?'Completed without division hints':'Completed'));
-    const next=button(nextDestination()?'Next problem →':'See my round →',goNext,true),stay=button('Stay & read',()=>{cancelAdvance();render();});
+    const next=button(state.lessonContext?(guided?'Try a similar problem →':'Choose another example →'):nextDestination()?'Next problem →':'See my round →',goNext,true),stay=button('Stay & read',()=>{cancelAdvance();render();});
     card.append(node('div',{class:'dp-actions'},next,stay,button('Try this one again',repeatCurrent)),node('p',{class:'dp-advance'},advancePending?'Next problem in about 2 seconds…':'Paused for review. Continue when you are ready.'));
     view.append(card);
   }
@@ -327,7 +411,7 @@
     panel.append(node('p',{class:'dp-caption'},'Choose another way to practise.'));
     const actions=node('div',{class:'dp-actions'},button('Practise the three again',()=>startSolo('solo1')),button('Try a zero in the answer',()=>startSolo('zero')),button('Try a remainder',()=>startSolo('remainder')),button('Another sharing problem',()=>startSolo('extra')));
     const tricky=Object.keys(state.mistakes);if(tricky.length)actions.append(button('Practise a tricky problem ('+tricky.length+')',()=>{
-      const id=tricky.find(id=>id!=='together');if(id)startSolo(id);else{state.guided=freshPractice('together');setMode('guided');focusAnswer();}
+      replayKnown(tricky[0]);
     }));
     panel.append(actions);view.append(panel);
   }
@@ -338,22 +422,28 @@
     if(typeof options.getWrongs==='function'){try{supplied=options.getWrongs()||[];}catch(error){supplied=[];}}
     return Array.isArray(supplied)?supplied.filter(record=>record&&record.resolved!==true):[];
   }
-  function hasContinue(){return state.shareStep>0||state.shareSeen||state.guided.answers.length>0||state.solo.answers.length>0||!!state.guided.draft||!!state.solo.draft||Object.keys(state.records).length>0;}
+  function isQueued(problem){return getWrongs().some(record=>{const p=record.questionShape||record.problem||record;return p.dividend===problem.dividend&&p.divisor===problem.divisor;});}
+  function replayKnown(id){
+    const problem=problems[id];if(!problem)return;
+    if(problem.lessonId)startLessonPractice(problem.lessonId,problem.practiceKind==='similar'?'similar':'retry',true);
+    else startSolo(id,true);
+  }
+  function hasContinue(){return lessons.some(lesson=>state.lessonWatch[lesson.id].step>0||state.lessonWatch[lesson.id].seen)||Object.values(state.lessonWork).some(p=>p.answers.length>0||!!p.draft)||state.guided.answers.length>0||state.solo.answers.length>0||!!state.guided.draft||!!state.solo.draft||Object.keys(state.records).length>0;}
   function openClassic(mode){if(!usable())return;cancelAdvance();notify('onOpenClassic',mode);}
   function goHome(){if(!usable())return;cancelAdvance();state.screen='home';feedback={text:'',kind:'neutral'};persist();render();}
   function startTricky(){
     const saved=getWrongs(),match=saved.map(record=>{const p=record.questionShape||record.problem||record;return Object.keys(problems).find(id=>problems[id].dividend===p.dividend&&problems[id].divisor===p.divisor);}).find(Boolean);
     const id=match||(!saved.length?Object.keys(state.mistakes)[0]:null);
-    if(id==='together'){state.guided=freshPractice(id);state.guided.replay=true;setMode('guided');}
-    else if(id)startSolo(id,true);else openClassic('tricky');
+    if(id)replayKnown(id);else openClassic('tricky');
   }
   function renderHome(){
     const completed=round.filter(id=>state.records[id]).length,wrongs=getWrongs(),trickyCount=wrongs.length||Object.keys(state.mistakes).length;
+    const watched=lessons.filter(lesson=>state.lessonWatch[lesson.id].seen).length,coached=lessons.filter(lesson=>state.records[lessonKey(lesson.id,'guided')]).length,similar=lessons.filter(lesson=>state.records[lessonKey(lesson.id,'similar')]).length;
     view.append(node('div',{class:'dp-home-intro'},node('h3',{},'Make long division make sense.'),node('p',{class:'dp-caption'},'Watch equal sharing, solve with your coach, then write the steps on your own.')));
     if(hasContinue())view.append(node('div',{class:'dp-actions',style:'margin-bottom:18px'},button('Continue where I left off →',()=>{state.screen='activity';persist();render();focusAnswer();},true)));
     const cards=node('div',{class:'dp-home-grid'});
-    [['sharing','1 · See it','Watch sharing','Follow arrows as 432 blocks move into three equal groups.','Watch 432 ÷ 3'],['guided','2 · Write it','Solve together','Use a real division board for 528 ÷ 3. Your coach explains each step.','Solve with my coach'],['solo','3 · Try it','Try solo','Complete three equations. Hints are always available when you need them.','Try a solo problem']].forEach(([mode,step,title,description,label])=>cards.append(node('section',{class:'dp-home-card'},node('span',{class:'dp-home-step'},step),node('h3',{},title),node('p',{},description),button(label,()=>setMode(mode),true))));
-    view.append(cards,node('p',{class:'dp-home-status'},'Your learning progress: '+(state.shareSeen?'sharing lesson complete':'sharing lesson ready')+' · '+(state.guided.checked?'guided equation complete':'guided equation ready')+' · '+completed+' of 3 solo equations complete.'),node('div',{class:'dp-progress','aria-label':completed+' of 3 solo equations complete'},round.map(id=>node('span',{'data-complete':!!state.records[id]}))));
+    [['sharing','1 · See it','Watch sharing','Choose from five examples. Follow arrows, exchanges, zero shares and remainders.','Choose an example'],['guided','2 · Write it','Solve together','Use a real division board for 528 ÷ 3. Your coach explains each step.','Solve with my coach'],['solo','3 · Try it','Try solo','Complete three equations. Hints are always available when you need them.','Try a solo problem']].forEach(([mode,step,title,description,label])=>cards.append(node('section',{class:'dp-home-card'},node('span',{class:'dp-home-step'},step),node('h3',{},title),node('p',{},description),button(label,()=>setMode(mode),true))));
+    view.append(cards,node('p',{class:'dp-home-status'},'Five sharing lessons: '+watched+' watched · '+coached+' completed with coach · '+similar+' similar problems solved.'),node('p',{class:'dp-caption'},'More practice: '+(state.guided.checked?'528 ÷ 3 complete with coach':'528 ÷ 3 ready with coach')+' · '+completed+' of 3 solo equations complete.'),node('div',{class:'dp-progress','aria-label':completed+' of 3 solo equations complete'},round.map(id=>node('span',{'data-complete':!!state.records[id]}))));
     const actions=node('div',{class:'dp-home-footer'},button('Daily mission',()=>openClassic('game')),button('More practice · Easy / Medium / Hard',()=>openClassic('practice')));
     if(trickyCount)actions.append(button('Tricky practice ('+trickyCount+')',startTricky));
     actions.append(button('Reset my progress',()=>{if(!usable())return;if(typeof options.onReset==='function'){if(notify('onReset')===false){saveNote.textContent='Could not reset your progress. Keep this page open and try again.';saveNote.setAttribute('data-error','true');}}else{reset();persist();}}));view.append(actions);

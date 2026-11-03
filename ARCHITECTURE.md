@@ -1,6 +1,6 @@
 # Architecture
 
-Kids Learning Space is a static, no-build game hub that embeds four independent
+Kids Learning Space is a static, no-build game hub that embeds five independent
 vanilla-JS learning games. The hub adds shared chrome (back button, profile,
 totals) and a unified progress layer on top of games that otherwise know
 nothing about each other.

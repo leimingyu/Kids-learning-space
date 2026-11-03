@@ -31,7 +31,20 @@ function backupHarness(seed) {
 const legacyClassic = { v: 1, topMode: 'practice', problem: { dividend: 936, divisor: 8 }, engine: { phase: 'multiply' }, inputValue: '8' };
 const oldProgress = { version: 1, streak: 4, totalStars: 17, missionsCompleted: 6, calendar: { '2026-10-28': { stars: 3 } } };
 const lesson = boot(); lesson.mode('guided'); lesson.submit('2'); lesson.button('Hint').fire('click'); lesson.input('7');
+// Keep old work plus multiple new lesson watch positions and matched drafts in
+// the same registered raw key. The backup layer treats all of it as opaque.
+lesson.mode('sharing'); lesson.selectLesson('equal');
+lesson.button('Next step').fire('click'); lesson.button('Next step').fire('click');
+lesson.button('Solve 84 ÷ 4 with help →').fire('click'); lesson.submit('2'); lesson.input('8');
+lesson.mode('sharing'); lesson.selectLesson('exchange'); lesson.button('Next step').fire('click');
+lesson.selectLesson('zero');
+for(let i=0;i<3;i++)lesson.button('Next step').fire('click');
+lesson.button('Solve 804 ÷ 4 with help →').fire('click'); lesson.input('2');
 const learning = lesson.state();
+assert.equal(learning.lessonWatch.equal.seen,true);assert.equal(learning.lessonWatch.exchange.step,1);
+assert.equal(learning.lessonWork['lesson-equal-guided'].draft,'8');
+assert.equal(learning.lessonWork['lesson-zero-guided'].draft,'2');
+assert.equal(learning.guided.draft,'7','Adding lessons preserves the earlier coaching checkpoint');
 const composite = { v: 2, module: 'learning', learningJourney: learning, classicSession: legacyClassic };
 const profile = (id, gameState) => ({ id, displayName: id, avatar: '🦊', games: { 'long-division-coach': { levels: {}, stickers: [], gameState } } });
 const hub = { version: 2, activeProfileId: 'dad', profiles: { dad: profile('dad', composite), child: profile('child', legacyClassic) } };
@@ -58,6 +71,9 @@ for (const key of [HUB, MAIN + '__dad', WRONGS + '__dad', MAIN + '__child', MAIN
 assert.equal(h.data.has(MAIN + '__temporary'), false);
 assert.equal(h.reloads, 1);
 assert.equal(h.api.getLastRestoreInfo().undoAvailable, true);
+const restoredLesson=boot(JSON.parse(h.data.get(MAIN+'__dad')).learningJourney);
+assert.deepEqual(restoredLesson.state(),learning,'Imported lesson positions and both practice drafts remain usable');
+assert.equal(restoredLesson.saves.length,0);assert.equal(restoredLesson.completions.length,0);
 await h.api.undoLastRestore();
 assert.equal(h.data.get(MAIN + '__dad'), '{"temporary":true}');
 assert.equal(h.data.get(MAIN + '__temporary'), '{"remove":true}');

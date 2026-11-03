@@ -6,12 +6,13 @@ const lesson = boot();
 assert.equal(lesson.saves.length, 0, 'Mount never overwrites an existing checkpoint');
 assert.equal(lesson.state().screen, 'home');
 lesson.mode('sharing');
+lesson.selectLesson('regroup');
 for (let i = 0; i < 5; i++) lesson.button('Next step').fire('click');
 assert.equal(lesson.state().shareStep, 5); assert.equal(lesson.state().shareSeen, true);
 assert.equal(lesson.state().records.together, undefined, 'Watching cannot award practice completion');
 assert.equal(lesson.completions.length, 0);
 const oldPlayer = lesson.sharingPlayer;
-lesson.button('Your turn: 528 ÷ 3 →').fire('click');
+lesson.button('Solve 432 ÷ 3 with help →').fire('click');
 assert.equal(oldPlayer.destroyed, true); assert.equal(lesson.state().mode, 'guided');
 
 // Invalid or unfinished entry is never scored; a genuine wrong answer is saved immediately.

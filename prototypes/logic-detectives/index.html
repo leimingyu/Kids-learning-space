@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Logic Detectives — Desktop Try-out</title>
+  <link rel="stylesheet" href="../../shared/styles/fonts.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="engine.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" id="brand-home" aria-label="Logic Detectives home">
+        <svg class="brand-mark" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="15" fill="#163d48"/><circle cx="21" cy="20" r="10" fill="none" stroke="#ffd17d" stroke-width="4"/><path d="m29 28 9 9" stroke="#ffd17d" stroke-width="5" stroke-linecap="round"/><path d="m17 20 3 3 6-7" fill="none" stroke="#fff9eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="brand-copy"><strong>Logic Detectives</strong><small>Kids Learning Space · Junior Detective Agency</small></span>
+      </a>
+      <div class="top-actions"><span class="prototype-tag">Desktop try-out</span><button class="button ghost small" id="home-button" hidden>Case board</button></div>
+    </header>
+
+    <main>
+      <section id="home-screen" aria-labelledby="home-title">
+        <div class="home-hero">
+          <div class="hero-copy">
+            <p class="eyebrow">A small mystery. A big idea.</p>
+            <h1 id="home-title">Every mystery<br>has a <span>pattern.</span></h1>
+            <p class="intro-text">Spot the clues. Repair the numbers. Make things add up. Your next case is waiting, detective.</p>
+            <div class="grade-switch" role="group" aria-label="Choose your grade"><button type="button" data-grade="2" class="active" aria-pressed="true">Grade 2</button><button type="button" data-grade="3" aria-pressed="false">Grade 3</button></div>
+            <div class="hero-actions"><button class="button primary" id="start-case">Open the case <span aria-hidden="true">→</span></button><span id="case-length">4 puzzles · Go at your own pace</span></div>
+          </div>
+          <div class="case-illustration">
+            <div class="case-card">
+              <span class="case-label" id="case-label">CASE FILE 002</span>
+              <svg viewBox="0 0 440 280" role="img" aria-label="A detective board linking a flag, a number clue, and a magnifying glass">
+                <defs><pattern id="paper-dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#365761"/></pattern></defs>
+                <rect x="8" y="8" width="424" height="264" rx="17" fill="#163d48"/><rect x="8" y="8" width="424" height="264" rx="17" fill="url(#paper-dots)"/>
+                <path d="M85 105 228 61 332 170 124 210 85 105" fill="none" stroke="#ed997f" stroke-width="2.5" stroke-dasharray="6 7"/>
+                <g transform="translate(44 45) rotate(-8 55 60)"><rect width="107" height="120" rx="6" fill="#fff7df"/><circle cx="54" cy="8" r="5" fill="#ef876b"/><path d="M27 96V31m2 1h55l-20 20 20 20H29" stroke="#1d6270" stroke-width="3.5" fill="none"/><path d="M36 38 65 67m-15-29 26 26" stroke="#1d6270" stroke-width="3"/><path d="M28 106h48" stroke="#cbbf9f" stroke-width="3"/></g>
+                <g transform="translate(187 27) rotate(7 56 48)"><rect width="112" height="96" rx="6" fill="#f5c76d"/><circle cx="56" cy="8" r="5" fill="#f6fbf8"/><text x="56" y="52" text-anchor="middle" fill="#163d48" font-family="Nunito, sans-serif" font-size="28" font-weight="900">8 + ?</text><text x="56" y="79" text-anchor="middle" fill="#163d48" font-family="Nunito, sans-serif" font-size="22" font-weight="800">= 23</text></g>
+                <g transform="translate(259 135) rotate(-6 63 49)"><rect width="125" height="98" rx="6" fill="#f7fbf7"/><circle cx="62" cy="8" r="5" fill="#ef876b"/><circle cx="63" cy="53" r="27" fill="none" stroke="#267b78" stroke-width="3"/><path d="m63 34 17 31H46Z" fill="#ed987f"/></g>
+                <g transform="translate(149 159) rotate(-15)"><circle cx="37" cy="36" r="31" fill="#d4eee7" fill-opacity=".8" stroke="#f6c46c" stroke-width="8"/><path d="m59 61 32 32" stroke="#f6c46c" stroke-width="14" stroke-linecap="round"/><path d="m22 32 10 10 19-20" stroke="#226c70" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+              </svg>
+              <h2 id="case-title">The Mixed-Up Parade</h2><p id="case-description">The flags are mixed up and the parade gate is stuck. Can you put the clues together?</p>
+              <span class="case-stamp">CURIOUS MINDS WANTED</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow">Take a closer look</p><h2>Try a puzzle first</h2></div><p>Mouse for pictures. Keyboard for numbers.</p></div>
+        <div class="quick-grid">
+          <button class="quick-card" data-quick="pattern"><span class="quick-icon" aria-hidden="true">◯ △ □</span><span class="quick-title">Pattern clues</span><span class="quick-description">Choose pieces. Build a missing picture.</span><span class="quick-count">Shapes + flags <span aria-hidden="true">↗</span></span></button>
+          <button class="quick-card" data-quick="table"><span class="quick-icon" aria-hidden="true">12 + ?</span><span class="quick-title">Number machine</span><span class="quick-description">Type the numbers that make it work.</span><span class="quick-count">Missing numbers <span aria-hidden="true">↗</span></span></button>
+          <button class="quick-card" data-quick="sticks"><span class="quick-icon" aria-hidden="true">+ → −</span><span class="quick-title">Stick repair</span><span class="quick-description">Click or drag a stick. Fix the equation.</span><span class="quick-count" id="stick-quick-label">Remove one stick <span aria-hidden="true">↗</span></span></button>
+        </div>
+        <div class="practice-strip"><div><strong>A second look makes a great detective.</strong><p id="practice-summary">Tricky puzzles will collect here while you play.</p></div><button class="button secondary" id="practice-button" disabled>Practice tricky puzzles <span id="practice-count">0</span></button></div>
+        <p class="session-note">A small preview for you to explore. This try-out keeps its notes until you close or reload the page. Your Kids Learning Space profiles and progress are separate.</p>
+      </section>
+
+      <section id="play-screen" hidden aria-labelledby="puzzle-title">
+        <div class="case-top"><p class="breadcrumb" id="run-label"></p><div class="mission-track" id="mission-track" aria-label="Case progress"></div></div>
+        <div class="play-layout">
+          <article class="puzzle-panel">
+            <div class="puzzle-heading"><span class="puzzle-type" id="puzzle-type"></span><span class="step-count" id="step-count"></span></div>
+            <h1 id="puzzle-title" tabindex="-1"></h1><p class="scene-text" id="scene-text"></p><p class="instruction" id="instruction"></p>
+            <div class="rule-banner" id="rule-banner"></div>
+            <div class="puzzle-body" id="puzzle-area"></div>
+            <div id="reason-panel" class="reason-panel" hidden></div>
+            <div class="puzzle-footer"><div class="feedback neutral" id="feedback" role="status" aria-live="polite">Take a look at the clues. You can change your answer before checking.</div><div class="action-row"><button class="button ghost" id="reset-answer">Start over</button><button class="button primary" id="check-answer">Check answer <span aria-hidden="true">✓</span></button><button class="button primary" id="next-puzzle" hidden>Next clue <span aria-hidden="true">→</span></button></div></div>
+          </article>
+          <aside class="partner-panel" aria-label="Your detective partner and hints">
+            <div class="partner-avatar" aria-hidden="true"><svg width="64" height="64" viewBox="0 0 64 64"><path d="M9 12 25 22 39 22 55 12 51 44 32 57 13 44Z" fill="#db8b5c"/><path d="m16 31 16 8 16-8-5 16-11 10-11-10Z" fill="#fff6df"/><path d="M9 22q23-18 46 0v7H9Z" fill="#173e49"/><path d="M23 29v5m18-5v5" stroke="#173e49" stroke-width="4" stroke-linecap="round"/><path d="m27 42 5 5 5-5Z" fill="#173e49"/></svg></div>
+            <p class="partner-name">Pip, your case partner</p><p class="partner-text" id="partner-text">A good detective checks one clue at a time.</p>
+            <div class="hint-box"><p class="hint-level" id="hint-level">NEED A LITTLE CLUE?</p><p id="hint-text">Try it your way first. I have three clues ready whenever you need them.</p></div>
+            <div class="hint-actions"><button class="button secondary" id="hint-button">Give me a clue</button></div>
+            <div class="clue-list"><strong>Detective’s toolkit</strong><p>Look carefully.</p><p>Try an idea.</p><p>Check that it fits.</p><p>Tell us why.</p></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="complete-screen" hidden aria-labelledby="complete-title"><div class="completion-card"><div class="completion-emblem" aria-hidden="true">✦</div><p class="eyebrow" id="complete-eyebrow">CASE CLOSED</p><h1 id="complete-title" tabindex="-1">Good thinking, detective!</h1><p id="complete-copy"></p><div class="summary-grid" id="summary-grid"></div><div class="hero-actions"><button class="button primary" id="complete-home">Back to the case board</button><button class="button secondary" id="complete-practice">Practice tricky puzzles</button></div><p class="session-note">You can revisit every puzzle. There is no timer.</p></div></section>
+    </main>
+    <footer class="site-footer">Made for curious minds <span aria-hidden="true">✦</span> Think it through. Try another way.</footer>
+  </div>
+  <dialog id="answer-dialog" class="answer-dialog" aria-labelledby="answer-dialog-title" aria-describedby="answer-dialog-message">
+    <div class="answer-popup">
+      <div class="popup-confetti" aria-hidden="true"><i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i></div>
+      <button type="button" class="popup-close" id="answer-dialog-close" aria-label="Close answer feedback">×</button>
+      <div class="popup-medallion" aria-hidden="true"><span id="answer-dialog-symbol">✓</span></div>
+      <p class="eyebrow" id="answer-dialog-eyebrow">CLUE CRACKED</p>
+      <h2 id="answer-dialog-title">You cracked the clue!</h2>
+      <p id="answer-dialog-message"></p>
+      <button type="button" class="button primary" id="answer-dialog-dismiss" autofocus>Show my reasoning <span aria-hidden="true">→</span></button>
+      <p class="popup-footnote">Take your time. Every clue helps you learn.</p>
+    </div>
+  </dialog>
+</body>
+</html>

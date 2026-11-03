@@ -4,6 +4,7 @@ import { boot } from './learning-harness.mjs';
 
 // Reduced motion reaches every meaningful state without requiring an animation.
 const reduced = boot(undefined, { realSharing: true }); reduced.mode('sharing');
+reduced.selectLesson('regroup');
 assert(reduced.view.querySelector('svg'));
 for (let i = 1; i <= 5; i++) {
   reduced.button('Next step').fire('click');
@@ -11,12 +12,13 @@ for (let i = 1; i <= 5; i++) {
   assert(reduced.view.querySelectorAll('[marker-end]').length > 0, 'Each share/exchange has direction arrows');
 }
 assert.equal(reduced.state().shareSeen, true);
-assert(reduced.view.textContent.includes('Three equal groups of 144'));
+assert(reduced.view.textContent.includes('144'));
 assert(reduced.view.querySelector('desc').textContent.includes('Group 1: 144. Group 2: 144. Group 3: 144.'));
 assert.equal(reduced.completions.length, 0, 'Watching is not independent practice');
 
 // Finishing a moving step settles the same value. Unmounting cancels every RAF.
 const moving = boot(undefined, { realSharing: true, reducedMotion: false }); moving.mode('sharing');
+moving.selectLesson('regroup');
 moving.button('Next step').fire('click');
 assert.equal(moving.view.querySelector('#dp-sharing-mount').getAttribute('aria-busy'), 'true');
 assert(moving.view.querySelectorAll('[marker-end]').length > 0);

@@ -232,16 +232,23 @@ for(const slug of ['lets-learn-fractions','long-division-coach','word-problem-ad
   h.data.delete('kls.restore.journal.v1');assert.equal(h.saveReply().ok,true);
   assert.equal(JSON.parse(h.data.get(main)).learningJourney.guided.draft,'6');
 
+  const earlierGuided=plain(h.checkpoint().learningJourney.guided);
   h.send('goHome');clickText(h,/^Tricky practice \(1\)$/);
   const practiceCore=h.context.DivisionPracticeCore;
-  let replay=h.checkpoint().learningJourney.guided;
+  let replay=h.checkpoint().learningJourney.solo;
+  assert.equal(h.checkpoint().learningJourney.mode,'solo');
+  assert.deepEqual(h.checkpoint().learningJourney.guided,earlierGuided,'Independent remediation preserves the earlier coached workspace');
+  assert.equal(replay.id,'together');
   assert.equal(replay.replay,true);
+  const legacyRetrySaved=h.checkpoint(),legacyRetry=harness(slug,{initialData:new Map(h.data),initialResume:legacyRetrySaved});
+  continueSaved(legacyRetry,slug);
+  assert.deepEqual(legacyRetry.checkpoint(),legacyRetrySaved,'Legacy 528 independent retry survives restore');
   while(practiceCore.replay(528,3,replay.answers).phase!=='done') {
-    submit(h,practiceCore.expectation(practiceCore.replay(528,3,replay.answers)).expected);
-    replay=h.checkpoint().learningJourney.guided;
+    submit(legacyRetry,practiceCore.expectation(practiceCore.replay(528,3,replay.answers)).expected);
+    replay=legacyRetry.checkpoint().learningJourney.solo;
   }
-  assert.equal(JSON.parse(h.data.get(wrongs)).records.length,0,'A clean targeted replay clears its active mistake');
-  assert.deepEqual(h.checkpoint().learningJourney.mistakes,{});
+  assert.equal(JSON.parse(legacyRetry.data.get(wrongs)).records.length,0,'A clean targeted replay clears its active mistake');
+  assert.deepEqual(legacyRetry.checkpoint().learningJourney.mistakes,{});
 
   const resetSeed=new Map(seed),childMain=MAIN+'__brand-new-child';resetSeed.set(childMain,child.data.get(childMain));
   const reset=harness(slug,{initialData:resetSeed});reset.context.confirm=()=>true;
@@ -326,7 +333,76 @@ for(const slug of ['lets-learn-fractions','long-division-coach','word-problem-ad
   continueSaved(missionHomeReopened,slug);missionHomeReopened.node('ldc-continue-classic').click();
   assertNextMission(missionHomeReopened.checkpoint(),'Reopened Home Continue');
   assert(!missionHomeReopened.messages.some(m=>m.event==='awardStars'),'Restored Home cannot award the warm-up again');
-  assert.deepEqual([...h.errors,...child.errors,...reopened.errors,...reset.errors,...solved.errors,...classic.errors,...oldReopened.errors,...custom.errors,...mission.errors,...missionReopened.errors,...missionHomeReopened.errors],[]);
+  assert.deepEqual([...h.errors,...child.errors,...reopened.errors,...legacyRetry.errors,...reset.errors,...solved.errors,...classic.errors,...oldReopened.errors,...custom.errors,...mission.errors,...missionReopened.errors,...missionHomeReopened.errors],[]);
+}
+// The selected lesson extends the same profile-scoped blob and checkpoint.
+// Exact watch positions and both new workspaces must survive the real bridge.
+{
+  const slug='long-division-coach',MAIN='longDivisionCoach_v1__dad-test',WRONGS='longDivisionCoach_wrongs_v1__dad-test';
+  const h=harness(slug),core=h.context.DivisionPracticeCore;
+  const enter=(env,value)=>{env.node('dp-answer').value=String(value);env.node('dp-answer').dispatchEvent({type:'input',preventDefault(){}});};
+  const submit=(env,value)=>{enter(env,value);env.node('dp-check').click();};
+  const work=env=>{const state=env.checkpoint().learningJourney,c=state.lessonContext;return state.lessonWork['lesson-'+c.lessonId+'-'+c.kind];};
+  const finish=(env,dividend,divisor)=>{
+    let practice=work(env),count=0;
+    while(core.replay(dividend,divisor,practice.answers).phase!=='done'){
+      submit(env,core.expectation(core.replay(dividend,divisor,practice.answers)).expected);
+      practice=work(env);assert(++count<40);
+    }
+  };
+  clickText(h,/^Watch sharing examples$|^Choose an example$|^Watch 432 ÷ 3$/);
+  h.document.querySelector('[data-lesson="equal"]').click();
+  h.node('dp-sharing-mount');
+  // Complete by the real player controls; finish works even with reduced
+  // motion disabled in this fixture, without running arbitrary browser code.
+  for(let i=0;i<2;i++){clickText(h,/^Next step$/);clickText(h,/^Finish step$/);}
+  const watched=h.checkpoint();
+  assert.equal(watched.learningJourney.lessonWatch.equal.seen,true);
+  assert.equal(h.messages.filter(m=>m.event==='awardStars').length,0,'Watching cannot award solving credit');
+  clickText(h,/^Solve 84 ÷ 4 with help →$/);
+  submit(h,9);submit(h,9);enter(h,2);
+  const draft=h.checkpoint();
+  assert.equal(draft.learningJourney.lessonWork['lesson-equal-guided'].wrong,2);
+  assert.equal(draft.learningJourney.lessonWork['lesson-equal-guided'].draft,'2');
+  const seed=new Map(h.data),reopened=harness(slug,{initialData:seed,initialResume:draft});
+  continueSaved(reopened,slug);
+  assert.deepEqual(reopened.checkpoint(),draft,'Selected lesson and matched draft restore exactly');
+  assert.equal(reopened.node('dp-answer').value,'2');
+  assert(!reopened.messages.some(m=>m.event==='awardStars'),'Restoring the selected lesson cannot award');
+  finish(reopened,84,4);
+  const guidedAward=reopened.messages.find(m=>m.event==='awardStars');
+  assert(guidedAward);assert.equal(guidedAward.stars,1,'Several wrong coached attempts receive one star');
+  assert.equal(JSON.parse(reopened.data.get(WRONGS)).records[0].questionId,'4/84','Coached completion cannot resolve independent remediation');
+  clickText(reopened,/^Try a similar problem →$/);finish(reopened,96,3);
+  const soloAward=reopened.messages.filter(m=>m.event==='awardStars').at(-1);
+  assert.equal(soloAward.stars,3,'A clean transfer receives independent credit');
+  const completed=reopened.checkpoint();
+  assert(completed.learningJourney.records['lesson-equal-guided']);
+  assert(completed.learningJourney.records['lesson-equal-similar']);
+  reopened.send('goHome');clickText(reopened,/^Tricky practice \(1\)$/);
+  const retry=reopened.checkpoint();
+  assert.equal(retry.learningJourney.mode,'solo');
+  assert.deepEqual(retry.learningJourney.lessonContext,{lessonId:'equal',kind:'retry'});
+  assert.equal(work(reopened).replay,true);
+  const retryReloaded=harness(slug,{initialData:new Map(reopened.data),initialResume:retry});
+  continueSaved(retryReloaded,slug);
+  assert.deepEqual(retryReloaded.checkpoint(),retry,'Independent tricky state survives restore');
+  finish(retryReloaded,84,4);
+  assert.equal(JSON.parse(retryReloaded.data.get(WRONGS)).records.length,0,'A later clean independent replay resolves the coached error');
+  assert.deepEqual(retryReloaded.checkpoint().learningJourney.lessonWork['lesson-equal-guided'],completed.learningJourney.lessonWork['lesson-equal-guided'],'Retry retains the coached work and mistake counters');
+  const other=harness(slug,{initialData:new Map(reopened.data),profileId:'lesson-new-child'}),fresh=other.checkpoint().learningJourney;
+  assert.deepEqual(fresh.lessonWork,{});assert.deepEqual(fresh.records,{});
+  assert.equal(Object.values(fresh.lessonWatch).some(w=>w.seen||w.step),false,'A new profile inherits no watched examples');
+  assert.equal(other.data.get(MAIN),reopened.data.get(MAIN),'A new profile cannot modify earlier lesson work');
+  reopened.send('goHome');const home=reopened.checkpoint();
+  const afterHome=harness(slug,{initialData:new Map(reopened.data),initialResume:home});continueSaved(afterHome,slug);
+  assert.deepEqual(afterHome.checkpoint().learningJourney.lessonWork,home.learningJourney.lessonWork,'Home retains coached, independent and retry work');
+  afterHome.context.confirm=()=>true;clickText(afterHome,/^Reset my progress$/);
+  const reset=afterHome.checkpoint().learningJourney;
+  assert.deepEqual(reset.lessonWork,{});assert.deepEqual(reset.records,{});
+  assert.equal(Object.values(reset.lessonWatch).some(w=>w.seen||w.step),false);
+  assert.deepEqual([...h.errors,...reopened.errors,...retryReloaded.errors,...other.errors,...afterHome.errors],[]);
 }
 console.log('PASS complete startup, early/late profile binding, menu and active Save, staged Continue, exact draft reopening, Home, and standalone load for all three games.');
 console.log('PASS Long Division actual-script profile isolation, draft/hint/mistake restore, accurate failed Save and retry, restore/suspend guards, and legacy classic compatibility.');
+console.log('PASS selectable lesson bridge roundtrip, profile isolation, coached scoring, independent transfer and reset.');

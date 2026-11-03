@@ -46,7 +46,7 @@ class Node {
   }
 }
 
-function harness({ bootHub = false, journal = null, recover = () => {} } = {}) {
+function harness({ bootHub = false, initialSlug = 'cosmic-math-quest', journal = null, recover = () => {} } = {}) {
   const values = new Map(); const failures = new Set(); const events = new Map(); const timers = new Map();
   const warnings = []; let now = 0, nextTimer = 0, id = 0;
   const a = { id: 'alice', displayName: 'Alice', avatar: '🦊', games: {}, lastActiveAt: '2026-01-01T00:00:00Z' };
@@ -59,7 +59,7 @@ function harness({ bootHub = false, journal = null, recover = () => {} } = {}) {
     removeItem(k) { if (failures.has(k)) throw new Error('Storage blocked'); values.delete(k); },
   };
   const nodes = new Map(['chrome-root', 'stage-frame', 'stage-root', 'hub-root'].map(k => [k, new Node('div', { id: k })]));
-  const frame = nodes.get('stage-frame'); frame.tag = 'iframe'; frame.setAttribute('src', 'games/cosmic-math-quest/index.html');
+  const frame = nodes.get('stage-frame'); frame.tag = 'iframe'; frame.setAttribute('src', 'games/' + initialSlug + '/index.html');
   const sent = [];
   frame.contentWindow = { postMessage: data => sent.push(data) };
   const doc = { readyState: 'complete', title: '', querySelector: s => {
@@ -68,7 +68,7 @@ function harness({ bootHub = false, journal = null, recover = () => {} } = {}) {
     for (const rootNode of nodes.values()) { const found = rootNode.querySelector(s); if (found) return found; }
     return null;
   } };
-  const location = { hash: '#/games/cosmic-math-quest', reload() { this.reloaded = true; } };
+  const location = { hash: '#/games/' + initialSlug, reload() { this.reloaded = true; } };
   const ctx = vm.createContext({ document: doc, location, localStorage: storage,
     console: { warn: (...x) => warnings.push(x), error: (...x) => warnings.push(x) },
     crypto: { randomUUID: () => String(++id) },
@@ -117,6 +117,40 @@ function clickButton(h, text) {
   assert.ok(button, 'button is visible: ' + text);
   assert.equal(button.disabled, false, 'button is enabled: ' + text);
   return button.attrs.onclick ? button.attrs.onclick() : button.emit('click', {});
+}
+
+// A release must refresh the main hub, its iframe document, and the game's
+// changed assets together. Exercise the actual startup route, not a URL copy.
+{
+  const h = harness({ bootHub: true, initialSlug: 'logic-detectives' });
+  const meta = h.ctx.KLS.GAMES.find(game => game.slug === 'logic-detectives');
+  assert.ok(meta.assetVersion, 'Logic Detectives declares a release asset version');
+  const iframe = new URL(h.frame.getAttribute('src'), 'http://kls.test/');
+  assert.equal(iframe.pathname, '/games/logic-detectives/index.html');
+  assert.equal(iframe.searchParams.get('v'), meta.assetVersion, 'The main hub loads the current game document');
+  assert.equal(h.C.getSession().slug, meta.slug, 'The versioned route retains the correct game session');
+
+  const gameHTML = readFileSync(new URL('games/logic-detectives/index.html', root), 'utf8');
+  const assets = [...gameHTML.matchAll(/(?:src|href)="([^"]+)"/g)]
+    .map(match => new URL(match[1], 'http://kls.test/games/logic-detectives/index.html'));
+  for (const name of ['styles.css', 'app.js', 'table-guide.js', 'row-demo.js']) {
+    const matches = assets.filter(url => url.pathname === '/games/logic-detectives/' + name);
+    assert.equal(matches.length, 1, name + ' loads exactly once');
+    assert.equal(matches[0].searchParams.get('v'), meta.assetVersion, name + ' matches the iframe release in embedded and standalone play');
+  }
+  const hubHTML = readFileSync(new URL('index.html', root), 'utf8');
+  const loader = hubHTML.match(/<script\b[^>]*src="(shared\/scripts\/hub\.js[^\"]*)"/);
+  assert.ok(loader, 'The main page loads the hub router');
+  assert.equal(new URL(loader[1], 'http://kls.test/').searchParams.get('v'), meta.assetVersion,
+    'The main page refreshes its router with the game release');
+
+  for (const slug of ['cosmic-math-quest', 'long-division-coach']) {
+    const other = harness({ bootHub: true, initialSlug: slug });
+    const url = new URL(other.frame.getAttribute('src'), 'http://kls.test/');
+    assert.equal(url.pathname, '/games/' + slug + '/index.html');
+    assert.equal(url.searchParams.get('v'), '20261030-division-lessons-r3', 'Existing game asset versions remain unchanged');
+    assert.equal(other.C.getSession().slug, slug);
+  }
 }
 
 // Acknowledgement must be bound to this request, sender, profile, and session.
@@ -449,4 +483,4 @@ function clickButton(h, text) {
   assert.throws(() => game.KLS.bridge.assertCanWrite(), /not ready/);
 }
 
-console.log('PASS: confirmed browser Save; request/source/profile/session validation; write failure rollback; loading/capture timeout and retry; deferred game initialization handshake; safe two-step Hub recovery; stale route/account cancellation; single resume delivery; flush-before-detach navigation; restore lock/recovery gate; keyed game errors.');
+console.log('PASS: versioned hub/iframe/game release and unchanged other-game routes; confirmed browser Save; request/source/profile/session validation; write failure rollback; loading/capture timeout and retry; deferred game initialization handshake; safe two-step Hub recovery; stale route/account cancellation; single resume delivery; flush-before-detach navigation; restore lock/recovery gate; keyed game errors.');

@@ -1,6 +1,6 @@
 # Kids Learning Space
 
-A static, no-build, no-framework, `file://`-friendly hub of four math learning
+A static, no-build, no-framework, `file://`-friendly hub of five math learning
 games for kids in grades 2–5. Pure vanilla HTML / CSS / JS — no npm, no
 bundler, no server required. **Fully self-contained and offline** — fonts are
 bundled, and nothing is fetched from the network at runtime. Runs the same on
@@ -14,12 +14,19 @@ macOS and Windows.
 
 | | Game | Topic | Audience |
 |---|---|---|---|
+| 🔎 | **Logic Detectives** | 60 pattern, number-table, and stick mysteries; six short cases per grade, visual explanations, and saved tricky-question practice | grades 2–3 |
 | 📚 | **Word Problem Adventure** | 400 reasoning stories, 100 per grade; ten kingdoms with visible progress, stars, and badges | grades 2–5 |
 | 🚀 | **Cosmic Math Quest**       | Multiplication & division mastery missions     | ages 8–10  |
 | 🍕 | **Let's Learn Fractions!**  | Fractions and equivalence                       | grades 2–4 |
 | ➗ | **Long Division Coach**     | Animated sharing → coached equations → solo practice | grades 3–5 |
 
 ## Run
+
+Logic Detectives uses desktop mouse and keyboard controls. Correct answers
+celebrate with a short visual explanation and **Next clue**; **Show me why**
+is optional. Case drafts, stars, badges, and mistakes save separately for every
+profile. Open it from the main page under **Logic & Patterns**.
+See the [game and verification record](games/logic-detectives/docs/QA_RELEASE.md).
 
 Word Problem Adventure now opens with a grade chooser and twenty five-story
 quests per grade. Children earn quest stars and badges at 5, 10, 25, 50, 75,
@@ -112,6 +119,7 @@ For confirmed in-game session saves, see the
 │   └── assets/
 │       └── mascot.svg      Pip the Fox (curious / cheering / thinking / sleeping)
 └── games/
+    ├── logic-detectives/
     ├── word-problem-adventure/
     ├── cosmic-math-quest/
     ├── lets-learn-fractions/

@@ -6,6 +6,17 @@
 
   const GAMES = [
     {
+      slug: 'logic-detectives',
+      assetVersion: '20261102-row-pattern-r1',
+      title: 'Logic Detectives',
+      emoji: '🔎',
+      subtitle: '60 pattern, number, and stick mysteries. Grades 2–3.',
+      topics: ['logic'],
+      tag: 'Logic & Patterns',
+      tagClass: 'tile__tag--logic',
+      storageBase: ['logicDetectives_v1', 'logicDetectives_wrongs_v1'],
+    },
+    {
       slug: 'word-problem-adventure',
       title: 'Word Problem Adventure',
       emoji: '📚',
@@ -49,6 +60,7 @@
 
   const TOPICS = [
     { slug: 'all',           label: 'All' },
+    { slug: 'logic',         label: 'Logic & Patterns' },
     { slug: 'word-problems', label: 'Word Problems' },
     { slug: 'mul-div',       label: 'Mult & Div' },
     { slug: 'fractions',     label: 'Fractions' },
@@ -245,11 +257,12 @@
 
       // Explicit index.html so this works on file:// (which has no directory
       // index resolution) as well as HTTP servers.
-      const desired = 'games/' + slug + '/index.html?v=20261028-division-journey';
+      const meta = GAMES.find((g) => g.slug === slug);
+      const assetVersion = meta?.assetVersion || '20261030-division-lessons-r3';
+      const desired = 'games/' + slug + '/index.html?v=' + encodeURIComponent(assetVersion);
       // Force reload even if same src (so resumeBlob delivery is deterministic).
       frame.setAttribute('src', desired);
 
-      const meta = GAMES.find((g) => g.slug === slug);
       document.title = (meta ? meta.title : 'Game') + ' — Kids Learning Space';
 
       // Tell the game which profile is active so it can scope its own

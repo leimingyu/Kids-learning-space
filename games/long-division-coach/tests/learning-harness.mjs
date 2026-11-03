@@ -77,11 +77,21 @@ export function boot(saved, options = {}) {
   const container = new Element();
   const saves = [], mistakes = [], completions = [], external = [], documentEvents = {}, windowEvents = {}, timers = new Map(), frames = new Map();
   let nextId = 0, now = 0, sharingPlayer = null, storageOK = true;
+  function createElement(tag) {
+    const el = new Element(tag);
+    if (options.layoutFor) {
+      const defaultBounds = el.getBoundingClientRect.bind(el);
+      el.getBoundingClientRect = () => options.layoutFor(el) || defaultBounds();
+      for (const key of ['clientWidth', 'scrollWidth']) Object.defineProperty(el, key, { get: () => options.layoutFor(el)?.[key] || 0 });
+      el.scrollLeft = 0;
+    }
+    return el;
+  }
   const document = {
     hidden: false,
     getElementById: id => container.id === id ? container : container.querySelector('#' + id),
-    createElement: tag => new Element(tag), createTextNode: text => new Element('#text', String(text)),
-    createElementNS: (namespace, tag) => { const el = new Element(tag); el.namespaceURI = namespace; return el; },
+    createElement, createTextNode: text => new Element('#text', String(text)),
+    createElementNS: (namespace, tag) => { const el = createElement(tag); el.namespaceURI = namespace; return el; },
     addEventListener: (name, fn) => (documentEvents[name] ||= []).push(fn),
     removeEventListener: (name, fn) => { documentEvents[name] = (documentEvents[name] || []).filter(f => f !== fn); }
   };
@@ -91,18 +101,6 @@ export function boot(saved, options = {}) {
     ResizeObserver: class { observe() {} disconnect() {} },
     addEventListener: (name, fn) => (windowEvents[name] ||= []).push(fn),
     removeEventListener: (name, fn) => { windowEvents[name] = (windowEvents[name] || []).filter(f => f !== fn); },
-    DivisionSharingPlayer: {
-      mount(mount, options) {
-        let index = options.initialStep, destroyed = false;
-        const emit = () => options.onStep({ step: index, completedStep: index, title: 'Sharing step ' + index, quotient: index === 5 ? '144' : '—', busy: false, canPrevious: index > 0, canNext: index < 5, complete: index === 5 });
-        sharingPlayer = {
-          next() { if (index < 5) index++; emit(); }, previous() { if (index > 0) index--; emit(); },
-          replay() { emit(); }, finish() { emit(); }, getStep() { return index; },
-          destroy() { destroyed = true; }, get destroyed() { return destroyed; }
-        };
-        emit(); return sharingPlayer;
-      }
-    }
   };
   const context = vm.createContext({ document, window, console,
     setTimeout: (fn, delay) => { const id = ++nextId; timers.set(id, { fn, due: now + delay }); return id; },
@@ -113,10 +111,24 @@ export function boot(saved, options = {}) {
   window.requestAnimationFrame = context.requestAnimationFrame;
   window.cancelAnimationFrame = context.cancelAnimationFrame;
   vm.runInContext(read('division-core.js'), context);
+  vm.runInContext(read('sharing-player.js'), context);
   if (options.realSharing) {
-    vm.runInContext(read('sharing-player.js'), context);
     const mountSharing = window.DivisionSharingPlayer.mount;
     window.DivisionSharingPlayer.mount = (...args) => { sharingPlayer = mountSharing(...args); return sharingPlayer; };
+  } else {
+    window.DivisionSharingPlayer.mount = (mount, options) => {
+      const plan = window.DivisionSharingPlayer.createPlan(options.dividend ?? 432, options.divisor ?? 3);
+      let index = options.initialStep || 0, destroyed = false;
+      const emit = () => options.onStep({ step: index, completedStep: index, stageCount: plan.stages.length,
+        title: plan.stages[index].title, quotient: plan.stages[index].quotient,
+        busy: false, canPrevious: index > 0, canNext: index < plan.stages.length - 1, complete: index === plan.stages.length - 1 });
+      sharingPlayer = {
+        next() { if (index < plan.stages.length - 1) index++; emit(); }, previous() { if (index > 0) index--; emit(); },
+        replay() { emit(); }, finish() { emit(); }, getStep() { return index; },
+        destroy() { destroyed = true; }, get destroyed() { return destroyed; }
+      };
+      emit(); return sharingPlayer;
+    };
   }
   vm.runInContext(read('learning-journey.js'), context);
   const journey = window.LDCLearningJourney.mount(container, {
@@ -130,12 +142,24 @@ export function boot(saved, options = {}) {
   });
   function state() { return copy(journey.getState()); }
   function mode(next) {
+    if (state().screen === 'home' && next === 'guided') {
+      const coach = container.querySelectorAll('button').find(b => b.textContent === 'Solve with my coach');
+      assert(coach, 'Missing existing coached-practice entry'); coach.fire('click'); return;
+    }
+    if (state().screen === 'home' && next === 'solo') {
+      const solo = container.querySelectorAll('button').find(b => b.textContent === 'Try a solo problem');
+      assert(solo, 'Missing existing solo-practice entry'); solo.fire('click'); return;
+    }
     const b = container.querySelectorAll('[data-mode]').find(b => b.getAttribute('data-mode') === next);
     assert(b, 'Missing mode control: ' + next); b.fire('click');
   }
   function button(label) {
     const b = container.querySelectorAll('button').find(b => b.textContent === label);
     assert(b, 'Missing button: ' + label); return b;
+  }
+  function selectLesson(id) {
+    const b = container.querySelectorAll('[data-lesson]').find(b => b.getAttribute('data-lesson') === id);
+    assert(b, 'Missing lesson choice: ' + id); b.fire('click');
   }
   function input(value) { const field = container.querySelector('#dp-answer'); assert(field, 'Missing answer field'); field.value = value; field.fire('input'); }
   function submit(value) {
@@ -152,7 +176,7 @@ export function boot(saved, options = {}) {
   function show() { document.hidden = false; (documentEvents.visibilitychange || []).forEach(fn => fn()); }
   return {
     container, saves, mistakes, completions, external, timers, frames, context, journey, document,
-    mode, button, input, submit, flushFrames, advance, hide, show, state,
+    mode, button, selectLesson, input, submit, flushFrames, advance, hide, show, state,
     get root() { return container.querySelector('#division-play-lab'); },
     get view() { return container.querySelector('#dp-view'); },
     get sharingPlayer() { return sharingPlayer; },
@@ -160,9 +184,20 @@ export function boot(saved, options = {}) {
   };
 }
 
-export function active(env) { const state = env.state(); return state.mode === 'guided' ? state.guided : state.solo; }
+export function active(env) {
+  const state = env.state(), context = state.lessonContext;
+  if (context && (context.kind === 'guided' ? state.mode === 'guided' : state.mode === 'solo')) {
+    return state.lessonWork['lesson-' + context.lessonId + '-' + context.kind];
+  }
+  return state.mode === 'guided' ? state.guided : state.solo;
+}
 export function currentEngine(env) {
-  const p = active(env), problems = { together: [528, 3], solo1: [672, 4], solo2: [738, 3], solo3: [864, 4], zero: [804, 4], remainder: [553, 4], extra: [435, 3] };
+  const p = active(env), problems = { together: [528, 3], solo1: [672, 4], solo2: [738, 3], solo3: [864, 4], zero: [804, 4], remainder: [553, 4], extra: [435, 3],
+    'lesson-equal-guided': [84, 4], 'lesson-equal-similar': [96, 3], 'lesson-equal-retry': [84, 4],
+    'lesson-exchange-guided': [96, 4], 'lesson-exchange-similar': [84, 3], 'lesson-exchange-retry': [96, 4],
+    'lesson-regroup-guided': [432, 3], 'lesson-regroup-similar': [528, 3], 'lesson-regroup-retry': [432, 3],
+    'lesson-zero-guided': [804, 4], 'lesson-zero-similar': [816, 4], 'lesson-zero-retry': [804, 4],
+    'lesson-remainder-guided': [553, 4], 'lesson-remainder-similar': [565, 4], 'lesson-remainder-retry': [553, 4] };
   return env.context.window.DivisionPracticeCore.replay(...problems[p.id], p.answers);
 }
 export function finishWork(env) {

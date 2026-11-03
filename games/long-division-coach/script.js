@@ -1993,15 +1993,15 @@
         const core = window.DivisionPracticeCore;
         const result = core.replay(event.problem.dividend, event.problem.divisor, event.record.answers);
         if (!core.checkFinal(result)) return;
-        if (event.replay && !event.usedHelp && event.wrong === 0) {
+        if (event.mode === "solo" && event.replay && !event.usedHelp && event.wrong === 0) {
           resolveMistake(`${event.problem.divisor}/${event.problem.dividend}`);
           updatePracticePillUI();
         }
         const bridge = window.KLS && window.KLS.bridge;
         if (bridge) {
-          const stars = event.mode === "guided" ? 2 :
-            !event.usedHelp && event.wrong === 0 ? 3 :
+          const earned = !event.usedHelp && event.wrong === 0 ? 3 :
             event.wrong <= 1 && event.record.hintsUsed <= 1 ? 2 : 1;
+          const stars = event.mode === "guided" ? Math.min(2, earned) : earned;
           bridge.stars(`learning-${event.id}`, stars);
           bridge.played();
           bridge.celebrate();
