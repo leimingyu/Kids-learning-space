@@ -31,10 +31,10 @@ body {
   font-size: 16px;
   line-height: 1.5;
 }
-button, input { font: inherit; }
+button, input, select { font: inherit; }
 button { cursor: pointer; }
-button, input, a { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+button, input, select, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
@@ -559,6 +559,72 @@ button.mission-card { width: 100%; font: inherit; }
 .stick-controls .legend { margin-top: 0; }
 .kls-embedded .topbar { padding-top: 13px; padding-bottom: 13px; }
 .kls-embedded .home-hero { padding-top: 10px; }
+
+/* Grade 3 concepts reuse the casebook and its quiet, keyboard-friendly workspace. */
+.concept-section { margin: 28px 0 34px; }
+.concept-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.concept-card { min-width: 0; }
+.concept-card .quick-icon { font-size: 16px; }
+.concept-card:first-child .quick-icon { font-size: 34px; }
+.concept-card .quick-title { overflow-wrap: break-word; }
+.concept-workspace { display: grid; gap: 20px; justify-items: center; width: 100%; padding: 6px 0 12px; }
+.concept-workspace > p:not(.concept-equation) { max-width: 540px; margin: 0; color: var(--muted); text-align: center; font-size: 14px; }
+.concept-stage { display: inline-block; padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--canvas); color: var(--teal-deep); font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.concept-progress { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.magic-layout { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 26px; width: 100%; }
+.magic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 294px); gap: 7px; }
+.magic-cell { display: grid; place-items: center; min-width: 0; aspect-ratio: 1; border: 0; border-radius: 12px; background: var(--paper); color: var(--ink); font-family: "Nunito", sans-serif; font-size: 30px; font-weight: 800; }
+.magic-given { border: 1px solid var(--line); background: var(--canvas); }
+.magic-input { width: 100%; height: 100%; min-height: 44px; padding: 4px; border: 2px solid var(--teal); border-radius: inherit; background: var(--paper); color: var(--ink); text-align: center; font: inherit; }
+.magic-cell.explained { box-shadow: 0 0 0 3px var(--gold); }
+.magic-sum { display: grid; justify-items: center; gap: 9px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 13px; background: var(--gold-wash); color: var(--ink); text-align: center; font-size: 16px; font-weight: 800; }
+.magic-sum .concept-number { width: 100px; }
+.concept-number { width: 82px; min-height: 52px; padding: 7px 9px; border: 2px solid var(--teal); border-radius: 10px; background: var(--paper); color: var(--ink); text-align: center; font-family: "Nunito", sans-serif; font-size: 25px; font-weight: 800; }
+.magic-grid .magic-input { width: 100%; height: 100%; min-height: 44px; padding: 4px; border-radius: inherit; font: inherit; }
+.concept-number::placeholder, .magic-input::placeholder { color: var(--muted); opacity: .8; }
+.concept-number::-webkit-inner-spin-button, .concept-number::-webkit-outer-spin-button, .magic-input::-webkit-inner-spin-button, .magic-input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
+.concept-number[type="number"], .magic-input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.concept-equation { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; width: 100%; color: var(--ink); text-align: center; font-family: "Nunito", sans-serif; font-size: clamp(23px, 3vw, 31px); font-weight: 800; line-height: 1.7; }
+.concept-equation > span { white-space: nowrap; }
+.concept-workspace > .concept-equation { margin: 0; }
+.concept-sign { -webkit-appearance: none; -moz-appearance: none; appearance: none; display: inline-block; flex: 0 0 52px; width: 52px; height: 52px; padding: 0; border: 2px solid var(--teal); border-radius: 9px; background-color: var(--paper); background-image: none; color: var(--ink); text-align: center; text-align-last: center; font-family: "Nunito", sans-serif; font-size: 29px; font-weight: 800; line-height: normal; cursor: pointer; }
+.concept-sign::-ms-expand { display: none; }
+.concept-sign:hover:not(:disabled) { background-color: var(--teal-wash); }
+.concept-sign:disabled, .concept-number:disabled, .magic-input:disabled { opacity: 1; cursor: default; }
+.concept-sign option { background: var(--paper); color: var(--ink); font-size: 24px; }
+.concept-table { border-collapse: separate; border-spacing: 0; width: min(100%, 330px); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; color: var(--ink); text-align: center; font-size: 23px; font-weight: 800; }
+.concept-table caption { padding-bottom: 10px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.concept-table th, .concept-table td { padding: 9px 15px; border-bottom: 1px solid var(--line); }
+.concept-table th { background: var(--teal-wash); color: var(--teal-deep); font-size: 18px; }
+.concept-table th + th, .concept-table td + td { border-left: 1px solid var(--line); }
+.concept-table tr:last-child td { border-bottom: 0; }
+.concept-table .concept-number { width: 90px; min-height: 44px; font-size: 23px; }
+.rule-machine { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 19px; justify-items: center; align-items: center; width: 100%; }
+.rule-formula { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; color: var(--ink); font-size: 29px; font-weight: 800; }
+.rule-formula .concept-number { width: 91px; }
+.concept-explanation-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; flex: 0 0 138px; width: 138px; margin: 0 auto; }
+.concept-explanation-grid > * { display: grid; place-items: center; min-width: 0; aspect-ratio: 1; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 18px; font-weight: 800; }
+
+@media (max-width: 1000px) {
+  .concept-grid { gap: 13px; }
+  .concept-card { grid-template-columns: 1fr; padding: 18px; }
+  .concept-card .quick-icon { grid-row: auto; margin-bottom: 5px; }
+}
+@media (max-width: 680px) {
+  .concept-grid { grid-template-columns: 1fr; }
+  .concept-card { grid-template-columns: 48px minmax(0, 1fr); min-height: 118px; }
+  .concept-card .quick-icon { grid-row: span 3; margin-bottom: 0; }
+  .concept-workspace { gap: 16px; }
+  .concept-equation { gap: 7px; font-size: 23px; }
+  .concept-sign { flex-basis: 46px; width: 46px; height: 48px; font-size: 27px; }
+  .concept-number { width: 73px; min-height: 48px; font-size: 23px; }
+  .magic-layout { gap: 18px; }
+  .magic-grid { width: min(100%, 264px); }
+  .magic-cell { font-size: 27px; }
+  .magic-sum { padding: 12px 17px; }
+  .rule-formula { gap: 7px; font-size: 25px; }
+  .rule-machine { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 1100px) {
   .mission-grid { gap: 12px; }

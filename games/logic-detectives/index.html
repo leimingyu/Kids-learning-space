@@ -4,22 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Logic Detectives — Kids Learning Space</title>
+  <title>RSM — Kids Learning Space</title>
   <link rel="stylesheet" href="../../shared/styles/fonts.css">
-  <link rel="stylesheet" href="styles.css?v=20261102-row-pattern-r1">
+  <link rel="stylesheet" href="styles.css?v=20261109-g3-concepts-r1">
   <script src="../../shared/scripts/game-bridge.js" defer></script>
-  <script src="engine.js" defer></script>
-  <script src="table-guide.js?v=20261102-row-pattern-r1" defer></script>
-  <script src="row-demo.js?v=20261102-row-pattern-r1" defer></script>
-  <script src="store.js" defer></script>
-  <script src="app.js?v=20261102-row-pattern-r1" defer></script>
+  <script src="engine.js?v=20261109-g3-concepts-r1" defer></script>
+  <script src="table-guide.js?v=20261109-g3-concepts-r1" defer></script>
+  <script src="row-demo.js?v=20261109-g3-concepts-r1" defer></script>
+  <script src="store.js?v=20261109-g3-concepts-r1" defer></script>
+  <script src="app.js?v=20261109-g3-concepts-r1" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="#" id="brand-home" aria-label="Logic Detectives home">
+      <a class="brand" href="#" id="brand-home" aria-label="RSM home">
         <svg class="brand-mark" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="15" fill="#163d48"/><circle cx="21" cy="20" r="10" fill="none" stroke="#ffd17d" stroke-width="4"/><path d="m29 28 9 9" stroke="#ffd17d" stroke-width="5" stroke-linecap="round"/><path d="m17 20 3 3 6-7" fill="none" stroke="#fff9eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="brand-copy"><strong>Logic Detectives</strong><small>Kids Learning Space · Junior Detective Agency</small></span>
+        <span class="brand-copy"><strong>RSM</strong><small>Kids Learning Space · Junior Detective Agency</small></span>
       </a>
       <div class="top-actions"><span class="prototype-tag">Grades 2 &amp; 3</span><button class="button ghost small" id="home-button" hidden>Case board</button><button class="button ghost small" id="reset-progress" disabled>Reset my progress</button></div>
     </header>
@@ -57,6 +57,14 @@
         <section class="mission-section" aria-labelledby="mission-heading"><div class="section-heading mission-heading"><div><p class="eyebrow">Your detective casebook</p><h2 id="mission-heading">Six mysteries to explore</h2></div><p>Choose any case. Come back whenever you like.</p></div><div class="mission-grid" id="mission-grid"></div></section>
         <div class="skill-summary" id="skill-summary" aria-label="Independent solves by puzzle family"></div>
         <div class="badge-row" id="badge-row" aria-label="Your detective badges"></div>
+        <section id="concept-section" class="concept-section" aria-labelledby="concept-heading" hidden>
+          <div class="section-heading"><div><p class="eyebrow">Think a little deeper</p><h2 id="concept-heading">New concepts · Grade 3 Accelerated</h2></div><p>Five puzzles. One new idea. No timer.</p></div>
+          <div class="concept-grid">
+            <button type="button" class="quick-card concept-card" data-concept="magic"><span class="quick-icon" aria-hidden="true">▦</span><span class="quick-title">Magic Square Lab</span><span class="quick-description">Make every row, column, and diagonal add to the same sum.</span><span class="quick-count" data-concept-progress="magic">Explore magic squares <span aria-hidden="true">↗</span></span></button>
+            <button type="button" class="quick-card concept-card" data-concept="parentheses"><span class="quick-icon" aria-hidden="true">( + )</span><span class="quick-title">Parentheses Workshop</span><span class="quick-description">Open the parentheses. Keep the expression’s value the same.</span><span class="quick-count" data-concept-progress="parentheses">Explore opening parentheses <span aria-hidden="true">↗</span></span></button>
+            <button type="button" class="quick-card concept-card" data-concept="rule"><span class="quick-icon" aria-hidden="true">X → Y</span><span class="quick-title">Rule Detective</span><span class="quick-description">Discover a rule. Test it. Work backward for a missing input.</span><span class="quick-count" data-concept-progress="rule">Explore number rules <span aria-hidden="true">↗</span></span></button>
+          </div>
+        </section>
         <div class="section-heading"><div><p class="eyebrow">Take a closer look</p><h2>Try a puzzle first</h2></div><p>Mouse for pictures. Keyboard for numbers.</p></div>
         <div class="quick-grid">
           <button class="quick-card" data-quick="pattern"><span class="quick-icon" aria-hidden="true">◯ △ □</span><span class="quick-title">Pattern clues</span><span class="quick-description">Choose pieces. Build a missing picture.</span><span class="quick-count">Shapes + flags <span aria-hidden="true">↗</span></span></button>
@@ -107,6 +115,6 @@
       <p class="popup-footnote">Take your time. Every clue helps you learn.</p>
     </div>
   </dialog>
-  <dialog id="reset-dialog" class="answer-dialog reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-copy"><div class="answer-popup"><h2 id="reset-title">Start a fresh casebook?</h2><p id="reset-copy">This clears your Logic Detectives cases, stars, badges, and tricky questions for the current profile.</p><div class="reset-actions"><button class="button secondary" id="cancel-reset" autofocus>Keep my progress</button><button class="button primary" id="confirm-reset">Reset my progress</button></div></div></dialog>
+  <dialog id="reset-dialog" class="answer-dialog reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-copy"><div class="answer-popup"><h2 id="reset-title">Start a fresh casebook?</h2><p id="reset-copy">This clears your RSM cases, stars, badges, and tricky questions for the current profile.</p><div class="reset-actions"><button class="button secondary" id="cancel-reset" autofocus>Keep my progress</button><button class="button primary" id="confirm-reset">Reset my progress</button></div></div></dialog>
 </body>
 </html>

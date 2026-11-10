@@ -1,4 +1,4 @@
-/* Profile-scoped, synchronous persistence for Logic Detectives.
+/* Profile-scoped, synchronous persistence for RSM.
  * Two localStorage keys are committed with verification and best-effort rollback.
  * A failed save remains in this document's memory for an explicit flush retry.
  */
@@ -12,12 +12,12 @@
   const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
   const clone = value => JSON.parse(JSON.stringify(value));
   function freshMain() {
-    return { version: 1, grade: 2, cases: {}, completed: {}, mastery: {}, badges: [], lastRun: null };
+    return { version: 1, grade: 2, cases: {}, completed: {}, mastery: {}, conceptRuns: {}, conceptMastery: {}, badges: [], lastRun: null };
   }
   function mainValue(value) {
     if (!record(value) || value.version !== 1) throw new Error('unsupported-main');
     if (own(value, 'grade') && value.grade !== 2 && value.grade !== 3) throw new Error('invalid-main');
-    for (const key of ['cases', 'completed', 'mastery']) if (own(value, key) && !record(value[key])) throw new Error('invalid-main');
+    for (const key of ['cases', 'completed', 'mastery', 'conceptRuns', 'conceptMastery']) if (own(value, key) && !record(value[key])) throw new Error('invalid-main');
     if (own(value, 'badges') && !Array.isArray(value.badges)) throw new Error('invalid-main');
     if (own(value, 'lastRun') && value.lastRun !== null && !record(value.lastRun)) throw new Error('invalid-main');
     // Spread retains additive JSON fields, including an own __proto__ property.
@@ -117,7 +117,7 @@
       try { wrongs = readWrongs(wrongsRaw); } catch (_) { invalid = true; }
       if (invalid) {
         protectedScopes.add(id.scope);
-        notifyError(id, 'Saved Logic Detectives data could not be understood. It has been kept unchanged. Restore a backup or explicitly reset this game to start fresh.');
+        notifyError(id, 'Saved RSM data could not be understood. It has been kept unchanged. Restore a backup or explicitly reset this game to start fresh.');
       } else {
         if (protectedScopes.has(id.scope)) pending.delete(id.scope);
         protectedScopes.delete(id.scope);
@@ -129,7 +129,7 @@
       if (raw === null) storage.removeItem(key); else storage.setItem(key, raw);
     }
     function commit(id, snapshot, removing) {
-      if (protectedScopes.has(id.scope) && !removing) return notifyError(id, 'Saved Logic Detectives data is protected. Restore a backup or explicitly reset this game before saving new progress.');
+      if (protectedScopes.has(id.scope) && !removing) return notifyError(id, 'Saved RSM data is protected. Restore a backup or explicitly reset this game before saving new progress.');
       try { canWrite(); } catch (error) { return writeGuardFailure(id, error); }
       let before;
       try { before = { main: storage.getItem(id.main), wrongs: storage.getItem(id.wrongs) }; }
@@ -138,7 +138,7 @@
         try { readMain(before.main); readWrongs(before.wrongs); }
         catch (_) {
           protectedScopes.add(id.scope);
-          return notifyError(id, 'Saved Logic Detectives data could not be understood. It has been kept unchanged. Restore a backup or explicitly reset this game to start fresh.');
+          return notifyError(id, 'Saved RSM data could not be understood. It has been kept unchanged. Restore a backup or explicitly reset this game to start fresh.');
         }
       }
       const touched = [];
@@ -169,7 +169,7 @@
     function write(main, wrongs) {
       const id = identity();
       if (!id) return waiting();
-      if (protectedScopes.has(id.scope)) return notifyError(id, 'Saved Logic Detectives data is protected. Load it successfully, restore a backup, or explicitly reset this game before saving new progress.');
+      if (protectedScopes.has(id.scope)) return notifyError(id, 'Saved RSM data is protected. Load it successfully, restore a backup, or explicitly reset this game before saving new progress.');
       let snapshot;
       try {
         snapshot = { main: JSON.stringify(mainValue(main)), wrongs: JSON.stringify(wrongsValue(wrongs)) };

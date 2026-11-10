@@ -6,15 +6,16 @@ bundler, no server required. **Fully self-contained and offline** — fonts are
 bundled, and nothing is fetched from the network at runtime. Runs the same on
 macOS and Windows.
 
-> Pip the Fox 🦊 hosts the hub. Tiles show each game with a topic tag, stars
-> earned, and last-played time. Click in, play, win — confetti, and "Played
-> just now" appears back on the hub when you return.
+> Pip the Fox 🦊 hosts the hub. **Continue your adventure** highlights the
+> active child's most recently played game with a saved checkpoint. The game
+> shelf shows full names, earned stars and stickers, and clear Play or Continue
+> actions. Topic filters narrow the shelf while keeping the spotlight in place.
 
 ## Games
 
 | | Game | Topic | Audience |
 |---|---|---|---|
-| 🔎 | **Logic Detectives** | 60 pattern, number-table, and stick mysteries; six short cases per grade, visual explanations, and saved tricky-question practice | grades 2–3 |
+| 🔎 | **RSM** | 60 case puzzles plus 36 Grade 3 Accelerated concept puzzles: magic squares, opening parentheses, and number rules; five-puzzle practice, visual explanations, and saved tricky questions | grades 2–3 |
 | 📚 | **Word Problem Adventure** | 400 reasoning stories, 100 per grade; ten kingdoms with visible progress, stars, and badges | grades 2–5 |
 | 🚀 | **Cosmic Math Quest**       | Multiplication & division mastery missions     | ages 8–10  |
 | 🍕 | **Let's Learn Fractions!**  | Fractions and equivalence                       | grades 2–4 |
@@ -22,7 +23,7 @@ macOS and Windows.
 
 ## Run
 
-Logic Detectives uses desktop mouse and keyboard controls. Correct answers
+RSM uses desktop mouse and keyboard controls. Correct answers
 celebrate with a short visual explanation and **Next clue**; **Show me why**
 is optional. Case drafts, stars, badges, and mistakes save separately for every
 profile. Open it from the main page under **Logic & Patterns**.
@@ -37,11 +38,20 @@ Every profile opens the current ten-kingdom interface. Older saved sessions
 remain available through **Continue earlier adventure**, with progress kept.
 See the [feature and verification record](games/word-problem-adventure/docs/GRADE_ADVENTURE_RELEASE.md).
 
-**Recommended: double-click “Play Kids Learning Space”** (`.bat` on Windows,
-`.command` on macOS). It starts a local server with Python 3, then opens the
-app in your browser. Keep its window open while playing. Progress saves in
-the browser, and backups are written automatically into this app's
+**Recommended: double-click “Play Kids Learning Space”** (the fox-icon `.exe`
+on Windows, `.command` on macOS). The Windows executable opens the original
+`.bat` launcher with its server window minimized; the batch file remains a
+working fallback. It starts a local server with Python 3, then opens the app
+in your browser. Leave the server window running while playing. Progress saves
+in the browser, and backups are written automatically into this app's
 `saved_status/` folder. There is no Save button to remember.
+
+**Optional Windows desktop icon:** double-click **Create Kids Learning Space
+Shortcut.bat**. It creates a matching fox shortcut and keeps any existing links.
+Keep the executable inside the complete game folder. If you move that folder,
+run the shortcut helper again. Python is still needed for automatic folder
+backups; the executable does not bundle it. See the
+[Windows launcher notes](docs/WINDOWS_LAUNCHER_RELEASE.md) for source and checks.
 
 Opening the launcher again reuses the same folder's running server. It opens
 the browser after binding the port, avoiding a browser/server startup race.
@@ -99,7 +109,9 @@ For confirmed in-game session saves, see the
 ├── index.html              Hub landing + iframe stage
 ├── design-system.html      Living component documentation
 ├── Play Kids Learning Space.command   Double-click to play + save to this folder (macOS)
-├── Play Kids Learning Space.bat       Double-click to play + save to this folder (Windows)
+├── Play Kids Learning Space.exe       Fox-icon Windows launcher
+├── Play Kids Learning Space.bat       Original Windows fallback launcher
+├── Create Kids Learning Space Shortcut.bat   Optional Windows desktop shortcut
 ├── README.md
 ├── ARCHITECTURE.md         Decisions: iframe, chrome, progress, routing
 ├── shared/

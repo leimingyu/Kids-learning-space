@@ -7,10 +7,10 @@
   const GAMES = [
     {
       slug: 'logic-detectives',
-      assetVersion: '20261102-row-pattern-r1',
-      title: 'Logic Detectives',
+      assetVersion: '20261109-g3-concepts-r1',
+      title: 'RSM',
       emoji: '🔎',
-      subtitle: '60 pattern, number, and stick mysteries. Grades 2–3.',
+      subtitle: '60 mysteries + 36 Grade 3 concept puzzles. Grades 2–3.',
       topics: ['logic'],
       tag: 'Logic & Patterns',
       tagClass: 'tile__tag--logic',
@@ -75,6 +75,7 @@
   window.KLS.GAMES = GAMES;
 
   let activeTopic = 'all';
+  let spotlightRenderKey = null;
 
   function parseHash() {
     const h = location.hash || '';
@@ -100,41 +101,78 @@
     return GAMES.filter((g) => g.topics.includes(activeTopic));
   }
 
-  // (Big-tile renderer removed — Solution 1 uses only the compact mini tile.
-  //  If a future redesign needs a hero card, restore via git history.)
-
-  /** Compact tile — used in the single-section library. Solution 1 removes
-   *  the tile tag (it duplicated the filter chips) and replaces the standalone
-   *  Continue section with an inline ▶ overlay on tiles that have saved state. */
-  function makeTileMini(g) {
-    const stars = gameStarsTotal(g.slug);
+  function gameSummary(g) {
     const game = progress.getGame(g.slug);
-    const stickers = (game.stickers || []).length;
-    const hasSaved = !!game.gameState;
-
-    const meta = [];
-    if (stars > 0)    meta.push(el('span', { class: 'tile__badge tile__badge--stars' },    '⭐ ' + stars));
-    if (stickers > 0) meta.push(el('span', { class: 'tile__badge tile__badge--stickers' }, '🏆 ' + stickers));
-
-    const classes = 'tile tile--mini' + (hasSaved ? ' tile--resumable' : '');
-    return el('a', {
-      class: classes,
-      href: '#/games/' + g.slug,
-      'aria-label': hasSaved ? 'Continue ' + g.title : g.title,
-      title: g.subtitle,
-    },
-      el('div', { class: 'tile-mini__row' },
-        el('div', { class: 'tile-mini__emoji', 'aria-hidden': 'true' }, g.emoji),
-        el('div', { class: 'tile-mini__body' },
-          el('h3', { class: 'tile-mini__title' }, g.title),
-          meta.length ? el('div', { class: 'tile-mini__meta' }, meta) : null,
-        ),
-      ),
-    );
+    return { game, stars: gameStarsTotal(g.slug), stickers: (game.stickers || []).length,
+      hasSaved: game.gameState != null };
   }
 
-  // (Continue section removed in Solution 1 — inline ▶ overlay on resumable
-  //  tiles serves the same purpose without a duplicate row.)
+  function makeRewards(summary, id) {
+    const rewards = el('div', { class: 'hub-game__rewards', id });
+    if (summary.stars > 0) rewards.append(el('span', { class: 'tile__badge tile__badge--stars' },
+      el('span', { 'aria-hidden': 'true' }, '⭐'), ' ' + summary.stars + (summary.stars === 1 ? ' star' : ' stars')));
+    if (summary.stickers > 0) rewards.append(el('span', { class: 'tile__badge tile__badge--stickers' },
+      el('span', { 'aria-hidden': 'true' }, '🏆'), ' ' + summary.stickers + (summary.stickers === 1 ? ' sticker' : ' stickers')));
+    if (!summary.stars && !summary.stickers) rewards.append(el('span', { class: 'hub-game__status' },
+      summary.hasSaved ? 'Saved adventure' : 'New adventure'));
+    return rewards;
+  }
+
+  /** Registered games only, scoped by progress.getGame to the active child.
+   *  Strict comparison retains registry order for tied or absent dates. */
+  function getSpotlightGame() {
+    let selected = null, newest = -Infinity;
+    for (const g of GAMES) {
+      const game = progress.getGame(g.slug);
+      if (game.gameState == null) continue;
+      const parsed = typeof game.lastPlayedAt === 'string' ? Date.parse(game.lastPlayedAt) : NaN;
+      const playedAt = Number.isFinite(parsed) ? parsed : -Infinity;
+      if (!selected || playedAt > newest) { selected = g; newest = playedAt; }
+    }
+    return selected;
+  }
+
+  function renderSpotlight() {
+    const slot = qs('#hub-spotlight');
+    if (!slot) return;
+    const g = getSpotlightGame();
+    const summary = g ? gameSummary(g) : null;
+    const key = JSON.stringify([progress.get().activeProfileId, g && g.slug, summary && summary.stars, summary && summary.stickers]);
+    // Topic filtering should leave the spotlight and its focused link intact.
+    if (key === spotlightRenderKey) return;
+    spotlightRenderKey = key;
+    slot.innerHTML = '';
+    slot.hidden = !g;
+    if (!g) return;
+    slot.append(el('a', { class: 'tile hub-spotlight', id: 'hub-continue-link',
+      href: '#/games/' + g.slug, 'data-game-slug': g.slug,
+      'aria-label': 'Continue ' + g.title, 'aria-describedby': 'hub-spotlight-rewards' },
+      el('div', { class: 'hub-spotlight__emoji', 'aria-hidden': 'true' }, g.emoji),
+      el('div', { class: 'hub-spotlight__body' },
+        el('p', { class: 'hub-spotlight__eyebrow', id: 'hub-spotlight-label' }, 'Continue your adventure'),
+        el('h2', { class: 'hub-spotlight__title', id: 'hub-spotlight-title' }, g.title),
+        makeRewards(summary, 'hub-spotlight-rewards')),
+      el('span', { class: 'hub-game__action hub-spotlight__action', 'aria-hidden': 'true' }, 'Continue →')));
+  }
+
+  function makeGameCard(g) {
+    const summary = gameSummary(g);
+    const action = summary.hasSaved ? 'Continue' : 'Play';
+    return el('a', {
+      class: 'tile hub-game', id: 'hub-card-' + g.slug,
+      href: '#/games/' + g.slug,
+      'data-game-slug': g.slug,
+      'aria-label': action + ' ' + g.title,
+      'aria-describedby': 'hub-rewards-' + g.slug,
+    },
+      el('div', { class: 'hub-game__heading' },
+        el('div', { class: 'hub-game__emoji', 'aria-hidden': 'true' }, g.emoji),
+        el('h3', { class: 'hub-game__title', id: 'hub-game-' + g.slug }, g.title),
+      ),
+      el('div', { class: 'hub-game__footer' }, makeRewards(summary, 'hub-rewards-' + g.slug),
+        el('span', { class: 'hub-game__action', 'aria-hidden': 'true' }, action + ' →')),
+    );
+  }
 
   function renderLibrary() {
     const tilesEl = qs('#hub-tiles');
@@ -149,11 +187,32 @@
       );
       return;
     }
-    games.forEach((g) => tilesEl.append(makeTileMini(g)));
+    games.forEach((g) => tilesEl.append(makeGameCard(g)));
   }
 
   function renderTiles() {
+    const focused = document.activeElement;
+    const focusedId = focused && focused.getAttribute && focused.getAttribute('id');
+    const wasCard = focusedId && (focusedId === 'hub-continue-link' || focusedId.startsWith('hub-card-'));
+    const focusedSlug = wasCard && focused.getAttribute('data-game-slug');
+    refreshProfilePill();
+    renderSpotlight();
     renderLibrary();
+    if (wasCard) {
+      let replacement = qs('#' + focusedId);
+      if (!replacement || replacement.getAttribute('data-game-slug') !== focusedSlug) {
+        replacement = qs('#hub-card-' + focusedSlug);
+      }
+      replacement = replacement || qs('.hub__filter-chip[aria-pressed="true"]') || qs('#hub-profile-pill');
+      if (replacement && replacement !== focused && replacement.focus) replacement.focus({ preventScroll: true });
+    }
+  }
+
+  function refreshProfilePill() {
+    const profile = progress.get().profile;
+    const avatar = qs('.hub__profile-avatar'), name = qs('.hub__profile-name');
+    if (avatar) avatar.textContent = profile ? profile.avatar : '🦊';
+    if (name) name.textContent = profile ? profile.displayName : 'Friend';
   }
 
   function renderFilter() {
@@ -164,11 +223,14 @@
       const chip = el('button', {
         class: 'hub__filter-chip',
         type: 'button',
+        'data-topic': t.slug,
         'aria-pressed': t.slug === activeTopic ? 'true' : 'false',
         onclick: () => {
           if (activeTopic === t.slug) return;
           activeTopic = t.slug;
-          renderFilter();
+          Array.from(filterEl.children).forEach(button => {
+            button.setAttribute('aria-pressed', button.getAttribute('data-topic') === activeTopic ? 'true' : 'false');
+          });
           renderTiles();
         },
       }, t.label);
@@ -192,12 +254,7 @@
     hub.className = 'hub';
     playEnter(hub);
 
-    const profile = progress.get().profile;
-
-    // Solution 1 "Single-section stripped": no Continue section, no "All games"
-    // heading, no subtitle, no tile tags (filter chips already do that job),
-    // no bottom Parent link. Account actions collapse into a single chip
-    // menu at the bottom-right.
+    spotlightRenderKey = null;
     hub.innerHTML = ''
       + '<header class="hub__header hub__header--slim">'
       +   '<div class="hub__brand">'
@@ -214,12 +271,14 @@
       +     '<span class="hub__profile-hint" aria-hidden="true">Switch ▾</span>'
       +   '</button>'
       + '</header>'
+      + '<section id="hub-spotlight" class="hub__spotlight" aria-labelledby="hub-spotlight-label" hidden></section>'
       + '<div id="hub-filter" class="hub__filter" role="group" aria-label="Filter games by topic"></div>'
-      + '<div id="hub-tiles" class="hub__library-grid"></div>'
+      + '<section class="hub__library" aria-labelledby="hub-library-title">'
+      +   '<h2 id="hub-library-title" class="hub__section-title">Choose any game</h2>'
+      +   '<div id="hub-tiles" class="hub__library-grid"></div>'
+      + '</section>'
       + '<div id="hub-account-actions" class="hub__quick-row"></div>';
 
-    qs('.hub__profile-avatar', hub).textContent = profile ? profile.avatar : '🦊';
-    qs('.hub__profile-name',   hub).textContent = profile ? profile.displayName : 'Friend';
     qs('#hub-profile-pill', hub).addEventListener('click', function () {
       location.hash = '#/profiles';
     });
@@ -246,22 +305,22 @@
   function renderGame(slug) {
     const hub = qs('#hub-root');
     const stage = qs('#stage-root');
-    const frame = qs('#stage-frame');
 
     function actuallyStart(resumeBlob) {
       hub.hidden = true;
       stage.hidden = false;
       playEnter(stage);
       chrome.mount();
-      chrome.startSession(slug, progress.get().activeProfileId, resumeBlob);
 
       // Explicit index.html so this works on file:// (which has no directory
       // index resolution) as well as HTTP servers.
       const meta = GAMES.find((g) => g.slug === slug);
       const assetVersion = meta?.assetVersion || '20261030-division-lessons-r3';
       const desired = 'games/' + slug + '/index.html?v=' + encodeURIComponent(assetVersion);
-      // Force reload even if same src (so resumeBlob delivery is deterministic).
-      frame.setAttribute('src', desired);
+      // A new browsing context prevents browser Back from restoring a blank
+      // or suspended game document, even when reopening the same game.
+      chrome.replaceFrame(desired);
+      chrome.startSession(slug, progress.get().activeProfileId, resumeBlob);
 
       document.title = (meta ? meta.title : 'Game') + ' — Kids Learning Space';
 

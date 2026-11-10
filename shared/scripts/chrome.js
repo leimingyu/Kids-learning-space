@@ -251,8 +251,21 @@
     const frame = qs('#stage-frame');
     if (frame) {
       frame.removeEventListener('load', session.onLoad);
-      frame.setAttribute('src', 'about:blank');
+      replaceFrame('about:blank');
     }
+  }
+
+  /** Destroy the old browsing context instead of navigating it. Assigning src
+   *  on a live iframe adds child entries to the browser's Back/Forward history;
+   *  it can restore about:blank without changing the hub's game hash. A fresh
+   *  frame has no old document/history to revive. Set src before attachment,
+   *  preserving attributes and file:// support without cross-origin access. */
+  function replaceFrame(src) {
+    const frame = qs('#stage-frame');
+    const fresh = frame.cloneNode(false);
+    fresh.setAttribute('src', src);
+    frame.replaceWith(fresh);
+    return fresh;
   }
 
   function recordResult(ok) {
@@ -388,7 +401,7 @@
   window.KLS = window.KLS || {};
   window.KLS.chrome = {
     mount, unmount, registerSlugs, pushResumeState, pushProfileToIframe,
-    startSession, detachSession, requestSave, flushSession: requestSave,
+    startSession, detachSession, replaceFrame, requestSave, flushSession: requestSave,
     hasSession() { return !!activeSession; },
     getSession() { return activeSession ? { slug: activeSession.slug, profileId: activeSession.profileId, sessionId: activeSession.sessionId } : null; },
   };

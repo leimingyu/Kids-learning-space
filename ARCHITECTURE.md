@@ -162,6 +162,16 @@ and from any plain static host (Python `http.server`, GitHub Pages,
 Netlify drop-in). History API would require a server-side `*` →
 `index.html` rewrite and break `file://` opens entirely.
 
+Browser Back/Forward must traverse hub routes, without extra iframe pages.
+After an acknowledged checkpoint, `chrome.detachSession()` destroys the old
+iframe context by replacing its node. `chrome.replaceFrame()` configures the
+replacement's `src` before attaching it; the router then starts the new session.
+Do not navigate a live iframe to `about:blank` or reuse it for another game:
+those child history entries can restore a blank or suspended document while
+the parent hash still names a game. A fresh frame also ensures messages queued
+by a removed document fail the source-window check. Failed checkpoints retain
+the original live frame and session.
+
 ## Adding a new game
 
 1. Drop it into `games/<new-slug>/index.html`.

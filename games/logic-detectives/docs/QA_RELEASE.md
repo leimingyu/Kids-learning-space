@@ -172,3 +172,34 @@ Live browser coverage is Chromium over HTTP. Safari, Firefox, and direct
 `file://` browser UI were not live-tested. Classic local scripts, relative bundled
 assets, the offline path audit, and standalone fake-DOM startup checks support the
 direct-file path; they are not claimed as live direct-file browser verification.
+
+## Grade 3 concept practices — November 9, 2026
+
+Added 36 deterministic concept puzzles outside the original 60 case puzzles:
+12 magic squares, 12 parentheses rewrites, and 12 X/Y rules. Parentheses rewrites
+have exactly one missing sign in a native `?` dropdown with no chevron. Concept
+practice uses five-question runs with separate mastery and resumable drafts;
+existing case IDs, stars, badges, profile keys, and backup envelope version 1
+remain compatible.
+
+Passed the existing engine, full-game, table-guide, table-interface, row-demo,
+storage, and backup suites; the shared save-session and hub-dashboard suites;
+and both new concept suites:
+
+- `smoke-concepts-engine.mjs` independently proves unique magic completions,
+  checks both diagonals, all four parentheses sign patterns, backward rules,
+  malformed answers, and neutral incomplete submissions.
+- `smoke-concepts-game.mjs` exercises all 36 puzzles through their actual
+  controls, sign dropdowns, hints, exact drafts after reload, committed mistakes,
+  Tricky practice, separate rewards, fresh profiles, standalone play, reset,
+  future-field preservation, and registered backup/export/restore.
+
+Live Chromium over HTTP on a disposable local origin verified the Grade 3
+cards, the single-blank arrowless native menu, mouse and keyboard sign entry,
+correct/retry popups, optional explanations, saved answer restoration after
+reload, magic-square numeric Enter submission, and rule-table completion.
+Desktop visual inspection covered all three practices. Rule tables and their
+formula sit side by side on desktop and stack on narrow layouts. Existing child
+profiles and the main launcher's save origin were not used for these checks.
+Safari, Firefox, mobile viewport, and direct-file UI were not live-tested in
+this update.

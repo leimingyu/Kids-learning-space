@@ -10,27 +10,67 @@ const source = name => readFileSync(new URL('shared/scripts/' + name, root), 'ut
 class Node {
   constructor(tag = 'div', attrs = {}, children = []) {
     this.tag = tag; this.attrs = { ...attrs }; this.children = []; this.events = new Map();
+    this.parentNode = null; this._connectedRoot = false; this.frameState = null;
+    if (tag === 'iframe') this.contentWindow = { postMessage() {} };
     this.hidden = false; this.disabled = false; this.offsetWidth = 1;
     const classes = new Set((attrs.class || '').split(' ').filter(Boolean));
     this.classList = { add: (...xs) => xs.forEach(x => classes.add(x)), remove: (...xs) => xs.forEach(x => classes.delete(x)), contains: x => classes.has(x) };
     this.append(...children);
   }
-  append(...xs) { for (const x of xs.flat()) if (x != null) this.children.push(x); }
+  append(...xs) {
+    for (const x of xs.flat()) if (x != null) {
+      if (x instanceof Node) { x.remove(); x.parentNode = this; }
+      this.children.push(x);
+    }
+  }
   appendChild(x) { this.append(x); }
+  get isConnected() { return this._connectedRoot || !!this.parentNode?.isConnected; }
+  remove() {
+    if (!this.parentNode) return;
+    const children = this.parentNode.children;
+    const index = children.indexOf(this);
+    if (index !== -1) children.splice(index, 1);
+    this.parentNode = null;
+  }
+  replaceWith(node) {
+    const parent = this.parentNode;
+    assert.ok(parent, 'only an attached iframe can be replaced');
+    const index = parent.children.indexOf(this);
+    node.remove(); parent.children[index] = node; node.parentNode = parent;
+    this.parentNode = null;
+  }
+  cloneNode(deep = false) {
+    const clone = new Node(this.tag, this.attrs);
+    clone.frameState = this.frameState;
+    if (clone.tag === 'iframe' && clone.frameState) {
+      clone.contentWindow.postMessage = data => clone.frameState.sent.push(data);
+    }
+    if (deep) clone.append(...this.children.map(child => child instanceof Node ? child.cloneNode(true) : child));
+    return clone;
+  }
+  clearChildren() {
+    for (const child of this.children) if (child instanceof Node) child.parentNode = null;
+    this.children = [];
+  }
   get textContent() { return this.children.map(x => typeof x === 'string' ? x : x.textContent || '').join(''); }
-  set textContent(x) { this.children = [String(x)]; }
+  set textContent(x) { this.clearChildren(); this.children = [String(x)]; }
   set innerHTML(x) {
-    this.children = []; this.html = x;
+    this.clearChildren(); this.html = x;
     // Only id/class lookup is needed for the hub's static shell. Keep the
     // markup flat so these tests can exercise the real recovery navigation.
     for (const match of String(x).matchAll(/<([a-z][a-z0-9-]*)([^>]*)>/gi)) {
       const attrs = {};
       for (const a of match[2].matchAll(/([a-z][a-z0-9-]*)="([^"]*)"/gi)) attrs[a[1]] = a[2];
-      if (attrs.id || attrs.class) this.children.push(new Node(match[1], attrs));
+      if (attrs.id || attrs.class) this.append(new Node(match[1], attrs));
     }
   }
   get innerHTML() { return this.html || ''; }
-  setAttribute(k, v) { this.attrs[k] = String(v); }
+  setAttribute(k, v) {
+    if (this.tag === 'iframe' && k === 'src' && this.frameState) {
+      this.frameState.srcAssignments.push({ frame: this, value: String(v), connected: this.isConnected });
+    }
+    this.attrs[k] = String(v);
+  }
   getAttribute(k) { return this.attrs[k] ?? null; }
   addEventListener(k, fn) { if (!this.events.has(k)) this.events.set(k, new Set()); this.events.get(k).add(fn); }
   removeEventListener(k, fn) { this.events.get(k)?.delete(fn); }
@@ -58,10 +98,14 @@ function harness({ bootHub = false, initialSlug = 'cosmic-math-quest', journal =
     setItem(k, v) { if (failures.has(k)) throw new Error('Storage quota exceeded'); values.set(k, String(v)); },
     removeItem(k) { if (failures.has(k)) throw new Error('Storage blocked'); values.delete(k); },
   };
-  const nodes = new Map(['chrome-root', 'stage-frame', 'stage-root', 'hub-root'].map(k => [k, new Node('div', { id: k })]));
-  const frame = nodes.get('stage-frame'); frame.tag = 'iframe'; frame.setAttribute('src', 'games/' + initialSlug + '/index.html');
-  const sent = [];
+  const nodes = new Map(['chrome-root', 'stage-root', 'hub-root'].map(k => [k, new Node('div', { id: k })]));
+  for (const node of nodes.values()) node._connectedRoot = true;
+  const sent = [], srcAssignments = [];
+  const frame = new Node('iframe', { id: 'stage-frame', title: 'Game', allow: 'autoplay' });
+  frame.frameState = { sent, srcAssignments };
+  frame.setAttribute('src', 'games/' + initialSlug + '/index.html');
   frame.contentWindow = { postMessage: data => sent.push(data) };
+  nodes.get('stage-root').append(frame);
   const doc = { readyState: 'complete', title: '', querySelector: s => {
     const rootNode = s[0] === '#' ? nodes.get(s.slice(1)) : null;
     if (rootNode) return rootNode;
@@ -95,10 +139,11 @@ function harness({ bootHub = false, initialSlug = 'cosmic-math-quest', journal =
   } else {
     C.registerSlugs(['cosmic-math-quest']); C.mount(); C.startSession('cosmic-math-quest', 'alice', { v: 7, mark: 'saved' });
   }
-  const message = (data, origin = frame.contentWindow) => emit('message', { source: origin, data });
+  const message = (data, origin = doc.querySelector('#stage-frame').contentWindow) => emit('message', { source: origin, data });
   const bound = (event, extra = {}) => ({ type: 'kls:progress', event, ...C.getSession(), ...extra });
   const status = () => nodes.get('chrome-root').querySelector('.chrome__saved')?.textContent || '';
-  return { ctx, C, P, nodes, frame, values, failures, storage, sent, events, tick, emit, message, bound, status, warnings,
+  return { ctx, C, P, nodes, values, failures, storage, sent, srcAssignments, events, tick, emit, message, bound, status, warnings,
+    get frame() { return doc.querySelector('#stage-frame'); },
     get managerShown() { return managerShown; }, get initSnapshots() { return initSnapshots; }, get picked() { return picked; } };
 }
 
@@ -119,8 +164,9 @@ function clickButton(h, text) {
   return button.attrs.onclick ? button.attrs.onclick() : button.emit('click', {});
 }
 
-// A release must refresh the main hub, its iframe document, and the game's
-// changed assets together. Exercise the actual startup route, not a URL copy.
+// The hub, chrome, CSS, and games have independent cache versions. A navigation
+// release must refresh its scripts while preserving unchanged game/CSS assets.
+// Exercise the actual startup route, not a URL copy.
 {
   const h = harness({ bootHub: true, initialSlug: 'logic-detectives' });
   const meta = h.ctx.KLS.GAMES.find(game => game.slug === 'logic-detectives');
@@ -129,11 +175,14 @@ function clickButton(h, text) {
   assert.equal(iframe.pathname, '/games/logic-detectives/index.html');
   assert.equal(iframe.searchParams.get('v'), meta.assetVersion, 'The main hub loads the current game document');
   assert.equal(h.C.getSession().slug, meta.slug, 'The versioned route retains the correct game session');
+  assert.equal(h.frame.getAttribute('title'), 'Game', 'Replacing an iframe preserves its accessibility attributes');
+  assert.equal(h.frame.getAttribute('allow'), 'autoplay', 'Replacing an iframe preserves its existing permissions');
+  assert.ok(h.srcAssignments.every(write => !write.connected), 'Startup sets iframe URLs before attachment');
 
   const gameHTML = readFileSync(new URL('games/logic-detectives/index.html', root), 'utf8');
   const assets = [...gameHTML.matchAll(/(?:src|href)="([^"]+)"/g)]
     .map(match => new URL(match[1], 'http://kls.test/games/logic-detectives/index.html'));
-  for (const name of ['styles.css', 'app.js', 'table-guide.js', 'row-demo.js']) {
+  for (const name of ['styles.css', 'engine.js', 'store.js', 'app.js', 'table-guide.js', 'row-demo.js']) {
     const matches = assets.filter(url => url.pathname === '/games/logic-detectives/' + name);
     assert.equal(matches.length, 1, name + ' loads exactly once');
     assert.equal(matches[0].searchParams.get('v'), meta.assetVersion, name + ' matches the iframe release in embedded and standalone play');
@@ -141,8 +190,19 @@ function clickButton(h, text) {
   const hubHTML = readFileSync(new URL('index.html', root), 'utf8');
   const loader = hubHTML.match(/<script\b[^>]*src="(shared\/scripts\/hub\.js[^\"]*)"/);
   assert.ok(loader, 'The main page loads the hub router');
-  assert.equal(new URL(loader[1], 'http://kls.test/').searchParams.get('v'), meta.assetVersion,
-    'The main page refreshes its router with the game release');
+  const hubVersion = '20261109-g3-concepts-r1';
+  assert.equal(new URL(loader[1], 'http://kls.test/').searchParams.get('v'), hubVersion,
+    'The main page refreshes its router with the Grade 3 concepts release');
+  const chromeLoader = hubHTML.match(/<script\b[^>]*src="(shared\/scripts\/chrome\.js[^\"]*)"/);
+  assert.ok(chromeLoader, 'The main page loads the iframe session controller');
+  assert.equal(new URL(chromeLoader[1], 'http://kls.test/').searchParams.get('v'), '20261107-browser-history-r1',
+    'The name change preserves the iframe navigation fix version');
+  const styles = hubHTML.match(/<link\b[^>]*href="(shared\/styles\/components\.css[^\"]*)"/);
+  assert.ok(styles, 'The main page loads shared components');
+  assert.equal(new URL(styles[1], 'http://kls.test/').searchParams.get('v'), '20261103-hub-spotlight-r1',
+    'The navigation release preserves the dashboard CSS version');
+  assert.equal(meta.assetVersion, '20261109-g3-concepts-r1',
+    'The Grade 3 concepts release refreshes the game document and its versioned assets');
 
   for (const slug of ['cosmic-math-quest', 'long-division-coach']) {
     const other = harness({ bootHub: true, initialSlug: slug });
@@ -151,6 +211,98 @@ function clickButton(h, text) {
     assert.equal(url.searchParams.get('v'), '20261030-division-lessons-r3', 'Existing game asset versions remain unchanged');
     assert.equal(other.C.getSession().slug, slug);
   }
+}
+
+// These fake DOM checks cover the cause of the blank Back/Forward screen:
+// changing a connected iframe's src creates nested browser-history entries.
+// Each session must instead attach a new, already-configured document. Real
+// browser history traversal is checked separately in browser QA.
+{
+  const h = harness({ bootHub: true, initialSlug: 'logic-detectives' });
+  h.message(h.bound('profileReady'));
+  const firstFrame = h.frame;
+  const firstIdentity = h.C.getSession();
+  h.ctx.location.hash = '';
+  const leaving = h.emit('hashchange');
+  const request = h.sent.findLast(message => message.event === 'requestState');
+  assert.equal(h.frame, firstFrame, 'A live game remains mounted until its checkpoint is acknowledged');
+  assert.equal(firstFrame.isConnected, true);
+  h.message(h.bound('saveState', { requestId: request.requestId, state: { clue: 3, draft: ['11', ''] }, ok: true }));
+  await Promise.all(leaving);
+  const placeholder = h.frame;
+  assert.notEqual(placeholder, firstFrame, 'Leaving discards the old browsing context');
+  assert.notEqual(placeholder.contentWindow, firstFrame.contentWindow);
+  assert.equal(firstFrame.isConnected, false);
+  assert.equal(placeholder.isConnected, true);
+  assert.equal(placeholder.getAttribute('src'), 'about:blank');
+  assert.equal(firstFrame.getAttribute('src').includes('logic-detectives'), true,
+    'The discarded game itself is never navigated to a blank document');
+  assert.equal(h.C.hasSession(), false);
+  assert.equal(h.nodes.get('stage-root').hidden, true);
+  const afterDetach = h.sent.length;
+  firstFrame.emit('load');
+  assert.equal(h.sent.length, afterDetach, 'The removed document no longer has a profile-binding load listener');
+
+  // The same route is reached when the browser goes Back from Hub to game.
+  h.ctx.location.hash = '#/games/logic-detectives';
+  await Promise.all(h.emit('hashchange'));
+  const returned = h.frame;
+  assert.notEqual(returned, placeholder, 'Returning mounts a new game context');
+  assert.notEqual(returned.contentWindow, firstFrame.contentWindow);
+  assert.equal(placeholder.isConnected, false);
+  assert.equal(returned.isConnected, true);
+  assert.equal(h.nodes.get('stage-root').hidden, false);
+  assert.equal(h.nodes.get('hub-root').hidden, true);
+  assert.notEqual(h.C.getSession().sessionId, firstIdentity.sessionId);
+  assert.match(returned.getAttribute('src'), /^games\/logic-detectives\/index\.html\?v=/);
+  const beforeReady = h.sent.filter(message => message.event === 'resumeState').length;
+  h.message(h.bound('profileReady'), firstFrame.contentWindow);
+  assert.equal(h.sent.filter(message => message.event === 'resumeState').length, beforeReady,
+    'A removed document cannot acknowledge the new session, even with its current identity');
+  h.message(h.bound('profileReady'));
+  const resumed = h.sent.findLast(message => message.event === 'resumeState');
+  assert.equal(resumed.state.clue, 3);
+  assert.deepEqual(Array.from(resumed.state.draft), ['11', ''], 'The returned game receives its saved unfinished answer');
+  h.message(h.bound('awardStars', { level: 'stale-frame', stars: 3 }), firstFrame.contentWindow);
+  assert.equal(h.P.getGame('logic-detectives').levels['stale-frame'], undefined);
+
+  // A browser Forward traversal can leave that restored game again. A later
+  // different game likewise gets a new context, not a reused WindowProxy.
+  h.ctx.location.hash = '';
+  const forward = h.emit('hashchange');
+  const forwardRequest = h.sent.findLast(message => message.event === 'requestState');
+  h.message(h.bound('saveState', { requestId: forwardRequest.requestId, state: resumed.state, ok: true }));
+  await Promise.all(forward);
+  assert.equal(returned.isConnected, false);
+  h.ctx.location.hash = '#/games/long-division-coach';
+  await Promise.all(h.emit('hashchange'));
+  assert.notEqual(h.frame.contentWindow, returned.contentWindow);
+  assert.equal(h.C.getSession().slug, 'long-division-coach');
+  assert.match(h.frame.getAttribute('src'), /^games\/long-division-coach\/index\.html\?v=/);
+  assert.ok(h.srcAssignments.every(write => !write.connected),
+    'Opening, leaving, returning, and switching games never navigate a connected iframe');
+}
+
+// A quick Back then Forward while Save is pending must retain the final route
+// and its exact live document; a completed older route cannot replace it.
+{
+  const h = harness({ bootHub: true });
+  h.message(h.bound('profileReady'));
+  const frame = h.frame, identity = h.C.getSession();
+  h.ctx.location.hash = '';
+  const older = h.emit('hashchange');
+  const request = h.sent.findLast(message => message.event === 'requestState');
+  h.ctx.location.hash = '#/games/cosmic-math-quest';
+  await Promise.all(h.emit('hashchange'));
+  h.message(h.bound('saveState', { requestId: request.requestId, state: { question: 5 }, ok: true }));
+  await Promise.all(older);
+  assert.equal(h.frame, frame);
+  assert.equal(frame.isConnected, true);
+  assert.equal(h.C.getSession().sessionId, identity.sessionId);
+  assert.equal(h.nodes.get('stage-root').hidden, false);
+  assert.equal(h.ctx.location.hash, '#/games/cosmic-math-quest');
+  assert.equal(h.P.getGameState('cosmic-math-quest').question, 5);
+  assert.ok(h.srcAssignments.every(write => !write.connected));
 }
 
 // Acknowledgement must be bound to this request, sender, profile, and session.
@@ -242,6 +394,7 @@ function clickButton(h, text) {
 // A profile picker cannot appear while its old iframe still has a live document.
 {
   const h = harness({ bootHub: true }); h.message(h.bound('profileReady'));
+  const oldFrame = h.frame;
   h.ctx.location.hash = '#/profiles';
   const routes = h.emit('hashchange');
   assert.equal(h.managerShown, false); assert.match(h.frame.getAttribute('src'), /cosmic-math/);
@@ -249,6 +402,7 @@ function clickButton(h, text) {
   h.message(h.bound('saveState', { requestId: req.requestId, state: { question: 8 }, ok: true }));
   await Promise.all(routes);
   assert.equal(h.managerShown, true); assert.equal(h.frame.getAttribute('src'), 'about:blank');
+  assert.notEqual(h.frame, oldFrame); assert.equal(oldFrame.isConnected, false);
   assert.equal(h.C.hasSession(), false);
   h.P.setActiveProfile('bob');
   h.message({ type: 'kls:progress', event: 'awardStars', slug: 'cosmic-math-quest', profileId: 'alice', sessionId: req.sessionId, level: 'wrong-owner', stars: 3 });
@@ -256,9 +410,12 @@ function clickButton(h, text) {
 }
 {
   const h = harness({ bootHub: true }); h.message(h.bound('profileReady'));
+  const oldFrame = h.frame;
   h.ctx.location.hash = '#/profiles'; const routes = h.emit('hashchange');
   h.tick(1500); await Promise.all(routes);
   assert.equal(h.managerShown, false); assert.equal(h.C.hasSession(), true);
+  assert.equal(h.frame, oldFrame, 'A failed save keeps the original browsing context alive');
+  assert.equal(oldFrame.isConnected, true);
   assert.equal(h.ctx.location.hash, '#/games/cosmic-math-quest');
   assert.equal(h.warnings.filter(x => typeof x === 'string').length, 0, 'failed navigation uses inline recovery, not a native alert');
   assert.match(h.status(), /did not confirm/);
@@ -483,4 +640,4 @@ function clickButton(h, text) {
   assert.throws(() => game.KLS.bridge.assertCanWrite(), /not ready/);
 }
 
-console.log('PASS: versioned hub/iframe/game release and unchanged other-game routes; confirmed browser Save; request/source/profile/session validation; write failure rollback; loading/capture timeout and retry; deferred game initialization handshake; safe two-step Hub recovery; stale route/account cancellation; single resume delivery; flush-before-detach navigation; restore lock/recovery gate; keyed game errors.');
+console.log('PASS: versioned navigation/game assets; fresh iframe contexts and detached-only URL assignment; saved draft resume and stale-frame rejection on return; rapid Back/Forward route cancellation; confirmed browser Save; request/source/profile/session validation; write failure rollback; loading/capture timeout and retry; deferred game initialization handshake; safe two-step Hub recovery; stale route/account cancellation; single resume delivery; flush-before-detach navigation; restore lock/recovery gate; keyed game errors.');

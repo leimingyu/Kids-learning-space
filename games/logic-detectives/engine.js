@@ -279,7 +279,178 @@
       cases.push({id,grade,number,title,scene,finish,puzzleIds});
     });
   }
+  // Grade 3 concept practice is additive: case IDs, content, and rewards above
+  // remain unchanged. Answers are small, serializable objects for exact replay.
+  const MAGIC_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]
+  ];
+  const magicLineName = index => index < 3 ? `Row ${index + 1}` : index < 6 ? `Column ${index - 2}` : index === 6 ? 'The top-left diagonal' : 'The top-right diagonal';
+  const displaySign = sign => sign === '-' ? '−' : '+';
+  const applySign = (a, sign, b) => sign === '+' ? a + b : a - b;
+
+  function conceptAnswer(puzzle, key) {
+    if (!puzzle || typeof key !== 'string') return undefined;
+    if (puzzle.type === 'magic') {
+      if (key === 'sum') return puzzle.magicSum;
+      const match = key.match(/^m([0-8])$/);
+      return match ? puzzle.cells?.[Number(match[1])] : undefined;
+    }
+    if (puzzle.type === 'parentheses') return key === 'sign' ? puzzle.rewriteSigns?.[puzzle.signIndex] : undefined;
+    if (puzzle.type === 'rule') {
+      if (key === 'sign') return puzzle.ruleSign;
+      if (key === 'amount') return puzzle.ruleAmount;
+      const match = key.match(/^([xy])(\d+)$/);
+      return match ? puzzle.pairs?.[Number(match[2])]?.[match[1]] : undefined;
+    }
+    return undefined;
+  }
+  function readConceptAnswers(puzzle, answers) {
+    const values = {};
+    // An unfinished submission stays neutral even if another field has a typo.
+    // Only a complete submission can become a saved mistake.
+    for (const key of puzzle.blanks) {
+      const raw = answers?.[key];
+      if (raw === undefined || raw === null || (typeof raw === 'string' && (raw.trim() === '' || (key === 'sign' && raw === '?')))) {
+        return { error: { correct:false, missing:true, key, message:key === 'sign' ? 'Choose + or − in the question-mark space before checking.' : 'Fill every missing number before checking.' } };
+      }
+    }
+    for (const key of puzzle.blanks) {
+      const raw = answers?.[key];
+      if (key === 'sign') {
+        if (raw !== '+' && raw !== '-' && raw !== '−') return { error:{ correct:false, missing:false, key, message:'Choose either + or − for the missing sign.' } };
+        values[key] = raw === '−' ? '-' : raw;
+      } else {
+        if (typeof raw !== 'string' || !/^\d+$/.test(raw.trim()) || !Number.isSafeInteger(Number(raw.trim()))) {
+          return { error:{ correct:false, missing:false, key, message:'Use a nonnegative whole number, written with digits, for each number space.' } };
+        }
+        values[key] = Number(raw.trim());
+      }
+    }
+    return { values };
+  }
+  function validateMagic(puzzle, answers) {
+    if (!puzzle || puzzle.type !== 'magic' || !Array.isArray(puzzle.cells) || puzzle.cells.length !== 9 || !Array.isArray(puzzle.blanks)) return {correct:false, missing:false, message:'Choose a magic-square puzzle first.'};
+    const parsed = readConceptAnswers(puzzle, answers);
+    if (parsed.error) return parsed.error;
+    const values = parsed.values, sum = puzzle.blanks.includes('sum') ? values.sum : puzzle.magicSum;
+    const cells = puzzle.cells.map((value, index) => puzzle.blanks.includes('m'+index) ? values['m'+index] : value);
+    for (let index = 0; index < MAGIC_LINES.length; index++) {
+      const line = MAGIC_LINES[index], total = line.reduce((acc, position) => acc + cells[position], 0);
+      if (!Number.isSafeInteger(total) || total !== sum) {
+        const key = line.map(position => 'm'+position).find(candidate => puzzle.blanks.includes(candidate)) || (puzzle.blanks.includes('sum') ? 'sum' : undefined);
+        return {correct:false, missing:false, key, line:{axis:index < 3 ? 'row' : index < 6 ? 'column' : 'diagonal', index:index < 3 ? index : index < 6 ? index - 3 : index - 6}, message:`${magicLineName(index)} adds to ${total}, but the magic sum is ${sum}. Check that line.`};
+      }
+    }
+    return {correct:true, missing:false, message:`All three rows, all three columns, and both diagonals add to ${sum}.`};
+  }
+  function validateParentheses(puzzle, answers) {
+    if (!puzzle || puzzle.type !== 'parentheses' || !Array.isArray(puzzle.blanks) || !Array.isArray(puzzle.rewriteSigns)) return {correct:false, missing:false, message:'Choose a parentheses puzzle first.'};
+    const parsed = readConceptAnswers(puzzle, answers);
+    if (parsed.error) return parsed.error;
+    if (parsed.values.sign !== conceptAnswer(puzzle, 'sign')) {
+      return {correct:false, missing:false, key:'sign', message:puzzle.signIndex === 0 ? 'The sign just before the parentheses stays with the first number inside.' : puzzle.outer === '+' ? 'Adding the group keeps the signs inside the parentheses. Try that sign again.' : 'Subtracting the group changes both signs inside: + becomes −, and − becomes +.'};
+    }
+    return {correct:true, missing:false, message:'The parentheses are open and the expression keeps exactly the same value.'};
+  }
+  function validateRule(puzzle, answers) {
+    if (!puzzle || puzzle.type !== 'rule' || !Array.isArray(puzzle.blanks) || !Array.isArray(puzzle.pairs)) return {correct:false, missing:false, message:'Choose a rule puzzle first.'};
+    const parsed = readConceptAnswers(puzzle, answers);
+    if (parsed.error) return parsed.error;
+    const values = parsed.values, sign = puzzle.blanks.includes('sign') ? values.sign : puzzle.ruleSign;
+    const amount = puzzle.blanks.includes('amount') ? values.amount : puzzle.ruleAmount;
+    for (let index = 0; index < puzzle.pairs.length; index++) {
+      const pair = puzzle.pairs[index], xKey = 'x'+index, yKey = 'y'+index;
+      const x = puzzle.blanks.includes(xKey) ? values[xKey] : pair.x;
+      const y = puzzle.blanks.includes(yKey) ? values[yKey] : pair.y;
+      const predicted = applySign(x, sign, amount);
+      if (!Number.isSafeInteger(predicted) || predicted !== y) {
+        const ruleWrong = sign !== puzzle.ruleSign || amount !== puzzle.ruleAmount;
+        const key = ruleWrong ? (sign !== puzzle.ruleSign ? 'sign' : 'amount') : puzzle.blanks.includes(xKey) ? xKey : yKey;
+        return {correct:false, missing:false, key, message:ruleWrong ? `Test the rule on row ${index + 1}: ${x} ${displaySign(sign)} ${amount} gives ${predicted}, but that row needs ${y}. One rule must fit every row.` : puzzle.blanks.includes(xKey) ? `Work backward in row ${index + 1}. Which input gives ${y} after ${sign === '+' ? 'adding' : 'subtracting'} ${amount}?` : `Check row ${index + 1}: use the same ${displaySign(sign)} ${amount} rule on its input.`};
+      }
+    }
+    return {correct:true, missing:false, message:`Every row follows Y = X ${displaySign(sign)} ${amount}, including the rows you solved backward.`};
+  }
+
+  const conceptStage = index => index < 4 ? 'discover' : index < 8 ? 'connect' : 'challenge';
+  function magicSteps(puzzle) {
+    const known = {}, steps = [];
+    puzzle.cells.forEach((value, index) => { if (!puzzle.blanks.includes('m'+index)) known['m'+index] = value; });
+    let sum = puzzle.blanks.includes('sum') ? undefined : puzzle.magicSum;
+    function reveal(key, equation, clues) { known[key] = conceptAnswer(puzzle, key); steps.push({key,equation,clues}); }
+    // The center relation is introduced only when single-line deductions need it.
+    for (let pass = 0; pass < 12; pass++) {
+      let changed = false;
+      if (sum === undefined) {
+        const fullLine = MAGIC_LINES.find(line => line.every(index => known['m'+index] !== undefined));
+        if (fullLine) { sum = puzzle.magicSum; reveal('sum',fullLine.map(index => known['m'+index]).join(' + ')+` = ${sum}`,fullLine.map(index => 'm'+index).concat('sum')); changed = true; }
+        else if (known.m4 !== undefined) { sum = puzzle.magicSum; reveal('sum',`${known.m4} + ${known.m4} + ${known.m4} = ${sum}`,['m4','sum']); changed = true; }
+        else {
+          const pair = [[0,8],[2,6],[1,7],[3,5]].find(([a,b]) => known['m'+a] !== undefined && known['m'+b] !== undefined);
+          if (pair) { reveal('m4',`(${known['m'+pair[0]]} + ${known['m'+pair[1]]}) ÷ 2 = ${puzzle.cells[4]}`,pair.map(index => 'm'+index).concat('m4')); changed = true; }
+        }
+      }
+      if (sum !== undefined) {
+        for (const line of MAGIC_LINES) {
+          const missing = line.filter(index => known['m'+index] === undefined);
+          if (missing.length !== 1) continue;
+          const key = 'm'+missing[0], others = line.filter(index => index !== missing[0]);
+          reveal(key,`${sum} − ${known['m'+others[0]]} − ${known['m'+others[1]]} = ${puzzle.cells[missing[0]]}`,['sum',...others.map(index => 'm'+index),key]); changed = true;
+        }
+        if (!changed && known.m4 === undefined) { reveal('m4',`${sum} ÷ 3 = ${puzzle.cells[4]}`,['sum','m4']); changed = true; }
+      }
+      if (!changed) break;
+    }
+    return steps;
+  }
+  const magicPlans = [
+    [1,0,0,[8],false], [1,2,1,[1,5],false], [2,1,2,[0,4,7],false], [2,3,3,[2,3,6],false],
+    [1,10,4,[1,2,4,7],false], [2,5,5,[0,1,3,5],false], [3,1,6,[0,1,4,6,8],false], [3,4,7,[0,1,2,5,7],false],
+    [2,8,0,[3,4,5,6,7,8],true], [3,7,1,[0,1,2,3,4,5],true], [2,15,2,[0,2,3,5,7],true], [3,12,3,[1,2,4,5,6,7],true]
+  ];
+  const magicTitles = ['The final square','Two missing tiles','Across and down','Follow the diagonal','The connected board','Choose your first clue','The hidden center','One clue leads to another','Discover the magic sum','Build from one row','The center gives a clue','Opposite corners'];
+  function makeMagic(index) {
+    const [scale,offset,orientation,missing,hideSum] = magicPlans[index], base = [6,1,8,7,5,3,2,9,4];
+    let cells = base.map(value => value * scale + offset);
+    if (orientation >= 4) cells = [cells[2],cells[1],cells[0],cells[5],cells[4],cells[3],cells[8],cells[7],cells[6]];
+    for (let turn = 0; turn < orientation % 4; turn++) cells = [cells[6],cells[3],cells[0],cells[7],cells[4],cells[1],cells[8],cells[5],cells[2]];
+    const p = {id:`g3-concept-magic-${index+1}`,grade:3,type:'magic',conceptStage:conceptStage(index),difficulty:Math.floor(index/4)+1,cells,magicSum:15*scale+3*offset,blanks:[...(hideSum?['sum']:[]),...missing.map(position => 'm'+position)],title:magicTitles[index],scene:'Pip is restoring a number mosaic. Every direction must agree.',rule:'Every row, every column, and both diagonals must have the same magic sum. Use nonnegative whole numbers.',instruction:hideSum?'Find the magic sum and fill the empty squares. Check both diagonals too.':'Fill the empty squares. Every row, column, and diagonal must equal the given magic sum.'};
+    p.solutionSteps = magicSteps(p);
+    const first = p.solutionSteps[0];
+    p.hints = [hideSum ? 'Look for a complete line or the center. In a 3 × 3 magic square, the magic sum is three times the center.' : 'Find a row, column, or diagonal with just one empty square. Subtract its two known numbers from the magic sum.', first.key === 'm4' && hideSum ? `Opposite corners have the center as their average. Try ${first.equation}.` : `A useful first deduction is ${first.equation}.`, p.solutionSteps.map(step => step.equation).join('; ')+'.'];
+    p.explanationShort = `Every one of the eight lines adds to ${p.magicSum}.`;
+    p.explanation = p.solutionSteps.map(step => step.equation).join('; ')+'. In a 3 × 3 magic square, the center is one third of the magic sum, and opposite squares add to twice the center. Finish by checking all three rows, all three columns, and both diagonals.';
+    return p;
+  }
+  const parenthesesPlans = [
+    [38,14,6,'+','+',0],[57,23,8,'+','-',1],[76,18,9,'-','+',1],[84,26,7,'-','-',1],
+    [49,17,8,'+','+',1],[63,28,9,'+','-',0],[95,24,16,'-','+',1],[72,31,12,'-','-',0],
+    [128,37,15,'+','+',1],[146,52,18,'+','-',1],[163,48,27,'-','+',0],[152,61,24,'-','-',1]
+  ];
+  function makeParentheses(index) {
+    const [a,b,c,outer,inner,signIndex] = parenthesesPlans[index], rewriteSigns = [outer,outer === '+' ? inner : inner === '+' ? '-' : '+'];
+    const original = `${a} ${displaySign(outer)} (${b} ${displaySign(inner)} ${c})`, rewrite = `${a} ${displaySign(rewriteSigns[0])} ${b} ${displaySign(rewriteSigns[1])} ${c}`;
+    const inside = applySign(b,inner,c), value = applySign(a,outer,inside), keep = outer === '+';
+    return {id:`g3-concept-parentheses-${index+1}`,grade:3,type:'parentheses',conceptStage:conceptStage(index),difficulty:Math.floor(index/4)+1,a,b,c,outer,inner,rewriteSigns,signIndex,blanks:['sign'],title:keep?'Open an added group':inner === '+'?'Subtract the whole sum':'Subtract a difference',scene:'Pip needs two expressions that keep exactly the same value.',rule:'Open the parentheses without changing the value. + before a group keeps its signs; − before a group changes both signs.',instruction:'Choose the missing + or − sign. You can compare the two expressions without calculating the final answer.',hints:[`Look at the ${displaySign(outer)} just before the parentheses. Are we adding or subtracting the whole group?`,signIndex === 0?`The first sign stays ${displaySign(outer)}. ${keep?'Adding a group keeps':'Subtracting a group changes'} the sign before ${c}.`:keep?`The group is being added, so the ${displaySign(inner)} before ${c} stays the same.`:`Taking away (${b} ${displaySign(inner)} ${c}) means taking away ${b} ${inner === '+'?'and also taking away':'and then adding back'} ${c}.`,`The equivalent expression is ${rewrite}.`],explanationShort:`${original} = ${rewrite}.`,explanation:`${keep?'Adding the group keeps the signs of both parts.':inner === '+'?'Subtracting a sum means subtracting both parts.':'Subtracting a difference means subtracting the first part, then adding back the part removed inside the group.'} With parentheses: ${b} ${displaySign(inner)} ${c} = ${inside}, then ${a} ${displaySign(outer)} ${inside} = ${value}. Opened: ${rewrite} = ${value}. Both routes agree.`,solutionSteps:[{key:'sign',equation:`${original} = ${rewrite}`,clues:['sign']}]};
+  }
+  const rulePlans = [
+    ['+',10,[12,31,45,67],['y3']],['-',20,[35,60,94,130],['y2']],['+',15,[8,27,44,61],['x3']],['-',40,[60,95,160,380],['y2','x3']],
+    ['+',23,[17,42,68,90],['x2','y3']],['-',17,[38,65,100,142],['y2','x3']],['+',35,[5,29,73,116],['x2','y3']],['-',28,[42,89,135,200],['y2','x3']],
+    ['+',48,[12,57,96,153],['x2','y3']],['-',65,[80,126,195,260],['y2','x3']],['+',76,[24,68,129,250],['x2','y3']],['-',90,[120,175,260,430],['y2','x3']]
+  ];
+  function makeRule(index) {
+    const [ruleSign,ruleAmount,inputs,missing] = rulePlans[index], pairs = inputs.map(x => ({x,y:applySign(x,ruleSign,ruleAmount)}));
+    const rule = `Y = X ${displaySign(ruleSign)} ${ruleAmount}`, first = pairs[0], forward = ruleSign === '+', steps = [{key:'sign',equation:`${first.x} ${displaySign(ruleSign)} ${ruleAmount} = ${first.y}`,clues:['x0','y0','sign','amount']}];
+    for (const key of missing) {
+      const pair = pairs[Number(key.slice(1))], inverse = key[0] === 'x';
+      steps.push({key,equation:inverse?`${pair.y} ${forward?'−':'+'} ${ruleAmount} = ${pair.x}`:`${pair.x} ${displaySign(ruleSign)} ${ruleAmount} = ${pair.y}`,clues:[key[0] === 'x'?'y'+key.slice(1):'x'+key.slice(1),'sign','amount',key]});
+    }
+    return {id:`g3-concept-rule-${index+1}`,grade:3,type:'rule',conceptStage:conceptStage(index),difficulty:Math.floor(index/4)+1,ruleSign,ruleAmount,pairs,blanks:['sign','amount',...missing],title:missing.some(key => key[0] === 'x')?'Find the rule and work backward':'Find one rule for every row',scene:'Pip found a number machine. Its inputs are X and its outputs are Y.',rule:'The rule adds or subtracts the same nonnegative whole-number amount in every row: Y = X + amount or Y = X − amount.',instruction:'Find the + or − rule, fill its amount, and complete the table. A missing X asks you to work backward.',hints:['Compare an input X with its output Y. Does the machine make the number larger or smaller? Find how much it changes.',`The first row changes ${first.x} to ${first.y}: ${steps[0].equation}. Check the same change on the second row.`,`${rule}. ${steps.slice(1).map(step => step.equation).join('; ')}.`],explanationShort:`${rule} works for every row.`,explanation:`${pairs[0].x} ${displaySign(ruleSign)} ${ruleAmount} = ${pairs[0].y} and ${pairs[1].x} ${displaySign(ruleSign)} ${ruleAmount} = ${pairs[1].y}, so the same ${forward?'addition':'subtraction'} rule fits both clues. ${steps.slice(1).map(step => step.equation).join('; ')}. To recover an input, undo the rule with ${forward?'subtraction':'addition'}.`,solutionSteps:steps};
+  }
+  const concepts = [{type:'magic',title:'Magic Square Lab'},{type:'parentheses',title:'Parentheses Workshop'},{type:'rule',title:'Rule Detective'}];
+  const conceptPuzzles = [...magicPlans.map((_,index) => makeMagic(index)),...parenthesesPlans.map((_,index) => makeParentheses(index)),...rulePlans.map((_,index) => makeRule(index))];
   function deepFreeze(value) { if(value && typeof value==='object' && !Object.isFrozen(value)){Object.values(value).forEach(deepFreeze);Object.freeze(value);}return value; }
   deepFreeze(puzzles);deepFreeze(cases);
-  root.LogicDetectivesEngine=Object.freeze({puzzles,cases,SEGMENTS,SHAPES,FLAGS,FILLS,possibleSegments,makeStickState,evaluateSticks,getStickSolutions,validatePattern,tableAnswer,validateTable});
+  deepFreeze(concepts);deepFreeze(conceptPuzzles);
+  root.LogicDetectivesEngine=Object.freeze({puzzles,cases,concepts,conceptPuzzles,SEGMENTS,SHAPES,FLAGS,FILLS,possibleSegments,makeStickState,evaluateSticks,getStickSolutions,validatePattern,tableAnswer,validateTable,conceptAnswer,validateMagic,validateParentheses,validateRule});
 })(typeof window==='undefined'?globalThis:window);
